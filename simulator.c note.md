@@ -16,5 +16,9 @@ RFSIM is a simulator designed to replace a physical RF board, allowing OAI to pe
    - If `saviq` is selected:
      - `saveIQfile`: Save transmitted IQ samples to a file.
 ### RX Data Flow
+1. **`rfsimulator_read`**  Read IQ samples from the remote side (instead of real RF reception).
+2. **`rxAddInput`**  Apply the selected channel model (e.g., AWGN, SCM) to simulate real-world effects.
+3. **`rx_rf`**  Forward the processed samples to the PHY layer.
+4. **`ru_thread`**  Handles lower-level RF/PHY processing. Simulates southbound transmission.
 
 ## rifsim simulator.c

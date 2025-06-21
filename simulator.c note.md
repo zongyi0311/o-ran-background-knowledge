@@ -1,4 +1,21 @@
 -  [Rfsimulator](#Rfsimulator)
+## OAI Project Directory Structure 
+
+| Directory Path         | Description |
+|------------------------|-------------|
+| `openair1/`            | Implementation of Layer 1 (PHY). Includes LDPC encoder/decoder source files such as `nrLDPC_encoder.c` and `ldpc_decoder.c`. |
+| `radio/rfsimulator/`   | RFSIM simulator implementation. Handles simulated RF channel transmission between gNB and UE. Key file: `simulator.c`. |
+| `cmake_targets/`       | Build scripts and configuration for compiling and launching softmodem. Main execution happens from this directory. |
+| `executables/`         | Contains main entry points for gNB, UE, and other top-level executables. |
+| `openair2/`            | Implementation of Layer 2 modules (MAC / RLC / PDCP / RRC). Can be skipped for LDPC-focused study. |
+| `openair3/`            | Layer 3 modules (e.g., NGAP, GTP for core network). Not directly related to LDPC. |
+| `CMakeLists.txt`       | Top-level CMake configuration file for building the entire project. |
+| `doc/`                 | Documentation and architecture descriptions (e.g., system diagrams, flow explanations). |
+| `tools/`               | Developer tools for code formatting, analysis, and maintenance. |
+| `docker/`              | Docker build files and environment setup for container-based deployment. |
+| `ci-scripts/`          | CI/CD scripts and configurations for automated testing and integration. |
+
+
 ## Rfsimulator
 ### General
    RFSIM is a simulator designed to replace a physical RF board, allowing OAI to perform communication tests without requiring wireless hardware. It can simulate simple channels such as AWGN. RFSIM is not bound by real-time hardware sampling rates—its execution speed depends on CPU performance and can be faster or slower than real time.
@@ -42,7 +59,7 @@ This structure is passed to `device_init()` during initialization to apply the d
 
 A state structure that maintains the internal configuration and runtime status of the RF simulator (`rfsimulator`) in OAI.
 
-#### 🧾 Key Fields & Descriptions
+#### Key Fields & Descriptions
 
 | Field | Description |
 |-------|-------------|
@@ -55,12 +72,40 @@ A state structure that maintains the internal configuration and runtime status o
 | `next_buf` | Index pointer for buffer selection |
 | `rx_num_channels`, `tx_num_channels` | Number of RX/TX antenna channels |
 | `sample_rate`, `rx_freq`, `tx_bw` | RF communication parameters (sampling rate, frequency, bandwidth) |
-| `channelmod` | Whether to enable channel model simulation (e.g., fading, multipath) |
+| `channelmod` | Whether to enable channel model simulation |
 | `chan_pathloss`, `chan_forgetfact` | Pathloss and channel memory factor for SCM model |
 | `chan_offset` | Offset applied to I/Q data for simulating delay |
-| `telnetcmd_qid`, `poll_telnetcmdq` | Optional telnet CLI interface for commands (e.g., runtime control) |
+| `telnetcmd_qid`, `poll_telnetcmdq` | Optional telnet CLI interface for commands  |
 | `wait_timeout` | Timeout (in seconds) when waiting for UE to connect |
 | `prop_delay_ms` | Simulated propagation delay between gNB and UE |
 | `hanging_workaround` | Flag to enable workaround for connection issues |
 
+
+####`rfsimulator_state_t *rfsimulator = calloc(sizeof(rfsimulator_state_t), 1);`
+
+This line allocates memory for a new `rfsimulator_state_t` structure.  
+All fields within the structure are initialized to zero.  
+The pointer to the allocated memory is stored in the variable `rfsimulator`.
+- `calloc(n, size)` allocates memory for `n` elements, each of size `size`, and zero-initializes them.
+- In this case, `n = 1`, `size = sizeof(rfsimulator_state_t)`, so it creates one zeroed-out instance of the struct.
+
+### `rfsimulator_readconfig()`
+
+This function reads configuration settings for the `rfsimulator` module and initializes its internal parameters.
+
+####  Key Steps:
+
+1. **Define and initialize parameter descriptor array**  
+   - Declares the list of expected parameters (e.g., IP, port, options).
+
+2. **Read configuration from the `.conf` file**  
+   - Uses the appropriate section (e.g., `[rfsimulator]`) to extract values.
+
+3. **Parse the `options` parameter**  
+   - Determines which simulation features are enabled (e.g., `chanmod`, `saviq`).
+
+4. **Determine simulator role**  
+   - Based on IP address or hostname, sets the role to `client` (UE) or `server` (gNB).
+
+This function is typically called during `device_init()` to prepare the simulator before communication starts.
 

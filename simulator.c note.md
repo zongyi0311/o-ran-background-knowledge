@@ -7,4 +7,40 @@ RFSIM is a simulator designed to replace a physical RF board, allowing OAI to pe
 Architecture
 load_lib(載入 RFSIM 的 shared library)->
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ##rifsim simulator.c

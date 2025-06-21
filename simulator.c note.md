@@ -92,20 +92,79 @@ The pointer to the allocated memory is stored in the variable `rfsimulator`.
 ### `rfsimulator_readconfig()`
 
 This function reads configuration settings for the `rfsimulator` module and initializes its internal parameters.
-
 ####  Key Steps:
-
 1. **Define and initialize parameter descriptor array**  
    - Declares the list of expected parameters (e.g., IP, port, options).
-
+     
 2. **Read configuration from the `.conf` file**  
    - Uses the appropriate section (e.g., `[rfsimulator]`) to extract values.
-
+     
 3. **Parse the `options` parameter**  
    - Determines which simulation features are enabled (e.g., `chanmod`, `saviq`).
-
+     
 4. **Determine simulator role**  
    - Based on IP address or hostname, sets the role to `client` (UE) or `server` (gNB).
-
+     
 This function is typically called during `device_init()` to prepare the simulator before communication starts.
+#### Flow Overview
+
+```text
+main() or nr-softmodem
+        ↓
+Load RF device plugin (e.g., librfsimulator.so)
+        ↓
+device_init(openair0_device *device, openair0_config_t *cfg)
+        ↓
+       ┌────────────────────────────────────┐
+       │   Called inside device_init()      │
+       │   → rfsimulator_readconfig(cfg)    │
+       └────────────────────────────────────┘
+        ↓
+Initialize rfsimulator_state_t based on cfg parameters (IP, port, options)
+```
+
+#### Code syntax and comments
+##### `paramdef_t rfsimu_params[] = RFSIMULATOR_PARAMS_DESC;`
+This line defines a parameter descriptor array used by the configuration system in OAI.
+
+- `paramdef_t` is a structure that describes a configuration parameter (e.g., name, type, default value, pointer to target variable).
+- `RFSIMULATOR_PARAMS_DESC` is a macro or a static constant array that contains all supported RFSIM configuration options.
+- This array is passed to functions like `config_get()` to load values from the `.conf` file or command-line.
+
+This is how OAI knows **which parameters to read**, **what types they are**, and **where to store them**.
+
+##### 🔍 Finding the Index of a Parameter: `config_paramidx_fromname()`
+
+This function searches a parameter descriptor array (like `rfsimu_params[]`) and returns the index of a parameter with the specified name.
+**Defined in:** `config_userapi.c`
+
+Used to locate options such as `"options"` so their values can be processed later.
+
+Look up the index of the parameter named "options" in the rfsimu_params array.
+
+The result is stored in variable p.
+
+#define RFSIMU_OPTIONS_PARAMNAME "options"
+
+##### ⚙️ `config_get()` — Load Configuration Values
+
+This function loads parameter values from a configuration source (e.g., `.conf` file or command-line) and stores them in the provided descriptor array.
+
+**Defined in:** `config_userapi.c`
+
+- **`config_get_if()`**  
+  Returns the active configuration interface (typically a macro for `uniqCfg`).
+
+- **`RFSIMU_SECTION`**  
+  A macro that defines the section name in the `.conf` file, typically `"rfsimulator"`.
+---
+- **`Function Behavior`**  
+`config_get()` reads the `[rfsimulator]` section of the configuration file,  
+matches parameter names to entries in `rfsimu_params`,  
+and fills their values into the corresponding target variables.
+
+This step is essential to prepare the RF simulator with the correct user-defined options  
+such as **IP**, **port**, and `options=chanmod,saviq`, etc.
+
+
 

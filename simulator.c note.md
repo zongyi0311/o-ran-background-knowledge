@@ -1,9 +1,8 @@
--[Initialization and RX Flow Diagram](#Initialization-and-RX-Flow-Diagram)
-## Initialization and RX Flow Diagram
-
+-  [RFSIM](#RFSIM)
+## RFSIM
 ### General
-RFSIM is a simulator designed to replace a physical RF board, allowing OAI to perform communication tests without requiring wireless hardware. It can simulate simple channels such as AWGN. RFSIM is not bound by real-time hardware sampling rates—its execution speed depends on CPU performance and can be faster or slower than real time.
-
+   RFSIM is a simulator designed to replace a physical RF board, allowing OAI to perform communication tests without requiring wireless hardware. It can simulate simple channels such as AWGN. RFSIM is not bound by real-time hardware sampling rates—its execution speed depends on CPU performance and can be faster or slower than real time.
+### Initialization and RX Flow Diagram
 ### Initialization Flow
 1. **`load_lib`**  Load the RFSIM shared library (`librfsimulator.so`) dynamically.
 2. **`device_init`** Initialize the device and set function pointers like `trx_read_func`.
@@ -21,4 +20,6 @@ RFSIM is a simulator designed to replace a physical RF board, allowing OAI to pe
 3. **`rx_rf`**  Forward the processed samples to the PHY layer.
 4. **`ru_thread`**  Handles lower-level RF/PHY processing. Simulates southbound transmission.
 
+### CL option
+   RFSIM Command Line Options (CL options) allow users to configure the behavior of the RF simulator directly from the terminal when launching nr-softmodem or nr-uesoftmodem.
 ## rifsim simulator.c

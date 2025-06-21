@@ -20,8 +20,6 @@
 | `docker/`               | Docker 建置相關檔案與設定 |
 | `ci-scripts/`           | 自動測試與 CI 流程相關的腳本與設定檔 |
 
----
-
 
 
 #rifsim simulator.c程式碼

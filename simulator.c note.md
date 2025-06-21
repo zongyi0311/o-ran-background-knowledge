@@ -1,4 +1,5 @@
 [rifsim simulator.c程式碼](#rifsim-simulator.c程式碼)
+
 [OAI 專案資料夾結構說明](#OAI-專案資料夾結構說明)
 
 
@@ -22,6 +23,5 @@
 ---
 
 
-[rifsim simulator.c程式碼](#rifsim-simulator.c程式碼)
 
 #rifsim simulator.c程式碼

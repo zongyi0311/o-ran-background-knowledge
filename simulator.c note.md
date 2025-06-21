@@ -1,3 +1,4 @@
+[Initialization and RX Flow Diagram](#Initialization-and-RX-Flow-Diagram)
 ## Initialization and RX Flow Diagram
 
 ### General

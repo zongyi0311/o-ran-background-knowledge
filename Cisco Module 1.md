@@ -70,12 +70,12 @@
 
 ---
 
-## 1. 📡 What is Bandwidth?
+## 1.  What is Bandwidth?
 
 - **Bandwidth** is the **theoretical maximum capacity** of a medium to carry data.
 - Measured in **bits per second (bps)** – how many bits can be transmitted in one second.
 
-### 🔢 Common Bandwidth Units:
+###  Common Bandwidth Units:
 
 | Unit                  | Abbreviation | Equivalent in bps  |
 |-----------------------|--------------|--------------------|

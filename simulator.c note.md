@@ -3,6 +3,7 @@
     -  [device_init](#device_init)
     -  [rfsimulator_readconfig()](#rfsimulator_readconfig)
     -  [Set openair0_device](#set-the-function-pointers-and-members-in-the-openair0_device-structure)
+       -  [startServer()](#startServer)
 ## OAI Project Directory Structure 
 
 | Directory Path         | Description |
@@ -287,5 +288,5 @@ This classification is crucial for setting up the proper TCP communication direc
   device->priv = rfsimulator;
   device->trx_write_init = rfsimulator_write_init;
 ```
-#### **`startServer()`**  
+#### startServer()
 

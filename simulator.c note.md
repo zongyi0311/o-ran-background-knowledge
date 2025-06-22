@@ -290,3 +290,77 @@ This classification is crucial for setting up the proper TCP communication direc
 ```
 #### startServer()
 
+# 🌐 `struct sockaddr_in` – IPv4 Socket Address Structure
+
+The `sockaddr_in` structure is used in C socket programming to store IPv4 addresses and port numbers. It is a specialized version of the generic `struct sockaddr`.
+
+---
+
+## 🧱 Definition
+
+```c
+typedef uint32_t in_addr_t; // 4 bytes
+
+struct in_addr {
+    in_addr_t s_addr;  // 32-bit IPv4 address
+};
+
+struct sockaddr_in {
+    unsigned short int sin_family; // Address family (e.g., AF_INET)
+    unsigned short int sin_port;   // Port number (network byte order)
+    struct in_addr sin_addr;       // IPv4 address
+    unsigned char sin_zero[8];     // Padding
+};
+```
+
+---
+
+## 📐 Memory Layout
+
+| Field         | Size     | Description                            |
+|---------------|----------|----------------------------------------|
+| `sin_family`  | 2 bytes  | Address family (e.g., AF_INET)         |
+| `sin_port`    | 2 bytes  | Port number (must use `htons()`)       |
+| `sin_addr`    | 4 bytes  | IPv4 address (`struct in_addr`)        |
+| `sin_zero[8]` | 8 bytes  | Padding to match size of `sockaddr`    |
+| **Total**     | **16 bytes** |                                    |
+
+---
+
+## 🧠 Explanation
+
+- `sin_family`: Always set to `AF_INET` for IPv4.
+- `sin_port`: Must be in **network byte order**. Use `htons()` to convert from host to network.
+- `sin_addr`: Contains the 32-bit IPv4 address.
+- `sin_zero`: Padding to ensure `sockaddr_in` has same size as `sockaddr`. Not used.
+
+---
+
+## 🛠️ Example Usage
+
+```c
+struct sockaddr_in server;
+
+server.sin_family = AF_INET;
+server.sin_port = htons(8080);  // Convert port to network byte order
+server.sin_addr.s_addr = inet_addr("127.0.0.1"); // Convert IP string to binary
+```
+
+You will typically cast this structure to `(struct sockaddr*)` when using with functions like:
+
+```c
+bind(sockfd, (struct sockaddr*)&server, sizeof(server));
+connect(sockfd, (struct sockaddr*)&server, sizeof(server));
+```
+
+---
+
+## ✅ Summary
+
+| Field        | Purpose                            |
+|--------------|------------------------------------|
+| `sin_family` | Specifies address family (AF_INET) |
+| `sin_port`   | Specifies port number              |
+| `sin_addr`   | Holds IPv4 address                 |
+| `sin_zero`   | Padding only, unused               |
+

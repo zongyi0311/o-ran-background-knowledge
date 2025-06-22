@@ -1,6 +1,6 @@
 -  [Rfsimulator](#Rfsimulator)
     -  [simulator.c](#simulatorc)
-    -  [device_init()](#device-init)
+    -  [device_init](#device_init)
     -  [rfsimulator_readconfig()](#rfsimulator-readconfig)
 ## OAI Project Directory Structure 
 

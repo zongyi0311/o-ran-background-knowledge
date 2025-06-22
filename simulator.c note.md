@@ -1,5 +1,5 @@
 -  [Rfsimulator](#Rfsimulator)
--  [simulator.c](#simulator.c)
+-  [simulator.c](#simulatorc)
 ## OAI Project Directory Structure 
 
 | Directory Path         | Description |

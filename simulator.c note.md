@@ -287,4 +287,5 @@ This classification is crucial for setting up the proper TCP communication direc
   device->priv = rfsimulator;
   device->trx_write_init = rfsimulator_write_init;
 ```
+#### **`startServer()`**  
 

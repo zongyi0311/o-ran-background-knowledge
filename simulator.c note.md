@@ -2,6 +2,7 @@
     -  [simulator.c](#simulatorc)
     -  [device_init](#device_init)
     -  [rfsimulator_readconfig()](#rfsimulator_readconfig)
+    -  [Set the function pointers](#set-the-function-pointers-and-members-in-the-openair0_device-structure)
 ## OAI Project Directory Structure 
 
 | Directory Path         | Description |
@@ -243,9 +244,47 @@ Creates and configures a list of channels between TX and RX paths based on syste
 
 These functions are used in `rfsimulator_readconfig()` when the `"chanmod"` option is enabled.
 
+---
+This logic appears inside the `rfsimulator_readconfig()` function and determines whether the RFSIM instance should behave as a **server** (e.g., gNB) or **client** (e.g., UE) based on the configured IP string.
 
+```c
+if ( strncasecmp(rfsimulator->ip, "enb", 3) == 0 ||
+     strncasecmp(rfsimulator->ip, "server", 3) == 0 ) {
+    rfsimulator->role = SIMU_ROLE_SERVER;
+} else {
+    rfsimulator->role = SIMU_ROLE_CLIENT;
+}
+```
+---
 
+ Explanation
 
+- `strncasecmp(a, b, n)`: Compares the first `n` characters of two strings case-insensitively.
+- If the IP string starts with `"enb"` or `"server"`:
+  - The simulator sets its role to `SIMU_ROLE_SERVER` → acts like a gNB.
+- Otherwise:
+  - The simulator sets its role to `SIMU_ROLE_CLIENT` → acts like a UE.
 
+This classification is crucial for setting up the proper TCP communication direction (server listens, client connects).
 
+---
+
+### Set the function pointers and members in the openair0_device structure
+```c
+ device->trx_start_func = rfsimulator->role == SIMU_ROLE_SERVER ? startServer : startClient;
+  device->trx_get_stats_func   = rfsimulator_get_stats;
+  device->trx_reset_stats_func = rfsimulator_reset_stats;
+  device->trx_end_func         = rfsimulator->role == SIMU_ROLE_SERVER ? stopServer : rfsimulator_end;
+  device->trx_stop_func        = rfsimulator_stop;
+  device->trx_set_freq_func    = rfsimulator_set_freq;
+  device->trx_set_gains_func   = rfsimulator_set_gains;
+  device->trx_write_func       = rfsimulator_write;
+  device->trx_read_func      = rfsimulator_read;
+  /* let's pretend to be a b2x0 */
+  device->type = RFSIMULATOR;
+  openair0_cfg[0].rx_gain[0] = 0;
+  device->openair0_cfg=&openair0_cfg[0];
+  device->priv = rfsimulator;
+  device->trx_write_init = rfsimulator_write_init;
+```
 

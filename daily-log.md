@@ -13,9 +13,9 @@
 **Short-term Goals**
 - Foundation [Reading rfsimulator simulator.c](https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/radio/rfsimulator/simulator.c?ref_type=heads)
 - Foundation [Reading TCP socket](https://github.com/davidleitw/socket/tree/master)
-- Foundation Learn Cisco Networking Basics Module 1 and Module 2
+- Foundation Learning Cisco Networking Basics Module 1
 
 **Daily Logs:**
 - 14:00-15:00: Reading rfsimulator_readconfig()[rfsimulator_readconfig()](https://github.com/zongyi0311/rfsim-intern-log/blob/main/simulator.c%20note.md#rfsimulator_readconfig)
-- 15:00-16:00: 
+- 20:00-21:00: Learning Cisco Networking Basics Module 1[Cisco Module 1](https://github.com/zongyi0311/rfsim-intern-log/blob/main/Cisco%20Module%201.md)
 

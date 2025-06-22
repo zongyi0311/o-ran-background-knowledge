@@ -1,4 +1,5 @@
 -  [Rfsimulator](#Rfsimulator)
+   -  [simulator.c](##simulator.c)
 ## OAI Project Directory Structure 
 
 | Directory Path         | Description |
@@ -146,7 +147,7 @@ The result is stored in variable p.
 
 #define RFSIMU_OPTIONS_PARAMNAME "options"
 
-##### ⚙️ `config_get()` — Load Configuration Values
+##### `config_get()` — Load Configuration Values
 
 This function loads parameter values from a configuration source (e.g., `.conf` file or command-line) and stores them in the provided descriptor array.
 
@@ -165,6 +166,84 @@ and fills their values into the corresponding target variables.
 
 This step is essential to prepare the RF simulator with the correct user-defined options  
 such as **IP**, **port**, and `options=chanmod,saviq`, etc.
+
+#####  Parsing `options` Parameter in RFSIMULATOR
+
+This loop iterates over the list of `options` (passed via `.conf` or command line) and enables specific simulation features such as IQ saving (`saviq`) or channel modeling (`chanmod`).
+
+```c
+for (int i = 0; i < rfsimu_params[p].numelt; i++) {
+    // Check if the current option is "saviq" → enable IQ saving
+    if (strcmp(rfsimu_params[p].strlistptr[i], "saviq") == 0) {
+        // Open the IQ save file in write mode (create if not exist, truncate if it does)
+        rfsimulator->saveIQfile = open(saveF, O_APPEND | O_CREAT | O_TRUNC | O_WRONLY, 0666);
+
+        if (rfsimulator->saveIQfile != -1) {
+            // Successfully opened file for IQ saving
+            LOG_I(HW, "Will save written IQ samples in %s\n", saveF);
+        } else {
+            // Failed to open file → print error and abort
+            LOG_E(HW, "open(%s) failed for IQ saving, errno(%d)\n", saveF, errno);
+            exit(-1);
+        }
+
+        // No need to check further options once "saviq" is handled
+        break;
+
+    } else if (strcmp(rfsimu_params[p].strlistptr[i], "chanmod") == 0) {
+        // Enable RF channel model simulation
+        init_channelmod();
+
+        // Load predefined channel list with current RF parameters
+        load_channellist(
+            rfsimulator->tx_num_channels,
+            rfsimulator->rx_num_channels,
+            rfsimulator->sample_rate,
+            rfsimulator->rx_freq,
+            rfsimulator->tx_bw
+        );
+
+        // Activate channel modeling for future RX sample processing
+        rfsimulator->channelmod = true;
+
+    } else {
+        // If the option is not recognized, print an error and terminate
+        fprintf(stderr, "unknown rfsimulator option: %s\n", rfsimu_params[p].strlistptr[i]);
+        exit(-1);
+    }
+}
+```
+When saving IQ samples (e.g., using the `"saviq"` option), the `open()` function is used with the following flags:
+
+| Flag        | Meaning                                              |
+|-------------|------------------------------------------------------|
+| `O_APPEND`  | Append data to the end of the file                   |
+| `O_CREAT`   | Create the file if it does not exist                 |
+| `O_TRUNC`   | Truncate the file to 0 length if it exists           |
+| `O_WRONLY`  | Open the file in write-only mode                     |
+
+| Macro           | Function                                    |
+| --------------- | ------------------------------------------- |
+| `LOG_I(M, ...)` | Informational log, used for status messages |
+| `LOG_E(M, ...)` | Error log, used when something goes wrong   |
+
+
+`init_channelmod()`
+Initializes channel modeling structures. Sets default parameters (e.g., path loss, fading model, memory factor) for RF simulation.
+
+`load_channellist(tx, rx, rate, freq, bw)`
+Creates and configures a list of channels between TX and RX paths based on system parameters:
+- `tx` → Transmit channels
+- `rx` → Receive channels
+- `rate` → Sample rate (Hz)
+- `freq` → Center frequency (Hz)
+- `bw` → Bandwidth (Hz)
+
+These functions are used in `rfsimulator_readconfig()` when the `"chanmod"` option is enabled.
+
+
+
+
 
 
 

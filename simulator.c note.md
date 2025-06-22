@@ -2,7 +2,7 @@
     -  [simulator.c](#simulatorc)
     -  [device_init](#device_init)
     -  [rfsimulator_readconfig()](#rfsimulator_readconfig)
-    -  [Set the function pointers](#set-the-function-pointers-and-members-in-the-openair0_device-structure)
+    -  [Set openair0_device](#set-the-function-pointers-and-members-in-the-openair0_device-structure)
 ## OAI Project Directory Structure 
 
 | Directory Path         | Description |

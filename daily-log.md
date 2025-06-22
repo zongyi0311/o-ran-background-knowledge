@@ -12,7 +12,6 @@
 
 **Short-term Goals**
 - Foundation [Reading rfsimulator simulator.c](https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/radio/rfsimulator/simulator.c?ref_type=heads)
-- Foundation [Reading TCP socket](https://github.com/davidleitw/socket/tree/master)
 - Foundation Learning Cisco Networking Basics Module 1
 
 **Daily Logs:**

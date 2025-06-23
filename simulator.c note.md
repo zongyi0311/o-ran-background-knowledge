@@ -673,3 +673,157 @@ sock = client_try_connect(t->ip, t->port);
 
 #### client_try_connect()
 
+```c
+s = getaddrinfo(host, dport, &hints, &result);
+if (s != 0) {
+  LOG_E(HW, "getaddrinfo: %s\n", gai_strerror(s));
+  return -1;
+}
+```
+**Purpose:**  
+This code uses `getaddrinfo()` to resolve a hostname and service (port) into a list of socket address structures, and checks for failure.
+
+---
+**`getaddrinfo()` Parameters**
+
+| Parameter   | Description                                        |
+|-------------|----------------------------------------------------|
+| `host`      | Hostname or IP address to resolve                  |
+| `dport`     | Port number or service name (as string)            |
+| `&hints`    | Pointer to `addrinfo` struct with filtering hints  |
+| `&result`   | Output: linked list of resolved addresses          |
+
+---
+
+#### connect()
+```c
+if (connect(sock, rp->ai_addr, rp->ai_addrlen) != -1) {
+  break;
+}
+```
+**Purpose**  
+This code attempts to connect the socket to the remote address provided by `rp` (from the `getaddrinfo()` results). If the connection is successful, it breaks out of the loop.
+
+---
+```c
+int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+```
+---
+**Purpose**
+
+The `connect()` function is used by a client to **initiate a connection to a remote server** using a socket. It is typically used with **TCP sockets** (`SOCK_STREAM`).
+
+---
+**Parameters**
+
+| Parameter     | Type                    | Description |
+|---------------|-------------------------|-------------|
+| `sockfd`      | `int`                   | The file descriptor of the socket created via `socket()` |
+| `addr`        | `const struct sockaddr *` | Pointer to a `sockaddr` structure containing the destination address |
+| `addrlen`     | `socklen_t`             | Size of the `addr` structure |
+
+---
+
+#### setblocking()
+
+**Purpose**
+
+This function sets the specified socket `sock` to either:
+
+- **Blocking mode**: I/O calls wait until completion (default)
+- **Non-blocking mode**: I/O calls return immediately if they would block
+---
+
+### 🧾 Step-by-Step Breakdown
+
+| Section        | Code                              | Explanation |
+|----------------|-----------------------------------|-------------|
+| Get flags      | `fcntl(sock, F_GETFL)`            | Retrieves current socket flags (e.g. `O_NONBLOCK`) |
+| Choose mode    | `if (active == blocking)`         | Uses the `blocking_t` enum to decide desired mode |
+| Modify flags   | `opts |= O_NONBLOCK` or `&= ~O_NONBLOCK` | Sets or clears the non-blocking flag |
+| Apply flags    | `fcntl(sock, F_SETFL, opts)`      | Applies the modified flags to the socket |
+| Error handling | `if (opts < 0)`                   | If `fcntl()` fails, logs error and returns `-1` |
+| Success        | `return 0;`                       | Returns 0 if everything succeeded |
+
+---
+
+**Example**
+
+```c
+int sock = socket(AF_INET, SOCK_STREAM, 0);
+setblocking(sock, notBlocking); // Set the socket to non-blocking mode
+```
+
+---
+**blocking_t**
+```c
+enum blocking_t {
+  notBlocking,
+  blocking
+};
+```
+---
+
+**Purpose**
+
+This `enum` defines two possible socket modes — blocking and non-blocking. It's typically used as a parameter to functions like `setblocking()` to control how a socket behaves during I/O operations.
+
+---
+| Name         | Value | Description                             |
+|--------------|--------|-----------------------------------------|
+| `notBlocking`| `0`    | Sets the socket to **non-blocking** mode |
+| `blocking`   | `1`    | Sets the socket to **blocking** mode     |
+
+> In C, enum members are automatically assigned integer values starting from `0`.
+
+---
+
+#### startClient() Flowchart
+
+```text
+┌──────────────────────────────────────────────┐
+│ Enter startClient(openair0_device *device)   │
+└────────────────────────┬─────────────────────┘
+                         │
+                         ▼
+┌──────────────────────────────────────────────┐
+│ device->priv → rfsimulator_state_t *t        │
+│ Set t->role = SIMU_ROLE_CLIENT               │
+└────────────────────────┬─────────────────────┘
+                         │
+                         ▼
+┌──────────────────────────────────────────────┐
+│ Loop: while (true)                           │
+│ Attempt connection via client_try_connect()  │
+└────────────────────────┬─────────────────────┘
+                         │
+                ┌────────▼────────┐
+                │ sock > 0 ?      │───────→ Yes ───► Connected → break loop
+                └──────┬──────────┘
+                       │ No
+                       ▼
+       ┌──────────────────────────────────────┐
+       │ Print "connect() failed, errno"      │
+       │ sleep(1);                            │
+       └──────────────────────────────────────┘
+                         ▲
+                         │ ←←←←←←←←←←←←←←←←←←←←←←←←←←←
+
+┌──────────────────────────────────────────────┐
+│ After loop: connection established           │
+│ Call setblocking(sock, notBlocking)          │
+└────────────────────────┬─────────────────────┘
+                         │
+                ┌────────▼────────┐
+                │ return -1 ?     │──────→ Yes → exit with error
+                └──────┬──────────┘
+                       │ No
+                       ▼
+┌──────────────────────────────────────────────┐
+│ Call allocCirBuf(t, sock)                    │
+│ If success → return 0                        │
+│ If fail    → return -1                       │
+└──────────────────────────────────────────────┘
+```
+---
+

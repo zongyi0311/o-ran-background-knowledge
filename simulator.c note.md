@@ -4,6 +4,7 @@
     -  [rfsimulator_readconfig()](#rfsimulator_readconfig)
     -  [Set openair0_device](#set-the-function-pointers-and-members-in-the-openair0_device-structure)
        -  [startServer()](#startServer)
+       -  [startClient()](#startClient)
 # OAI Project Directory Structure 
 
 | Directory Path         | Description |
@@ -269,6 +270,82 @@ if ( strncasecmp(rfsimulator->ip, "enb", 3) == 0 ||
 This classification is crucial for setting up the proper TCP communication direction (server listens, client connects).
 
 ---
+#### rfsimulator_readconfig() Flowchart 
+
+```text
+┌────────────────────────────────────────────────────┐
+│ Function Entry: rfsimulator_readconfig()           │
+└────────────┬───────────────────────────────────────┘
+             │
+             ▼
+┌────────────────────────────────────────────────────┐
+│ Declare: saveF = NULL, modelname = NULL            │
+│ Create param array: rfsimu_params[]                │
+│ ← from RFSIMULATOR_PARAMS_DESC macro               │
+└────────────┬───────────────────────────────────────┘
+             │
+             ▼
+┌────────────────────────────────────────────────────┐
+│ Lookup index `p` for "options" in rfsimu_params[]  │
+│ using config_paramidx_fromname()                   │
+└────────────┬───────────────────────────────────────┘
+             │
+             ▼
+┌────────────────────────────────────────────────────┐
+│ Call config_get() to load configuration            │
+│ If ret < 0 → AssertFatal() to abort                │
+└────────────┬───────────────────────────────────────┘
+             │
+             ▼
+┌────────────────────────────────────────────────────┐
+│ Initialize: rfsimulator->saveIQfile = -1           │
+└────────────┬───────────────────────────────────────┘
+             │
+             ▼
+┌────────────────────────────────────────────────────┐
+│ Loop through rfsimu_params[p].strlistptr[]         │
+│ for i = 0 to numelt                                │
+└────────────┬───────────────────────────────────────┘
+             │
+             ▼
+┌────────────────────────────────────────────────────┐
+│ If option == "saviq":                              │
+│ → Open file with open(saveF, flags, 0666)          │
+│   If success: log message                          │
+│   Else: print error and exit(-1)                   │
+└────────────┬───────────────────────────────────────┘
+             │
+             ▼
+┌────────────────────────────────────────────────────┐
+│ If option == "chanmod":                            │
+│ → Call init_channelmod()                           │
+│ → Call load_channellist(...)                       │
+│ → Set rfsimulator->channelmod = true               │
+└────────────┬───────────────────────────────────────┘
+             │
+             ▼
+┌────────────────────────────────────────────────────┐
+│ Else (unknown option):                             │
+│ → Print error and exit(-1)                         │
+└────────────┬───────────────────────────────────────┘
+             │
+             ▼
+┌────────────────────────────────────────────────────┐
+│ Check if environment variable RFSIMULATOR exists   │
+│ If so:                                             │
+│ → Assign rfsimulator->ip from getenv("RFSIMULATOR")│
+│ → Log warning (deprecated usage)                   │
+│ → sleep(10)                                        │
+└────────────┬───────────────────────────────────────┘
+             │
+             ▼
+┌────────────────────────────────────────────────────┐
+│ Determine simulator role based on IP prefix:       │
+│ If IP starts with "enb" or "server" → SERVER role  │
+│ Else → CLIENT role                                 │
+└────────────────────────────────────────────────────┘
+```
+---
 
 ## Set the function pointers and members in the openair0_device structure
 ```c
@@ -344,6 +421,8 @@ The `getaddrinfo()` function returns a **linked list of `struct addrinfo`**, whe
 
 Each node describes one possible way to connect to the target host and service.
 
+#### socket()
+
 int socket(int domain, int type, int protocol);
 | Parameter   | Description                          | Common Values                      |
 |-------------|--------------------------------------|------------------------------------|
@@ -352,6 +431,8 @@ int socket(int domain, int type, int protocol);
 | `protocol`  | Transport protocol (usually 0)       | `0` (default), `IPPROTO_TCP`, `IPPROTO_UDP` |
 
  Set `protocol = 0` to automatically choose the default for the given type.
+
+ #### setsockopt()
 
  ```c
 int setsockopt(int sockfd, int level, int option_name,const void *option_value, socklen_t option_len);
@@ -450,4 +531,143 @@ int listen(int sockfd, int backlog);
 **Without `listen()`, `accept()` will fail!**
 
 ---
+
+| Code                             | Meaning |
+|----------------------------------|---------|
+| `struct epoll_event ev = {0};`   | Initializes the struct to all zeros |
+| `ev.events = EPOLLIN;`           | Register interest in **readable input events** |
+| `ev.data.ptr = NULL;`            | No custom data attached for this event (can store user-defined context later) |
+
+#### epoll_ctl()
+
+```c
+if (epoll_ctl(t->epollfd, EPOLL_CTL_ADD, t->listen_sock, &ev) != 0) {
+    LOG_E(HW, "epoll_ctl(EPOLL_CTL_ADD) failed, errno(%d)\n", errno);
+    return -1;
+}
+```
+---
+
+**Purpose**
+
+Registers the **listening socket** (`t->listen_sock`) to the `epoll` instance (`t->epollfd`) to monitor for **incoming connection events**.
+
+---
+
+**Function Syntax**
+
+```c
+int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
+```
+---
+
+| Field           | Value                    | Meaning                         |
+|------------------|---------------------------|----------------------------------|
+| `epfd`           | `t->epollfd`              | epoll instance for this server  |
+| `op`             | `EPOLL_CTL_ADD`           | Add new socket to watch list    |
+| `fd`             | `t->listen_sock`          | The server socket in listening state |
+| `event`          | `&ev`                     | Watch for readable events (`EPOLLIN`) |
+
+---
+
+**Error Handling**
+
+If `epoll_ctl()` fails:
+
+- Logs an error with `errno`
+- Returns `-1` to indicate server setup failed
+---
+This line is **crucial** for setting up an event-driven server using `epoll`.  
+Without this, `epoll_wait()` will not receive any connection events from clients.
+
+#### startServer() Flowchart
+
+```text
+┌────────────────────────────┐
+│ Initialize variables       │
+│  - sock = -1               │
+│  - results, rp = NULL      │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ Set role to SERVER         │
+│ Format port as string      │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ Set up hints for IPv6      │
+│  - ai_family = AF_INET6    │
+│  - ai_socktype = SOCK_STREAM │
+│  - ai_flags = AI_PASSIVE   │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ Call getaddrinfo()         │
+│ If fail → print error      │
+│             ↳ return -1    │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ Loop through addr list     │
+│ for (rp = results; ...)    │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ Create socket              │
+│ If fail → continue         │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ setsockopt: Disable v6only │
+│ If fail → continue         │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ setsockopt: Enable reuse   │
+│ If fail → continue         │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ bind() to addr             │
+│ If success → break         │
+│ else → close socket        │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ freeaddrinfo(results)      │
+│ Check if socket valid      │
+│ If invalid → return -1     │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ listen(sock, backlog)      │
+│ If fail → return -1        │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ Register socket in epoll   │
+│ epoll_ctl(..., ADD, ...)   │
+│ If fail → return -1        │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ Save sock to t->listen_sock│
+│ Return 0 (Success)         │
+└────────────────────────────┘
+```
+### startClient()
+
+
 

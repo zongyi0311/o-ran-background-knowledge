@@ -412,7 +412,7 @@ The `getaddrinfo()` function returns a **linked list of `struct addrinfo`**, whe
 
 | Field Name   | Description |
 |--------------|-------------|
-| `ai_family`  | Address family (e.g., `AF_INET` for IPv4, `AF_INET6` for IPv6) |
+| `ai_family`  | Address family (e.g., `AF_INET` for IPv4, `AF_INET6` for IPv6) AF_UNSPEC for Not specified |
 | `ai_socktype`| Socket type (e.g., `SOCK_STREAM` for TCP, `SOCK_DGRAM` for UDP) |
 | `ai_protocol`| Protocol (e.g., `IPPROTO_TCP`, `IPPROTO_UDP`) |
 | `ai_addrlen` | Length of the `ai_addr` field |
@@ -669,5 +669,7 @@ Without this, `epoll_wait()` will not receive any connection events from clients
 ```
 ### startClient()
 
+sock = client_try_connect(t->ip, t->port);
 
+#### client_try_connect()
 

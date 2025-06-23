@@ -26,4 +26,4 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
   
 **Daily Logs:**
 - 15:00-17:30 : studying [startServer()](https://github.com/zongyi0311/rfsim-intern-log/blob/main/simulator.c%20note.md#startServer) and [startClient()](https://github.com/zongyi0311/rfsim-intern-log/blob/main/simulator.c%20note.md#startClient)
-- 21:00-22:00 : Learning Cisco Networking Basics Module 2
+- 21:00-22:00 : Learning Cisco Networking Basics [Module 2](https://github.com/zongyi0311/rfsim-intern-log/blob/main/Cisco%20Module%202.md)

@@ -289,6 +289,165 @@ This classification is crucial for setting up the proper TCP communication direc
   device->trx_write_init = rfsimulator_write_init;
 ```
 ### startServer()
+```c
+static int startServer(openair0_device *device)
+{
+  int sock = -1;
+  struct addrinfo *results = NULL;
+  struct addrinfo *rp = NULL;
 
+  rfsimulator_state_t *t = (rfsimulator_state_t *)device->priv;
+  t->role = SIMU_ROLE_SERVER;
 
+  char port[6];
+  snprintf(port, sizeof(port), "%d", t->port);
+
+  struct addrinfo hints = {
+    .ai_family = AF_INET6,//IPv6 addresses.
+    .ai_socktype = SOCK_STREAM,//want TCP sockets, UDP use SOCK_DGRAM
+    .ai_flags = AI_PASSIVE,//a server, so you want to bind to a local address (not connect).
+  };
+```
+---
+This is the **server-side startup function** for the RF simulator in OAI. It prepares a TCP server socket using IPv6 and configures it to listen on the configured port.
+
+---
+| Code                          | Purpose |
+|-------------------------------|---------|
+| `int sock = -1;`              | File descriptor placeholder for socket |
+| `struct addrinfo *results = NULL;` | Will store the list of possible addresses returned by `getaddrinfo()` |
+| `struct addrinfo *rp = NULL;` | Used to iterate through address list |
+| `t->role = SIMU_ROLE_SERVER;` | Set the role of the simulator to server |
+| `char port[6];`               | Buffer to store port number string (5 digits + null terminator) |
+| `snprintf(...)`              | Convert the numeric port (`t->port`) to a string |
+
+---
+#### getaddrinfo()
+| Function Name     | Purpose                                           | Defined In   |
+|-------------------|---------------------------------------------------|--------------|
+| `getaddrinfo()`   | Query address information                         | `<netdb.h>`  |
+| `gai_strerror()`  | Interpret error codes (specific to `getaddrinfo`) | `<netdb.h>`  |
+| `freeaddrinfo()`  | Free the address information results              | `<netdb.h>`  |
+
+**What Does `getaddrinfo()` Return?**
+
+The `getaddrinfo()` function returns a **linked list of `struct addrinfo`**, where each node represents a possible socket connection configuration.
+
+| Field Name   | Description |
+|--------------|-------------|
+| `ai_family`  | Address family (e.g., `AF_INET` for IPv4, `AF_INET6` for IPv6) |
+| `ai_socktype`| Socket type (e.g., `SOCK_STREAM` for TCP, `SOCK_DGRAM` for UDP) |
+| `ai_protocol`| Protocol (e.g., `IPPROTO_TCP`, `IPPROTO_UDP`) |
+| `ai_addrlen` | Length of the `ai_addr` field |
+| `ai_addr`    | Pointer to a `sockaddr` structure containing the actual address information |
+| `ai_next`    | Pointer to the next `addrinfo` node in the list (used for iteration) |
+
+Each node describes one possible way to connect to the target host and service.
+
+int socket(int domain, int type, int protocol);
+| Parameter   | Description                          | Common Values                      |
+|-------------|--------------------------------------|------------------------------------|
+| `domain`    | Address family (IPv4, IPv6, etc.)    | `AF_INET` (IPv4), `AF_INET6` (IPv6) |
+| `type`      | Type of socket                       | `SOCK_STREAM` (TCP), `SOCK_DGRAM` (UDP) |
+| `protocol`  | Transport protocol (usually 0)       | `0` (default), `IPPROTO_TCP`, `IPPROTO_UDP` |
+
+ Set `protocol = 0` to automatically choose the default for the given type.
+
+ ```c
+int setsockopt(int sockfd, int level, int option_name,const void *option_value, socklen_t option_len);
+
+```
+| Parameter       | Meaning                                      |
+|------------------|----------------------------------------------|
+| `sockfd`         | The socket file descriptor                   |
+| `level`          | Protocol level (e.g., `SOL_SOCKET`, `IPPROTO_TCP`) |
+| `option_name`    | Name of the option to set                    |
+| `option_value`   | Pointer to the value to set                  |
+| `option_len`     | Length (in bytes) of the value               |
+
+---
+
+| Level           | Option Name       | Type     | Purpose                                                  |
+|-----------------|-------------------|----------|----------------------------------------------------------|
+| `SOL_SOCKET`    | `SO_REUSEADDR`    | `int`    | Allow reuse of local addresses (e.g., avoid "address in use") |
+| `SOL_SOCKET`    | `SO_REUSEPORT`    | `int`    | Allow multiple sockets to bind to the same port (Linux)  |
+| `SOL_SOCKET`    | `SO_RCVBUF`       | `int`    | Set receive buffer size                                  |
+| `SOL_SOCKET`    | `SO_SNDBUF`       | `int`    | Set send buffer size                                     |
+| `SOL_SOCKET`    | `SO_KEEPALIVE`    | `int`    | Enable periodic keepalive messages                       |
+| `IPPROTO_TCP`   | `TCP_NODELAY`     | `int`    | Disable Nagle’s algorithm (send data immediately)        |
+| `IPPROTO_IPV6`  | `IPV6_V6ONLY`     | `int`    | Limit IPv6 socket to IPv6 only (default = 1)             |
+
+---
+
+-  setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &disable, sizeof(int));
+-  Makes an IPv6 socket also accept IPv4 connections via IPv4-mapped addresses.
+
+-  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int))
+-  allow reusing a local address (IP + port)** even if it is still in the `TIME_WAIT` state.
+
+Why Use `SO_REUSEADDR`?
+
+- When a server restarts quickly, the port may still be reserved by the OS.
+- Without this option, `bind()` would fail with:  
+   `bind: Address already in use`
+- With `SO_REUSEADDR`, the server can rebind the port **immediately**.
+---
+
+#### bind()
+
+```c
+if (bind(sock, rp->ai_addr, rp->ai_addrlen) == 0) {
+    break;
+}
+```
+
+**Purpose:**
+This line attempts to **bind the socket to a local IP address and port**.
+
+| Parameter         | Description                             |
+|-------------------|-----------------------------------------|
+| `sock`            | The socket file descriptor              |
+| `rp->ai_addr`     | Pointer to the address to bind          |
+| `rp->ai_addrlen`  | Size of the address structure           |
+
+---
+
+**Why `bind()` May Fail**
+
+| Common Reason                  | Description                                 |
+|--------------------------------|---------------------------------------------|
+| Port already in use            | Another process is using the same port      |
+| Permission denied              | Binding to a port < 1024 without root       |
+| Address incompatible           | The address is not supported by socket type |
+
+---
+
+**Summary**
+
+| Function | Purpose                          |
+|----------|----------------------------------|
+| `bind()` | Binds a socket to a local address |
+| `== 0`   | Success, proceed to listen/accept |
+| `!= 0`   | Failure, try next address         |
+
+---
+
+#### listen()
+
+```c
+int listen(int sockfd, int backlog);
+```
+
+- **Purpose**: Marks the socket as a listening socket for incoming TCP connections.
+- **Precondition**: Must be `bind()`-ed before calling.
+- **backlog**: Maximum number of pending connections in the queue.
+
+| Return | Meaning        |
+|--------|----------------|
+| `0`    | Success        |
+| `-1`   | Failure (check `errno`) |
+
+**Without `listen()`, `accept()` will fail!**
+
+---
 

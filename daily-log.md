@@ -23,3 +23,6 @@
 -  studying [rfsimulator simulator.c](https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/radio/rfsimulator/simulator.c?ref_type=heads)
 focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-intern-log/blob/main/simulator.c%20note.md#set-the-function-pointers-and-members-in-the-openair0_device-structure)
 -  Learning Cisco Networking Basics Module 2
+  
+**Daily Logs:**
+- 15:00-17:00 : studying [startServer()](https://github.com/zongyi0311/rfsim-intern-log/blob/main/simulator.c%20note.md#startServer) and [startClient()](https://github.com/zongyi0311/rfsim-intern-log/blob/main/simulator.c%20note.md#startClient) 

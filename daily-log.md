@@ -30,7 +30,7 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 
 ## 2025/06/24
 **Short-term Goals**
--  studying [rfsimulator simulator.c](https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/radio/rfsimulator/simulator.c?ref_type=heads)
+-  Read stopServer() and rfsimulator_end() and draw flowcharts
 
 **Daily Logs:**
 - 20:00-21:00 : studying [stopServer()](https://github.com/zongyi0311/rfsim-intern-log/blob/main/simulator.c%20note.md#stopServer)

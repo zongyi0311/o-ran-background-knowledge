@@ -5,6 +5,7 @@
     -  [Set openair0_device](#set-the-function-pointers-and-members-in-the-openair0_device-structure)
        -  [startServer()](#startServer)
        -  [startClient()](#startClient)
+       -  [stopServer()](#stopServer)
 # OAI Project Directory Structure 
 
 | Directory Path         | Description |

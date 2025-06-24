@@ -139,7 +139,7 @@ This line defines a parameter descriptor array used by the configuration system 
 
 This is how OAI knows **which parameters to read**, **what types they are**, and **where to store them**.
 
-#### 🔍 Finding the Index of a Parameter: `config_paramidx_fromname()`
+####  Finding the Index of a Parameter: `config_paramidx_fromname()`
 
 This function searches a parameter descriptor array (like `rfsimu_params[]`) and returns the index of a parameter with the specified name.
 **Defined in:** `config_userapi.c`
@@ -826,4 +826,331 @@ This `enum` defines two possible socket modes — blocking and non-blocking. It'
 └──────────────────────────────────────────────┘
 ```
 ---
+
+### stopServer()
+
+Shutdown Server and Release Resources
+
+```c
+static void stopServer(openair0_device *device) {
+  rfsimulator_state_t *t = (rfsimulator_state_t *) device->priv;
+  DevAssert(t != NULL);
+  close(t->listen_sock);
+  rfsimulator_end(device);
+}
+```
+---
+
+Purpose
+
+The `stopServer()` function is used to **shutdown the server-side socket** and **clean up resources** associated with the RF simulator. It's typically called when the simulation ends, restarts, or the process is exiting.
+
+---
+| Line | Code | Explanation |
+|------|------|-------------|
+| 1    | `rfsimulator_state_t *t = (rfsimulator_state_t *) device->priv;` | Retrieve the simulator state from the device object |
+| 2    | `DevAssert(t != NULL);` | Ensure the simulator state pointer is not null (safety check) |
+| 3    | `close(t->listen_sock);` | Close the listening socket to free OS-level resources |
+| 4    | `rfsimulator_end(device);` | Perform additional cleanup (e.g., buffers, epoll removal, memory) |
+
+---
+
+
+**When to Use**
+
+- When the server is shutting down (e.g., during `SIGINT`)
+- Before restarting the simulator
+- After tests finish to release sockets and memory
+
+---
+### rfsimulator_end()
+
+```c
+static void rfsimulator_end(openair0_device *device) {
+  rfsimulator_state_t* s = device->priv;
+  for (int i = 0; i < MAX_FD_RFSIMU; i++) {
+    buffer_t *b = &s->buf[i];
+    if (b->conn_sock >= 0 )
+      removeCirBuf(s, b);
+  }
+  close(s->epollfd);
+  free(s);
+}
+```
+---
+
+| Line | Code | Explanation |
+|------|------|-------------|
+| 1    | `buffer_t *b = &s->buf[i];`              | Access each buffer associated with a connection |
+| 2    | `if (b->conn_sock >= 0)`                 | Check if the connection is active |
+| 3    | `removeCirBuf(s, b);`                    | Remove circular buffer and clean up the connection |
+| 4    | `close(s->epollfd);`                     | Close the epoll file descriptor used for polling events |
+| 5    | `free(s);`                               | Free the dynamically allocated simulator state memory |
+
+---
+
+| Component         | Description |
+|------------------|-------------|
+| `MAX_FD_RFSIMU`   | Maximum number of socket connections (typically 250) |
+| `buffer_t`        | Structure representing a single client buffer/connection |
+| `removeCirBuf()`  | Function to remove epoll watch, close socket, free buffer |
+| `s->epollfd`      | epoll instance used to monitor events |
+| `s->buf[]`        | Array of buffer_t, one for each potential connection |
+
+---
+
+##### buffer_t
+
+```c
+typedef struct buffer_s {
+  int conn_sock;                         // TCP socket descriptor for the connected client (UE or gNB)
+  openair0_timestamp lastReceivedTS;     // Timestamp of the last received data (used for sync or ordering)
+  bool headerMode;                       // True if currently parsing a packet header
+  bool trashingPacket;                   // True if the current packet is being discarded (e.g., due to error)
+  samplesBlockHeader_t th;               // Header information for the current incoming packet
+  char *transferPtr;                     // Pointer to the current write position in the receive buffer
+  uint64_t remainToTransfer;             // Number of bytes left to complete the current packet
+  char *circularBufEnd;                  // Pointer to the end of the circular buffer (for wrap-around detection)
+  sample_t *circularBuf;                 // Main circular buffer that stores IQ (complex) samples
+  channel_desc_t *channel_model;         // Pointer to the associated channel model (fading, multipath, etc.)
+} buffer_t;
+```
+
+---
+
+`buffer_t` is used in the RF simulator to manage the **state, data, and channel conditions** for each active TCP connection. Each connection has its own instance of this structure.
+
+---
+
+| Field Name          | Type                  | Description |
+|---------------------|-----------------------|-------------|
+| `conn_sock`         | `int`                 | File descriptor for the socket associated with this connection |
+| `lastReceivedTS`    | `openair0_timestamp`  | Timestamp of the last received packet |
+| `headerMode`        | `bool`                | Indicates whether the simulator is currently parsing a packet header |
+| `trashingPacket`    | `bool`                | Indicates whether the current packet is being discarded due to error |
+| `th`                | `samplesBlockHeader_t`| Holds header information of the packet being processed |
+| `transferPtr`       | `char *`              | Pointer to where the incoming data is being written |
+| `remainToTransfer`  | `uint64_t`            | Amount of data (in bytes) left to receive for the current packet |
+| `circularBufEnd`    | `char *`              | Marker to check if circular buffer has wrapped around |
+| `circularBuf`       | `sample_t *`          | Buffer that stores complex IQ samples in a circular fashion |
+| `channel_model`     | `channel_desc_t *`    | Pointer to the simulated wireless channel (e.g., fading, multipath) |
+
+---
+
+##### removeCirBuf()
+
+```c
+static void removeCirBuf(rfsimulator_state_t *bridge, buffer_t *buf)
+{
+  if (epoll_ctl(bridge->epollfd, EPOLL_CTL_DEL, buf->conn_sock, NULL) != 0) {
+    LOG_E(HW, "epoll_ctl(EPOLL_CTL_DEL) failed\n");
+  }
+  close(buf->conn_sock);
+  free(buf->circularBuf);
+  // Fixme: no free_channel_desc_scm(bridge->buf[sock].channel_model) implemented
+  // a lot of mem leaks
+  // free(bridge->buf[sock].channel_model);
+  memset(buf, 0, sizeof(buffer_t));
+  buf->conn_sock = -1;
+  nb_ue--;
+}
+```
+---
+This function is called when a connection (UE or gNB) is being closed. It performs the following:
+
+- Unregisters the socket from epoll monitoring
+- Closes the socket
+- Frees the IQ circular buffer
+- Clears the associated buffer state
+---
+| Line | Description |
+|------|-------------|
+| `epoll_ctl(...)` | Removes the socket from the epoll event loop |
+| `close(buf->conn_sock);` | Closes the TCP socket for this buffer |
+| `free(buf->circularBuf);` | Frees the memory allocated for the IQ sample buffer |
+| `memset(...)` | Clears all fields of the `buffer_t` structure |
+| `buf->conn_sock = -1;` | Marks the buffer as inactive |
+| `nb_ue--;` | Decrements the global count of active UEs |
+
+---
+##### epoll_ctl()
+
+`epoll_ctl()` is used to add, modify, or remove file descriptors (e.g., sockets) from an `epoll` instance. It controls what events are watched and how the kernel reacts to I/O readiness.
+
+---
+```c
+int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
+```
+
+| Parameter | Description |
+|-----------|-------------|
+| `epfd`    | File descriptor of the epoll instance (returned by `epoll_create`) |
+| `op`      | Operation to perform: add, modify, or delete |
+| `fd`      | Target file descriptor to watch (e.g., a socket) |
+| `event`   | Pointer to an `epoll_event` structure specifying the events to monitor (only for ADD and MOD) 
+
+---
+- **On success**: returns `0`
+- **On failure**: returns `-1` and sets `errno`
+---
+
+| Operation        | Macro             | Description                             |
+|------------------|-------------------|-----------------------------------------|
+| Add to watchlist | `EPOLL_CTL_ADD`   | Adds a new file descriptor to be monitored |
+| Modify settings  | `EPOLL_CTL_MOD`   | Changes the monitored events of an existing fd |
+| Remove fd        | `EPOLL_CTL_DEL`   | Stops monitoring the specified file descriptor |
+
+---
+
+```c
+epoll_ctl(bridge->epollfd, EPOLL_CTL_DEL, buf->conn_sock, NULL);
+```
+- Removes `buf->conn_sock` from the epoll instance `bridge->epollfd`.
+- When using `EPOLL_CTL_DEL`, the `event` parameter **must be NULL**.
+
+---
+
+**close()**
+
+Releases a **file descriptor** (e.g., for sockets, files, pipes).  
+After calling `close()`, the file descriptor is no longer usable.
+**Used for:**  
+- Network sockets (`socket()`)
+- File descriptors (`open()`, `accept()`)
+- Pipes, device files
+
+**free()**
+
+Releases **heap memory** previously allocated by `malloc()`, `calloc()`, or `realloc()`.
+**Used for:**  
+- Dynamically allocated memory (like buffers, structs, arrays)
+- Any pointer returned by `malloc()` family
+
+**memset**
+
+`memset()` is a standard C library function used to **fill a block of memory** with a specified byte value.
+
+- Initialize buffers or arrays
+- Clear `struct` variables to zero
+- Reset heap memory before use
+
+```c
+void *memset(void *ptr, int value, size_t num);
+```
+
+| Parameter | Description |
+|-----------|-------------|
+| `ptr`     | Pointer to the memory block to fill |
+| `value`   | Byte value to set (converted to `unsigned char`) |
+| `num`     | Number of bytes to set |
+
+### 🛑 `stopServer()` + `rfsimulator_end()` Integrated Flowchart
+
+```text
+┌────────────────────────────┐
+│        stopServer()        │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ rfsimulator_state_t *t =   │
+│   (rfsimulator_state_t*)   │
+│   device->priv;            │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ DevAssert(t != NULL);      │
+│ Ensure t is not NULL       │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ Close listening socket     │
+│ close(t->listen_sock);     │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ Call rfsimulator_end(t);   │
+└────────────┬───────────────┘
+             │
+             ▼
+    ╔════════════════════════════════╗
+    ║      rfsimulator_end() Begins   ║
+    ╚════════════════════════════════╝
+             │
+             ▼
+┌────────────────────────────┐
+│ for i = 0 to MAX_FD_RFSIMU │
+│ Loop through all buffers   │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ if (b->conn_sock >= 0)     │
+│ → Call removeCirBuf()      │
+└────────────┬───────────────┘
+             │
+             ▼
+    ╔════════════════════════════════╗
+    ║        removeCirBuf() Begins    ║
+    ╚════════════════════════════════╝
+             │
+             ▼
+┌────────────────────────────┐
+│ Remove fd from epoll       │
+│ epoll_ctl(..., DEL, ...)   │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ Close the socket            │
+│ close(buf->conn_sock);      │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ Free circular buffer memory│
+│ free(buf->circularBuf);    │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ Clear all buffer fields     │
+│ memset(buf, 0, ...);        │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ Mark conn_sock = -1        │
+│ Decrement nb_ue            │
+└────────────┴───────────────┘
+             ▲
+             │ (next buffer)
+             │
+             ▼
+┌────────────────────────────┐
+│ After all buffers processed│
+│ Close epoll fd             │
+│ close(s->epollfd);         │
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ Free the simulator state   │
+│ free(s);                   │
+└────────────┬───────────────┘
+             │
+             ▼
+    ╔════════════════════════════════╗
+    ║      rfsimulator_end() Ends     ║
+    ╚════════════════════════════════╝
+             │
+             ▼
+┌────────────────────────────┐
+│    stopServer() Ends        │
+└────────────────────────────┘
+```
+
 

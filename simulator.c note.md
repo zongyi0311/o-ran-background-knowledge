@@ -6,6 +6,7 @@
        -  [startServer()](#startServer)
        -  [startClient()](#startClient)
        -  [stopServer()](#stopServer)
+       -  [rfsimulator_write()](#rfsimulator_write)
 # OAI Project Directory Structure 
 
 | Directory Path         | Description |
@@ -1154,4 +1155,1062 @@ void *memset(void *ptr, int value, size_t num);
 └────────────────────────────┘
 ```
 
+### rfsimulator_write()
+
+Wrapper Function to Send IQ Samples to RF Simulator
+
+```c
+static int rfsimulator_write(openair0_device *device,
+                             openair0_timestamp timestamp,
+                             void **samplesVoid,
+                             int nsamps,
+                             int nbAnt,
+                             int flags) {
+  timestamp -= device->openair0_cfg->command_line_sample_advance;
+
+  return rfsimulator_write_internal(device->priv,
+                                    timestamp,
+                                    samplesVoid,
+                                    nsamps,
+                                    nbAnt,
+                                    flags,
+                                    false);  // false = use lock
+}
+```
+---
+
+This function is a **wrapper** around the internal write logic used in the OAI RF simulator. It handles:
+
+1. **Timestamp Adjustment:**
+   - `timestamp -= command_line_sample_advance`  
+     Ensures samples are transmitted earlier to compensate for system delays.
+
+2. **Internal Write Call:**
+   - Calls `rfsimulator_write_internal()` to actually process and store the samples.
+
+3. **Thread Safety:**
+   - The final argument is `false`, meaning the write operation uses a lock for thread safety.
+
+---
+| Parameter       | Type                | Description                                  |
+|----------------|---------------------|----------------------------------------------|
+| `device`        | `openair0_device*`   | RF device structure                          |
+| `timestamp`     | `openair0_timestamp` | Timestamp at which samples should be sent    |
+| `samplesVoid`   | `void **`            | Pointers to sample data per antenna          |
+| `nsamps`        | `int`                | Number of samples per antenna                |
+| `nbAnt`         | `int`                | Number of antennas (e.g., 1T, 2T, etc.)       |
+| `flags`         | `int`                | Control flags (usually unused/reserved)      |
+| `false`         | `bool`               | `false` means the function will acquire locks|
+
+---
+
+- This function is called by the PHY layer or device transmission pipeline in the simulator.
+- It helps **inject IQ samples** into the RF simulation buffer, maintaining timing alignment using `sample_advance`.
+
+---
+#### rfsimulator_write_internal()
+
+```c
+for (int i = 0; i < MAX_FD_RFSIMU; i++) {
+  buffer_t *b = &t->buf[i];
+
+  if (b->conn_sock >= 0) {
+    samplesBlockHeader_t header = {nsamps, nbAnt, timestamp};
+    fullwrite(b->conn_sock, &header, sizeof(header), t);
+
+    sample_t tmpSamples[nsamps][nbAnt];
+
+    if (nbAnt == 1) {
+      if (b->conn_sock >= 0) {
+        fullwrite(b->conn_sock, samplesVoid[0], sampleToByte(nsamps, nbAnt), t);
+      }
+    } else {
+      for (int a = 0; a < nbAnt; a++) {
+        sample_t *in = (sample_t *)samplesVoid[a];
+        for (int s = 0; s < nsamps; s++)
+          tmpSamples[s][a] = in[s];
+      }
+
+      if (b->conn_sock >= 0) {
+        fullwrite(b->conn_sock, (void *)tmpSamples, sampleToByte(nsamps, nbAnt), t);
+      }
+    }
+  }
+}
+```
+
+---
+**Outer Loop**
+
+```c
+for (int i = 0; i < MAX_FD_RFSIMU; i++)
+```
+- Scans through all possible RF socket connections
+- `MAX_FD_RFSIMU` is typically 250 (maximum supported connections)
+
+```c
+buffer_t *b = &t->buf[i];
+if (b->conn_sock >= 0)
+```
+- Skips if the socket is unused or closed (`conn_sock == -1`)
+
+---
+
+**Send Block Header**
+```c
+samplesBlockHeader_t header = {nsamps, nbAnt, timestamp};
+fullwrite(b->conn_sock, &header, sizeof(header), t);
+```
+- Sends metadata before actual IQ data
+  - `nsamps`: number of samples per antenna
+  - `nbAnt`: number of antennas
+  - `timestamp`: time offset for synchronization
+
+---
+
+**Single-Antenna Path**
+
+```c
+if (nbAnt == 1) {
+  fullwrite(b->conn_sock, samplesVoid[0], sampleToByte(nsamps, nbAnt), t);
+}
+```
+- If only 1 antenna: transmit its sample buffer directly
+- `samplesVoid[0]` is a `void*` to the first antenna's samples
+
+---
+**Multi-Antenna Path**
+
+```c
+for (int a = 0; a < nbAnt; a++) {
+  sample_t *in = (sample_t *)samplesVoid[a];
+  for (int s = 0; s < nsamps; s++)
+    tmpSamples[s][a] = in[s];
+}
+```
+- Outer loop `a`: iterates each antenna
+- Inner loop `s`: reorders per-antenna data into `[sample][antenna]` layout
+- Needed because socket transmission expects data grouped per sample time, not per antenna
+
+```c
+fullwrite(b->conn_sock, (void *)tmpSamples, sampleToByte(nsamps, nbAnt), t);
+```
+- Transmits the interleaved multi-antenna samples over the socket
+
+---
+
+**`fullwrite(sock, ptr, size, t)`**
+- Ensures full write (no partial writes)
+- Handles multiple calls to `write()` until `size` bytes are written
+
+**`sampleToByte(nsamps, nbAnt)`**
+- Calculates size in bytes: `sizeof(sample_t) * nsamps * nbAnt`
+- Determines total IQ data payload length
+
+---
+
+| Level | Scope                | Purpose                                      |
+|-------|----------------------|----------------------------------------------|
+| Outer | All socket buffers   | Send to each connected UE/gNB                |
+| Mid   | All antennas         | Extract antenna-specific sample streams      |
+| Inner | All samples per ant. | Interleave for `[time][antenna]` data layout |
+
+---
+
+```c
+if (t->lastWroteTS != 0 && fabs((double)t->lastWroteTS - timestamp) > (double)CirSize)
+  LOG_W(HW, "Discontinuous TX gap too large Tx:%lu, %lu\n", t->lastWroteTS, timestamp);
+
+if (t->lastWroteTS > timestamp)
+  LOG_W(HW, "Not supported to send Tx out of order %lu, %lu\n", t->lastWroteTS, timestamp);
+
+if ((flags != TX_BURST_START) && (flags != TX_BURST_START_AND_END) && (t->lastWroteTS < timestamp))
+  LOG_W(HW,
+        "Gap in writing to USRP: last written %lu, now %lu, gap %lu\n",
+        t->lastWroteTS,
+        timestamp,
+        timestamp - t->lastWroteTS);
+
+t->lastWroteTS = timestamp + nsamps;
+
+if (!alreadyLocked)
+  pthread_mutex_unlock(&Sockmutex);
+
+LOG_D(HW,
+      "Sent %d samples at time: %ld->%ld, energy in first antenna: %d\n",
+      nsamps,
+      timestamp,
+      timestamp + nsamps,
+      signal_energy(samplesVoid[0], nsamps));
+
+return nsamps;
+```
+
+---
+
+**Discontinuity Warning**
+
+```c
+if (t->lastWroteTS != 0 && fabs(...) > CirSize)
+```
+- If this is **not the first write**, and the time gap since the last write is **larger than the circular buffer** size, log a warning.
+- Indicates a possible transmission gap or simulator misalignment.
+
+---
+
+**Out-of-Order Warning**
+
+```c
+if (t->lastWroteTS > timestamp)
+```
+- If the current sample’s timestamp is **before** the last one written, log a warning.
+- Transmission must be strictly time-ordered. This condition is **not supported**.
+
+---
+
+**Gap Warning (Non-Burst Transmission)**
+
+```c
+if ((flags != TX_BURST_START) &&
+    (flags != TX_BURST_START_AND_END) &&
+    (t->lastWroteTS < timestamp))
+```
+- If this write is **not the start of a burst** and there's a time gap (missing timestamps), warn about a discontinuity.
+- Helps detect partial drops or skipped samples.
+
+---
+
+**Update Timestamp**
+
+```c
+t->lastWroteTS = timestamp + nsamps;
+```
+- Record the new **ending timestamp** of this block of samples.
+- Used in future checks to detect gaps or disorder.
+
+---
+
+**Debug Output**
+
+```c
+LOG_D(HW,
+  "Sent %d samples at time: %ld->%ld, energy in first antenna: %d\n", ...);
+```
+- Print transmission summary for debugging:
+  - Total number of samples
+  - Time range
+  - Signal energy of antenna 0 (helpful for detecting silence or transmission issues)
+
+---
+
+| Check Type       | Condition                                        | Purpose                        |
+|------------------|--------------------------------------------------|--------------------------------|
+| Time Gap Check   | `abs(lastWroteTS - timestamp) > CirSize`        | Detect excessive discontinuity |
+| Out-of-Order     | `lastWroteTS > timestamp`                        | Block backward transmission    |
+| Mid-burst Gaps   | `timestamp > lastWroteTS` without burst flags    | Warn about skipped blocks      |
+| Timestamp Update | `lastWroteTS = timestamp + nsamps`              | Prepare for next transmission  |
+| Unlocking        | `if (!alreadyLocked)`                           | Thread-safe access             |
+| Debug Logging    | `LOG_D(...)`                                     | Print TX status and signal info |
+
+
+# 📈 `rfsimulator_write()` → `rfsimulator_write_internal()` Flowchart
+
+```text
+┌────────────────────────────────────────────┐
+│        rfsimulator_write()                 │
+│  - Called by upper OAI PHY layer           │
+│  - Inputs: device, timestamp, samples, etc.│
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ Adjust timestamp                           │
+│ timestamp -= device->cfg->sample_advance   │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ Call rfsimulator_write_internal()          │
+│ Pass:                                       │
+│  - device->priv → rfsimulator_state_t *t   │
+│  - adjusted timestamp                      │
+│  - samplesVoid, nsamps, nbAnt, flags       │
+│  - alreadyLocked = false                   │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ rfsimulator_write_internal()               │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ If not alreadyLocked → lock Sockmutex      │
+│ pthread_mutex_lock(&Sockmutex)             │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ Print debug info: number of samples, time  │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ LOOP: for each connection buffer (250 max) │
+│   buffer_t *b = &t->buf[i];                │
+│   if (b->conn_sock >= 0) {                 │
+│     → Send header                           │
+│     → Send samples                          │
+│   }                                         │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌──────────── Sample Send Logic ─────────────┐
+│ IF nbAnt == 1                              │
+│   → Send samplesVoid[0] directly           │
+│ ELSE                                       │
+│   → For each antenna a:                    │
+│      for (s = 0; s < nsamps; s++)          │
+│        tmpSamples[s][a] = in[s];           │
+│   → Send tmpSamples                        │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ Check for gaps or out-of-order timestamps: │
+│  - too large jump → LOG_W                  │
+│  - out of order   → LOG_W                  │
+│  - missing burst  → LOG_W                  │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ Update lastWroteTS = timestamp + nsamps    │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ If not alreadyLocked → unlock Sockmutex    │
+│ pthread_mutex_unlock(&Sockmutex)           │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ Log signal energy for samplesVoid[0]       │
+│ Return nsamps                              │
+└────────────────────────────────────────────┘
+```
+
+---
+
+## 📘 Key Functions Called
+
+| Function                      | Purpose                                      |
+|------------------------------|----------------------------------------------|
+| `rfsimulator_write()`        | Entry point from PHY layer                   |
+| `rfsimulator_write_internal()` | Main data transmission to all buffers       |
+| `pthread_mutex_lock()`       | Thread-safety for socket writes              |
+| `fullwrite()`                | Write all bytes over socket, with retries    |
+| `sampleToByte()`             | Compute total byte size of IQ samples        |
+| `signal_energy()`            | Calculate energy of first antenna's signal   |
+| `pthread_mutex_unlock()`     | Unlock shared resources                      |
+
+---
+
+**`rfsimulator_write()` → `rfsimulator_write_internal()` Full Flowchart**
+
+```text
+┌────────────────────────────────────────────┐
+│        rfsimulator_write()                 │
+│  - Called by upper OAI PHY layer           │
+│  - Inputs: device, timestamp, samples, etc.│
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ Adjust timestamp                           │
+│ timestamp -= device->cfg->sample_advance   │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ Call rfsimulator_write_internal()          │
+│ Pass:                                       │
+│  - device->priv → rfsimulator_state_t *t   │
+│  - adjusted timestamp                      │
+│  - samplesVoid, nsamps, nbAnt, flags       │
+│  - alreadyLocked = false                   │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ rfsimulator_write_internal()               │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ If not alreadyLocked → lock Sockmutex      │
+│ pthread_mutex_lock(&Sockmutex)             │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ Print debug info: number of samples, time  │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ LOOP: for each connection buffer (250 max) │
+│   buffer_t *b = &t->buf[i];                │
+│   if (b->conn_sock >= 0) {                 │
+│     → Send header                           │
+│     → Send samples                          │
+│   }                                         │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌──────────── Sample Send Logic ─────────────┐
+│ IF nbAnt == 1                              │
+│   → Send samplesVoid[0] directly           │
+│ ELSE                                       │
+│   → For each antenna a:                    │
+│      for (s = 0; s < nsamps; s++)          │
+│        tmpSamples[s][a] = in[s];           │
+│   → Send tmpSamples                        │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ Check for gaps or out-of-order timestamps: │
+│  - too large jump → LOG_W                  │
+│  - out of order   → LOG_W                  │
+│  - missing burst  → LOG_W                  │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ Update lastWroteTS = timestamp + nsamps    │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ If not alreadyLocked → unlock Sockmutex    │
+│ pthread_mutex_unlock(&Sockmutex)           │
+└──────────────────────┬─────────────────────┘
+                       │
+                       ▼
+┌────────────────────────────────────────────┐
+│ Log signal energy for samplesVoid[0]       │
+│ Return nsamps                              │
+└────────────────────────────────────────────┘
+```
+
+---
+
+| Function                      | Purpose                                      |
+|------------------------------|----------------------------------------------|
+| `rfsimulator_write()`        | Entry point from PHY layer                   |
+| `rfsimulator_write_internal()` | Main data transmission to all buffers       |
+| `pthread_mutex_lock()`       | Thread-safety for socket writes              |
+| `fullwrite()`                | Write all bytes over socket, with retries    |
+| `sampleToByte()`             | Compute total byte size of IQ samples        |
+| `signal_energy()`            | Calculate energy of first antenna's signal   |
+| `pthread_mutex_unlock()`     | Unlock shared resources                      |
+
+---
+
+### rfsimulator_read
+
+```c
+rfsimulator_state_t *t = device->priv;
+LOG_D(HW,
+      "Enter rfsimulator_read, expect %d samples, will release at TS: %ld, nbAnt %d\n",
+      nsamps, t->nextRxTstamp + nsamps, nbAnt);
+```
+---
+
+| 項目 | 說明 |
+|------|------|
+| `rfsimulator_state_t *t = device->priv;` | 取得 RFSIM 模擬器內部狀態。<br>此指標 `t` 包含目前所有 buffer、時間戳、連線 socket 狀態與模擬角色。 |
+| `LOG_D(...)` | 使用 OAI 的除錯訊息系統印出本次讀取的資訊：<br>• 預期接收樣本數：`nsamps`<br>• 釋出時間戳：`t->nextRxTstamp + nsamps`<br>• 天線數量：`nbAnt` |
+
+---
+這段程式碼的目的是在 `rfsimulator_read()` 開始時：
+
+- 取得模擬器內部狀態（context）
+- 印出即將接收樣本的基本資訊
+- 幫助後續除錯與同步分析使用
+
+```c
+int first_sock;
+
+for (first_sock = 0; first_sock < MAX_FD_RFSIMU; first_sock++)
+  if (t->buf[first_sock].circularBuf != NULL)
+    break;
+```
+---
+
+| 項目 | 說明 |
+|------|------|
+| `first_sock` | 用來記錄第一個有連線的 socket 編號（index）。初始化為 0。 |
+| `t->buf[i].circularBuf` | 這是指向每個 socket 對應的接收緩衝區（circular buffer），若不為 `NULL` 表示該 socket 已成功連線並初始化。 |
+| `break;` | 一旦找到有一個 socket 已連線，就跳出迴圈，不再繼續檢查。 |
+
+---
+
+這段程式碼的目的是：
+> 在最多 `MAX_FD_RFSIMU`（通常為 250）個模擬 socket 中，檢查是否至少有一個對端（如 UE 或 gNB）已連上模擬器並建立 buffer。如果沒有任何一個連上，後續會進入「產生空樣本」的處理流程。
+
+
+```c
+if (first_sock == MAX_FD_RFSIMU) {
+  if (t->nextRxTstamp == 0)
+    LOG_I(HW, "No connected device, generating void samples...\n");
+
+  if (!flushInput(t, t->wait_timeout, nsamps)) {
+    for (int x = 0; x < nbAnt; x++)
+      memset(samplesVoid[x], 0, sampleToByte(nsamps, 1));
+
+    t->nextRxTstamp += nsamps;
+```
+---
+
+| 程式段落 | 解釋 |
+|----------|------|
+| `if (first_sock == MAX_FD_RFSIMU)` | 若先前的搜尋沒有找到任何有效連線（即沒有一個 socket 建立 buffer），就表示目前沒有裝置（如 UE）連線到模擬器。 |
+| `if (t->nextRxTstamp == 0)` | 代表這是模擬器的第一次接收，還未收到任何有效資料，因此印出提示：將產生空樣本。 |
+| `flushInput(...)` | 嘗試從 socket 接收資料，給予一個 timeout（等候時間）。如果沒有收到樣本，會返回 false。 |
+| `if (!flushInput(...))` | 如果在等待後仍沒有資料，系統會進入「產生空樣本」的處理流程。 |
+| `for (...) memset(...)` | 對所有天線的接收樣本緩衝區，用 0 填滿。這代表產生的是「無訊號樣本」（void/空白樣本），也就是模擬器偽造一段靜默期。 |
+| `t->nextRxTstamp += nsamps;` | 將下一個接收樣本的時間戳推進 `nsamps`，確保時間連續往前，即使沒收到資料也不會中斷時間軸。 |
+
+---
+
+當模擬器偵測到「完全沒有連線裝置（如 UE）」時：
+
+> 它會先等待看看是否在 timeout 時間內能接收到任何樣本；若沒有，則自動為每根天線生成一段空白樣本（全為 0），以維持模擬時序與資料一致性。
+
+這樣可避免模擬器因缺少實際資料而中斷收發流程。
+
+#### flushInput()
+
+```c
+static bool flushInput(rfsimulator_state_t *t, int timeout, int nsamps_for_initial) {
+  struct epoll_event events[MAX_FD_RFSIMU] = {{0}};
+  int nfds = epoll_wait(t->epollfd, events, MAX_FD_RFSIMU, timeout);
+
+  if (nfds == -1) {
+    if (errno == EINTR || errno == EAGAIN) {
+      return false;
+    } else {
+      LOG_W(HW, "epoll_wait() failed, errno(%d)\n", errno);
+      return false;
+    }
+  }
+```
+---
+
+| 區塊 | 功能說明 |
+|------|-----------|
+| `epoll_event events[]` | 準備一個陣列來接收 `epoll_wait()` 回傳的事件。每個事件代表一個有資料可讀的 socket。 |
+| `epoll_wait(...)` | 在模擬器內部的 epoll 機制上等待 socket 事件（例如：有資料可讀）。<br>參數：<br>• `t->epollfd` 是 epoll 描述子<br>• `MAX_FD_RFSIMU` 是最大可監控的 socket 數量<br>• `timeout` 是最大等待時間（毫秒） |
+| `nfds == -1` | 如果等待過程出現錯誤（如中斷、暫時無效、系統錯誤），就視情況印出警告並返回 false。 |
+| `errno == EINTR` 或 `EAGAIN` | 這些是非致命錯誤，代表暫時中斷或無資料，因此直接結束並回傳 false。 |
+| 其他錯誤 | 若非上述錯誤，則列印錯誤資訊並回傳 false。 |
+
+---
+> 利用 `epoll_wait()` 監控所有模擬器 socket 的輸入事件，確認是否有對端（UE/gNB）傳送資料進來；若出現錯誤或超時，則提前結束這次等待，避免程式卡住。
+---
+
+#### epoll_wait()
+
+---
+```c
+int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout);
+```
+
+---
+
+
+| 參數       | 說明                                                                 |
+|------------|----------------------------------------------------------------------|
+| `epfd`     | 由 `epoll_create()` 或 `epoll_create1()` 建立的 epoll 描述子。      |
+| `events`   | 指向 `epoll_event` 結構陣列的指標，用來儲存觸發的事件。             |
+| `maxevents`| 可處理的最大事件數（即 `events[]` 陣列的大小）。                   |
+| `timeout`  | 等待時間（毫秒）：<br>• `0` 表示立即返回<br>• `-1` 表示無限等待<br>• `>0` 指定等待的最大毫秒數 |
+
+---
+
+| 回傳值     | 說明                                                                 |
+|------------|----------------------------------------------------------------------|
+| `>= 0`     | 表示有幾個事件發生，`events[]` 中前 `n` 筆是有效的事件              |
+| `0`        | 表示 timeout 到期，但沒有事件發生                                   |
+| `-1`       | 發生錯誤，可查看 `errno` 得知原因                                    |
+
+---
+
+| 錯誤碼     | 說明                                                                 |
+|------------|----------------------------------------------------------------------|
+| `EINTR`    | 被 signal 中斷，屬於非致命錯誤，可忽略並重試                        |
+| `EAGAIN`   | 無事件可處理，可能是非阻塞模式下的暫時無資料                        |
+| 其他錯誤   | 如 `epfd` 無效、記憶體不足等，需進一步調查                          |
+
+---
+
+### 🧠 用途總結
+
+> `epoll_wait()` 是 Linux 高效能的 I/O 事件監控機制，能監視大量檔案描述符（socket）是否可讀寫或有錯誤，適合用於伺服器或模擬器（如 RFSIM）中處理多個 client 裝置連線狀態。
+
+---
+
+```c
+for (int nbEv = 0; nbEv < nfds; ++nbEv) {
+  buffer_t *b = events[nbEv].data.ptr;
+
+  if (events[nbEv].events & EPOLLIN && b == NULL) {
+    int conn_sock;
+    conn_sock = accept(t->listen_sock, NULL, NULL);
+    if (conn_sock == -1) {
+      LOG_E(HW, "accept() failed, errno(%d)\n", errno);
+      return false;
+    }
+```
+---
+| 程式行 | 解釋 |
+|--------|------|
+| `for (int nbEv = 0; ...)` | 處理 `epoll_wait()` 回傳的每個事件，最多 `nfds` 個。 |
+| `buffer_t *b = events[nbEv].data.ptr;` | 取出該事件對應的使用者資料指標。若為 NULL，表示是新連線請求。 |
+| `if (events[nbEv].events & EPOLLIN && b == NULL)` | 如果該事件是「有資料可讀」且來自監聽 socket，表示有裝置（如 UE）想連線。 |
+| `accept(t->listen_sock, NULL, NULL);` | 接受新連線，產生一個新的 socket 描述子用於與該裝置通訊。 |
+| `if (conn_sock == -1)` | 若連線建立失敗，印出錯誤並返回 `false`。 |
+
+---
+
+- **監聽新的 UE/gNB 裝置嘗試連線到模擬器（server）**
+- **使用 `accept()` 建立一個新的 socket**
+- 若成功，後續會對這個新連線做初始化與加進 epoll 監控列表
+
+**accept()**
+```c
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+```
+
+---
+
+### 🔍 參數說明
+
+| 參數 | 說明 |
+|------|------|
+| `sockfd` | 伺服器端用來監聽的 socket（通常經過 `socket()`、`bind()`、`listen()` 建立） |
+| `addr` | （可選）指向 `sockaddr` 結構的指標，用來取得對方 client 的位址資訊 |
+| `addrlen` | 指向 `socklen_t` 的變數，用來表示 `addr` 的結構長度，並在函式結束後會寫回實際的長度 |
+
+如果不需要對端位址資訊，`addr` 和 `addrlen` 可傳入 `NULL`。
+
+---
+
+### 🔁 回傳值
+
+| 回傳值 | 說明 |
+|--------|------|
+| `>= 0` | 成功，回傳一個新的 socket 檔案描述符，用來與 client 溝通 |
+| `-1`   | 失敗，需透過 `errno` 取得錯誤原因（如連線已中斷等） |
+
+在 `flushInput()` 函式中：
+- 使用 `epoll_wait()` 監聽 `listen_sock` 是否有新連線
+- 若事件發生（EPOLLIN）且對應 `buffer_t == NULL`
+- 就代表是新裝置（UE/gNB）嘗試連線
+- 此時使用 `accept()` 建立新 socket，並初始化對應的接收緩衝區
+
+```c
+if (setblocking(conn_sock, notBlocking)) {
+  return false;
+}
+buffer_t *new_buf = allocCirBuf(t, conn_sock);
+if (new_buf == NULL) {
+  return false;
+}
+LOG_I(HW, "A client connects, sending the current time\n");
+
+c16_t v = {0};
+nb_ue++;
+void *samplesVoid[t->tx_num_channels];
+```
+---
+
+| 程式行 | 說明 |
+|--------|------|
+| `setblocking(conn_sock, notBlocking)` | 將 `conn_sock` 設定為非阻塞模式，這樣之後使用 `read()` 或 `write()` 時不會被阻塞在呼叫中。若設定失敗，直接 return `false`。 |
+| `allocCirBuf(t, conn_sock)` | 為這個新 socket 分配一個 `buffer_t` 結構並初始化對應的環形緩衝區（circular buffer）。若記憶體不足或連線數已滿，會回傳 `NULL`。 |
+| `LOG_I(...)` | 記錄有一個 UE 成功連進模擬器（gNB 端）。 |
+| `c16_t v = {0};` | 宣告一個空的複數樣本（16 位元整數），後續可能用於初始化傳輸樣本。 |
+| `nb_ue++` | 將連線中的 UE 數量加一。這對於後續同步或計時有幫助。 |
+| `void *samplesVoid[t->tx_num_channels];` | 建立一個指標陣列，為後續傳送樣本準備記憶體區塊（依照有幾個天線通道 `tx_num_channels` 來定義）。 |
+
+---
+1. 設定新 socket 為非阻塞模式
+2. 配置 buffer，並將其納入模擬器的管理陣列中
+3. 更新連線狀態與 UE 數量
+4. 準備好樣本資料指標區塊以利後續傳輸
+
+**連線後立即送出虛擬樣本 — 用於時間同步**
+```c
+for (int i = 0; i < t->tx_num_channels; i++)
+    samplesVoid[i] = (void *)&v;
+
+rfsimulator_write_internal(
+    t,
+    t->lastWroteTS > 1 ? t->lastWroteTS - 1 : 0,
+    samplesVoid,
+    1,
+    t->tx_num_channels,
+    1,
+    false
+);
+```
+---
+| 步驟 | 說明 |
+|------|------|
+| 建立虛擬樣本 | 使用 `samplesVoid[]` 指向靜態樣本 `v`（通常為零值樣本） |
+| 傳送 1 筆樣本 | 呼叫 `rfsimulator_write_internal()` 傳送 1 筆樣本給每個天線 |
+| 設定時間戳 | 使用 `lastWroteTS - 1` 略早於目前時間，避免與未來樣本衝突 |
+| flags = 1 | 表示傳送起始（`TX_BURST_START`） |
+| alreadyLocked = false | 代表這裡還沒上鎖，會由內部加鎖處理 |
+
+---
+
+> **讓新連線的 client（如 UE）在連線後立即收到一筆樣本以進行時間同步。**
+此動作避免了以下問題：
+- UE 收不到第一筆樣本而卡住
+- UE 無法與模擬器同步時間戳（`timestamp`）
+- 保證連線後立刻進入穩定傳輸流程
+
+---
+
+```c
+if (new_buf->channel_model)
+    new_buf->channel_model->start_TS = t->lastWroteTS;
+```
+
+| 功能 | 說明 |
+|------|------|
+| 同步 channel 模型時間 | 如果該 socket 的 `buffer_t` 有使用通道模型（如 fading 模擬），就將其時間起點設為模擬器目前已發送的最後時間 `lastWroteTS` |
+
+---
+
+```c
+if (events[nbEv].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP))
+    socketError(t, b);
+```
+
+| 錯誤處理條件 | 行為 |
+|---------------|------|
+| `EPOLLHUP` | 對方斷開 |
+| `EPOLLERR` | socket 發生錯誤 |
+| `EPOLLRDHUP` | 對方關閉了寫入端（常見於 TCP close） |
+| ➡️ | 呼叫 `socketError()` 處理錯誤並跳過這個事件 |
+
+---
+
+**socketError()**
+
+```c
+static void socketError(rfsimulator_state_t *bridge, buffer_t *buf)
+```
+
+---
+
+| 行為 | 說明 |
+|------|------|
+| 檢查是否有效 socket | 若 `buf->conn_sock != -1`，表示這個 socket 有綁定且尚未關閉 |
+| 輸出警告 | 印出 "Lost socket" 表示通訊已中斷 |
+| 清除 buffer | 使用 `removeCirBuf()` 清除該 socket 對應的緩衝與資源 |
+| Client 特殊處理 | 若角色是 `SIMU_ROLE_CLIENT`，發生錯誤會立刻 `exit(1)` 強制結束程式 |
+
+---
+
+```c
+if (events[nbEv].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP)) {
+    socketError(t, b);
+    continue;
+}
+```
+---
+
+```c
+if (b->circularBuf == NULL)
+  LOG_E(...);
+```
+
+| 檢查目的 | 說明 |
+|----------|------|
+| 是否為有效的連線 | 若該 socket 沒有綁定 buffer，就略過該事件 |
+
+---
+
+```c
+if (b->headerMode)
+    blockSz = b->remainToTransfer;
+else
+    blockSz = (b->transferPtr + b->remainToTransfer <= b->circularBufEnd)
+              ? b->remainToTransfer
+              : b->circularBufEnd - b->transferPtr;
+```
+
+| 模式 | blockSz 計算方式 |
+|------|-------------------|
+| Header 模式 | 接收 header 剩餘大小 |
+| 資料模式 | 依據 circular buffer 位置動態計算避免越界 |
+
+---
+
+```c
+ssize_t sz = recv(b->conn_sock, b->transferPtr, blockSz, MSG_DONTWAIT);
+```
+
+| 函式 | 說明 |
+|-------|------|
+| `recv()` | 從 TCP socket 讀取資料 |
+| `MSG_DONTWAIT` | 使用非阻塞模式，不會卡住主迴圈 |
+
+---
+
+```c
+if (sz < 0) {
+  if (errno != EAGAIN) {
+    LOG_E(...);
+  }
+}
+```
+
+| 條件 | 說明 |
+|------|------|
+| `sz < 0` | 表示 `recv()` 發生錯誤 |
+| `errno == EAGAIN` | 資料尚未就緒（非阻塞模式下常見），屬於正常現象 |
+| 其他 errno | 代表真正的 socket 錯誤，需記錄錯誤訊息 |
+
+---
+
+```c
+else if (sz == 0)
+  continue;
+```
+
+| 條件 | 說明 |
+|------|------|
+| `sz == 0` | 表示對端 socket 正常關閉連線 |
+| 行為 | 略過此事件，等待後續 epoll 檢查來清理資源 |
+
+
+
+
+**判斷條件**
+```c
+if (b->headerMode == true && b->remainToTransfer == 0)
+```
+| 條件 | 意義 |
+|------|------|
+| `headerMode == true` | 正在處理 header |
+| `remainToTransfer == 0` | header 資料已接收完畢 |
+
+---
+**切換到資料接收模式**
+```c
+b->headerMode = false;
+```
+---
+**首次時間同步（只在 `t->nextRxTstamp == 0` 時進行）**
+```c
+t->nextRxTstamp = ...;
+b->lastReceivedTS = ...;
+```
+| 變數 | 用途 |
+|------|------|
+| `t->nextRxTstamp` | UE 下一次應接收的時間戳，與 gNB 對齊 |
+| `b->lastReceivedTS` | buffer 中目前最後接收到的資料時間戳 |
+
+---
+**忽略第一包資料，只做同步用**
+```c
+b->trashingPacket = true;
+```
+---
+**設定 Channel 模型起始時間（如果有）**
+```c
+b->channel_model->start_TS = t->nextRxTstamp;
+```
+---
+
+**判斷條件**
+
+```c
+else if (b->lastReceivedTS < b->th.timestamp)
+```
+
+| 比較欄位 | 用途 |
+|----------|------|
+| `b->lastReceivedTS` | buffer 目前最後一筆樣本的時間戳 |
+| `b->th.timestamp` | 新接收封包的起始時間戳 |
+
+→ 中間出現空檔，需要補零樣本
+
+---
+**天線數量**
+
+```c
+int nbAnt = b->th.nbAnt;
+```
+---
+**Gap < CirSize：逐筆填 0**
+```c
+for (index = lastReceivedTS; index < timestamp; index++)
+  for (each antenna a)
+    circularBuf[(index * nbAnt + a) % CirSize] = 0;
+```
+| 目的 | 保持每個樣本與時間對應一致性 |
+|------|------------------------------|
+| `% CirSize` | 保證緩衝區環形不溢位 |
+
+---
+**Gap 過大：整個緩衝區歸零**
+```c
+memset(circularBuf, 0, total_size);
+```
+---
+**更新最後時間戳**
+```c
+b->lastReceivedTS = b->th.timestamp;
+```
+---
+
+**根據時間戳決定是否接收或丟棄封包資料**
+
+**情況 1：timestamp 倒退且封包 size = 1**
+```c
+if (b->lastReceivedTS > b->th.timestamp && b->th.size == 1)
+```
+| 條件                             | 意義                       |
+|----------------------------------|----------------------------|
+| 新封包 timestamp 過舊            | 可能是 Rx/Tx 同步封包     |
+| 封包大小為 1                     | 是特殊同步封包             |
+| 動作：`b->trashingPacket = true` | 不寫入，僅作同步參考        |
+
+---
+**情況 2：timestamp 正常接續**
+```c
+else if (b->lastReceivedTS == b->th.timestamp)
+```
+- 正常狀態，允許寫入資料
+- 無需特殊處理
+---
+**情況 3：timestamp 倒退但 size ≠ 1**
+```c
+else
+```
+| 條件                             | 意義                     |
+|----------------------------------|--------------------------|
+| 新封包 timestamp 過舊            | 非同步封包但順序錯誤     |
+| 動作：`b->trashingPacket = true` | 丟棄封包，避免資料錯亂    |
+
+---
+
+**IQ 樣本資料接收邏輯**
+
+---
+**鎖定並檢查 Tx/Rx 差距**
+```c
+pthread_mutex_lock(&Sockmutex);
+...
+pthread_mutex_unlock(&Sockmutex);
+```
+- 保護多執行緒對 timestamp 的存取
+- 若 Tx 與 Rx 差距超過 `CirSize`，輸出警告
+---
+**設定資料寫入位置與大小**
+```c
+b->transferPtr = (char *)&b->circularBuf[(b->lastReceivedTS * b->th.nbAnt) % CirSize];
+b->remainToTransfer = sampleToByte(b->th.size, b->th.nbAnt);
+```
+| 欄位 | 說明 |
+|------|------|
+| `transferPtr` | 指向 IQ 緩衝區正確位置 |
+| `remainToTransfer` | 還要接收幾個 byte |
+
+---
+**若已在讀 IQ 資料（不是 header）**
+```c
+if (b->headerMode == false)
+```
+- 處理樣本資料並更新 timestamp
+---
+**資料完整接收完畢時**
+
+```c
+if (b->remainToTransfer == 0)
+```
+| 動作 | 說明 |
+|------|------|
+| `headerMode = true` | 下次收 header |
+| `transferPtr = &th` | 指向 header buffer |
+| `remainToTransfer = sizeof(header)` | 準備收下個封包 |
+| `trashingPacket = false` | 重置狀態 |
+
+---
+
+## 🔁 `flushInput()` 詳細流程圖
+
+```text
+┌───────────────────────────────────────────┐
+│ flushInput(t, timeout, nsamps_initial)   │
+└───────────────────────────────────────────┘
+                   │
+                   ▼
+┌───────────────────────────────────────────┐
+│ 使用 epoll_wait() 監聽所有 socket 事件     │
+└───────────────────────────────────────────┘
+                   │
+                   ▼
+          ┌──────────────────────┐
+          │ nfds == -1 ?         │
+          └──────────────────────┘
+              │          │
+       errno = EINTR     │ nfds > 0
+     or errno = EAGAIN   ▼
+        return false   開始處理事件
+                         │
+                         ▼
+        ┌────────────────────────────────────┐
+        │ 逐個處理 events[nbEv]              │
+        └────────────────────────────────────┘
+                         │
+                         ▼
+        ┌────────────────────────────────────┐
+        │ 如果是新連線事件 (b == NULL)       │
+        │ → accept(), 建立 conn_sock         │
+        │ → 設定 non-blocking                │
+        │ → 建立 circular buffer 結構       │
+        │ → 加入 epoll 監聽                  │
+        └────────────────────────────────────┘
+                         │
+                         ▼
+        ┌────────────────────────────────────┐
+        │ 如果是已連線的 socket 收資料       │
+        │ → recv() 資料進 buffer             │
+        │   - 如果還在收 header               │
+        │       → 更新 transferPtr / remain  │
+        │       → 完成則轉入 payload 模式     │
+        │   - 如果是 payload                  │
+        │       → 寫入 circular buffer       │
+        │       → 更新 lastReceivedTS        │
+        │       → 完成則回到 headerMode      │
+        └────────────────────────────────────┘
+                         │
+                         ▼
+          ┌────────────────────────────┐
+          │ 所有 event 處理完畢        │
+          └────────────────────────────┘
+                         │
+                         ▼
+               return nfds > 0
+```
 

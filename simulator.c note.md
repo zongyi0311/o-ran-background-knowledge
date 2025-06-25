@@ -7,6 +7,7 @@
        -  [startClient()](#startClient)
        -  [stopServer()](#stopServer)
        -  [rfsimulator_write()](#rfsimulator_write)
+       -  [rfsimulator_read()](#rfsimulator_read)
 # OAI Project Directory Structure 
 
 | Directory Path         | Description |
@@ -1619,7 +1620,7 @@ LOG_D(HW,
 
 ---
 
-### rfsimulator_read
+### rfsimulator_read()
 
 ```c
 rfsimulator_state_t *t = device->priv;

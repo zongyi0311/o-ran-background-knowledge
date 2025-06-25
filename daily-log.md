@@ -40,4 +40,5 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 -  Read rfsimulator_write() and rfsimulator_read() and draw flowcharts
 
 **Daily Logs:**
-- 18:00-21:00 : [rfsimulator_write()](https://github.com/zongyi0311/rfsim-intern-log/blob/main/simulator.c%20note.md#rfsimulator_write)[rfsimulator_read()](https://github.com/zongyi0311/rfsim-intern-log/blob/main/simulator.c%20note.md#rfsimulator_read)
+- 18:00-21:00 : [rfsimulator_write()](https://github.com/zongyi0311/rfsim-intern-log/blob/main/simulator.c%20note.md#rfsimulator_write)
+- [rfsimulator_read()](https://github.com/zongyi0311/rfsim-intern-log/blob/main/simulator.c%20note.md#rfsimulator_read)

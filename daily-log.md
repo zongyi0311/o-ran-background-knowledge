@@ -41,3 +41,8 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 
 **Daily Logs:**
 - 18:00-21:00 : [rfsimulator_write()](https://github.com/zongyi0311/rfsim-intern-log/blob/main/simulator.c%20note.md#rfsimulator_write) [rfsimulator_read()](https://github.com/zongyi0311/rfsim-intern-log/blob/main/simulator.c%20note.md#rfsimulator_read) rfsimulator_read() has not been finished yet.
+
+## 2025/06/26
+**Short-term Goals**
+-  Prepare for TOEIC and take mock exams
+

@@ -44,5 +44,5 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 
 ## 2025/06/26
 **Short-term Goals**
--  Prepare for TOEIC and take mock exams
+-  Prepare for TOEIC(6/29) and take mock exams
 

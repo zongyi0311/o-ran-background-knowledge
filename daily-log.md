@@ -46,3 +46,9 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 **Short-term Goals**
 -  Prepare for TOEIC(6/29) and take mock exams
 
+## 2025/06/27
+**Short-term Goals**
+-  reading DVB-S2 [1](https://ww2.mathworks.cn/help/comm/ug/dvb-s-2-link-including-ldpc-coding-in-simulink.html) [2](https://ww2.mathworks.cn/help/comm/ug/dvb-s-2-link-including-ldpc-coding.html)
+
+- 
+

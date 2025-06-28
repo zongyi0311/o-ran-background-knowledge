@@ -1,3 +1,4 @@
+```text
 function [dvb, encldpcCfg, decldpcCfg] = configureDVBS2Custom_NoBCH(modType, codeRate, numIter, EsNodB)
 
 % --- 根據碼率取得 LDPC 檢查矩陣 ---
@@ -43,8 +44,9 @@ dvb.PhaseOffset           = 0;
 dvb.SymbolMapping         = 'Gray';
 
 end
-
-
+```
+---
+```text
 [dvb, encldpcCfg, decldpcCfg] = configureDVBS2Custom('4PSK', 1/2, 200, -9);
 
 numFrames = 20;
@@ -103,4 +105,4 @@ distFig = figure;
 histogram(numIterVec,1:dvb.LDPCNumIterations-1);
 xlabel('Number of iterations'); ylabel('# occurrences'); grid on;
 title('Distribution of number of LDPC decoder iterations')
-]]></w:t></w:r></w:p></w:body></w:document>
+```

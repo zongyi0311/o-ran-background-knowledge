@@ -393,3 +393,133 @@ function [ct1, ct2] = getchecknodetable(R)
 | 欄位名稱 | 說明 |
 |----------|------|
 | `RecDelayPreBCH` | 接收端 BCH 前的預延遲補償設定（通常等於 BCHMessageLength） |
+
+# 📡 DVB-S2 Link 系統架構與模擬流程筆記
+
+>  標準：ETSI EN 302 307 V1.1.1 (2005-03)  
+>  功能：完整實作 DVB-S2 前向錯誤修正 + QPSK + AWGN 通道
+
+---
+##  模擬總覽
+
+模擬系統完整流程如下：
+
+1. Bit Source（資料產生）
+2. BBFRAME 打包（188 Bytes 封包）
+3. BCH 外碼編碼（32208 ➜ 32400 bits）
+4. LDPC 內碼編碼（32400 ➜ 64800 bits）
+5. Interleaving（根據調變方式決定）
+6. QPSK 調變（2 bits/symbol）
+7. AWGN 通道（加入高斯白雜訊）
+8. 解調與 LLR 計算
+9. LDPC 解碼（疊代）
+10. BCH 解碼（最終修復）
+11. 錯誤率統計與星座圖展示
+
+---
+
+## 🖼️ 系統架構圖（Simulink）
+
+![DVB-S2 模型架構](attachment:file-RZyrBXGcjMFtb28QcEfzbQ)
+
+---
+
+## 🔧 模組說明與資料流程
+
+### 🔹 Bit Source + BBFRAME 封裝
+
+
+- 隨機產生 1504 bits 作為一個 TS Packet。
+- 經過封裝為 **BBFRAME**（Baseband Frame） ➜ 32208 bits。
+
+---
+
+### 🔹 BCH 外碼編碼
+
+
+- 使用預定 Generator Polynomial 與 Primitive Polynomial。
+- 實作符合 DVB-S2 表格 5a 所規定之編碼參數。
+
+---
+
+### 🔹 LDPC 編碼
+
+
+- 呼叫 MATLAB 函式 `dvbs2ldpc(R)` 產生校驗矩陣。
+- 使用 1/2, 3/5 等 CodeRate。
+- 模擬符合標準的 Type-I LDPC 低密度奇偶檢查碼。
+
+---
+
+### 🔹 Interleaver（可選）
+
+
+- QPSK 無需交錯。
+- APSK 類型（8PSK、16APSK、32APSK）根據 Symbol 列數轉置交錯。
+
+---
+
+### 🔹 QPSK 調變
+
+
+- 使用 Custom Symbol Mapping。
+- PhaseOffset 設定為 π/4。
+- 每個 Symbol 代表 2 個 bits。
+
+---
+
+### 🔹 AWGN 通道
+
+
+- 雜訊變異數計算公式：
+dvb.NoiseVar = 1 / (10^(EsNodB/10))
+
+---
+
+### 🔹 QPSK 解調與 LLR 計算
+
+
+- 使用 Approximate LLR 方法進行軟式解調。
+- 搭配 `CustomSymbolMapping` 與噪音變異數設定。
+
+---
+
+### 🔹 LDPC 解碼（疊代）
+
+
+- 最大疊代次數通常設為 50~200。
+- 內部使用 Min-Sum 或 Belief Propagation 解碼算法。
+
+---
+
+### 🔹 BCH 解碼
+
+
+- 恢復原始資料並糾正殘餘錯誤。
+
+---
+
+### 🔹 錯誤統計與星座圖
+
+- **PER**（Packet Error Rate）
+- **BERLDPC**（LDPC 後 Bit Error Rate）
+- **BERMod**（調變後 Bit Error Rate）
+- **Constellation Diagram** 顯示雜訊影響與 QPSK 星座收斂情況。
+
+---
+
+##  關鍵參數設定
+
+| 名稱                     | 數值            | 說明                         |
+|--------------------------|------------------|------------------------------|
+| BBFrame Size             | 32208 bits       | BCH 編碼前訊息長度          |
+| BCH Codeword             | 32400 bits       | 外碼輸出長度                |
+| LDPC Codeword            | 64800 bits       | LDPC 輸出長度（標準固定）   |
+| QPSK Symbol Output       | 32400 symbols    | 每個符號對應 2 bits         |
+| NoiseVar                 | `1/(10^(Es/No))` | 根據 EsNodB 計算 AWGN 雜訊  |
+| LDPC Max Iterations      | 50~200           | 疊代次數上限                 |
+
+---
+
+
+---

@@ -55,7 +55,9 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 
 ## 2025/06/30
 **Short-term Goals**
--  reading DVB-S2 matlab example [DVB-S.2 Link, Including LDPC Coding](https://ww2.mathworks.cn/help/comm/ug/dvb-s-2-link-including-ldpc-coding-in-simulink.html) [DVB-S.2 Link, Including LDPC Coding in Simulink](https://ww2.mathworks.cn/help/comm/ug/dvb-s-2-link-including-ldpc-coding.html)
+-  reading DVB-S2 matlab example [DVB-S.2 Link, Including LDPC Coding](https://ww2.mathworks.cn/help/comm/ug/dvb-s-2-link-including-ldpc-coding-in-simulink.html)
+-  [DVB-S.2 Link, Including LDPC Coding in Simulink]
+  (https://ww2.mathworks.cn/help/comm/ug/dvb-s-2-link-including-ldpc-coding.html)
 
 **Daily Logs:**
 - 20:00-22:00 :Modify the code [note](https://github.com/zongyi0311/rfsim-intern-log/blob/main/DSB-S2%20code.md)

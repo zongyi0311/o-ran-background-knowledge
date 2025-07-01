@@ -61,3 +61,11 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 
 **Daily Logs:**
 - 20:00-22:00 :Modify the code [note](https://github.com/zongyi0311/rfsim-intern-log/blob/main/DSB-S2%20code.md)
+
+  ## 2025/07/01
+**Short-term Goals**
+- Study DVB-S2X and compare it with DVB-S2 [EN 302 307-2 - V1.4.1 - Digital Video Broadcasting (DVB)](https://www.etsi.org/deliver/etsi_en/302300_302399/30230702/01.04.01_60/en_30230702v010401p.pdf) and [EN 302 307 - V1.3.1 - Digital Video Broadcasting (DVB)](https://www.etsi.org/deliver/etsi_en/302300_302399/302307/01.03.01_20/en_302307v010301a.pdf)
+
+**Daily Logs:**
+- 16:30-18:00 :Discuss last week’s progress and this week’s plan with team members
+- 20:30-23:00 :[DVB-S2X.md](https://github.com/zongyi0311/rfsim-intern-log/blob/main/DVB-S2X.md)

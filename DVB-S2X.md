@@ -361,7 +361,7 @@
 
 ![image](https://github.com/user-attachments/assets/6f70fbaa-f2d6-4a72-9121-cdc957a76154)
 
-##📦 模組詳解
+## 模組詳解
 1.  Mode Adaptation
 支援：
 Single or Multiple Input Streams
@@ -381,9 +381,9 @@ ACM/VCM 命令
 
 | 模式 | 調變與碼率固定？ | 使用場景 | 優點 |
 |------|------------------|----------|------|
-| **CCM** | ✅ 是 | 單一廣播節目 | 簡單、相容性好 |
-| **VCM** | ❌ 否 | 不同內容服務（例如 HDTV vs SDTV）| 提高整體頻譜利用率 |
-| **ACM** | ❌ 否 | 單播/多播 + 回饋通道支援 | 可動態最佳化每位使用者連線品質與效率 |
+| **CCM** |  是 | 單一廣播節目 | 簡單、相容性好 |
+| **VCM** |  否 | 不同內容服務（例如 HDTV vs SDTV）| 提高整體頻譜利用率 |
+| **ACM** |  否 | 單播/多播 + 回饋通道支援 | 可動態最佳化每位使用者連線品質與效率 |
 
 ---
 
@@ -410,7 +410,7 @@ ACM/VCM 命令
 
 ---
 
-## 🧪 MATLAB / OAI 模擬實作建議
+##  模擬實作建議
 
 ### MATLAB：
 - 手動設定不同碼率與調變，模擬 VCM 效果。
@@ -428,14 +428,7 @@ end
 
 ---
 
-功能：
-Input Interface
-Input Stream Synchronizer（可選）
-Null-Packet Deletion（ACM/TS 模式）
-CRC-8 編碼（封包錯誤偵測）
-Buffer 暫存
-Merger & Slicer：合併多路輸入流
-🔹 註：虛線區塊為非廣播應用所需功能（e.g., Multiple TS）
+
 
 
 

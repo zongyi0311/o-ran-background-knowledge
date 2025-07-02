@@ -70,7 +70,7 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 - 16:30-18:00 :Discuss last week’s progress and this week’s plan with team members
 - 20:30-23:00 :[DVB-S2X.md](https://github.com/zongyi0311/rfsim-intern-log/blob/main/DVB-S2X.md)
 
-  ## 2025/07/02
+## 2025/07/02
 **Short-term Goals**
 - 陪家人去醫院
 - 從彰化回台北

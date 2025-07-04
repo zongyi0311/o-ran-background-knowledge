@@ -80,4 +80,6 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 - studying 5G Physical Layer: Principles, Models and Technology Components chapter 2 and chapter 3
 - 整理OAI裡面關於channel model的檔案目錄。
  
-
+**Daily Logs:**
+- 10:00-12:00 :chapter 2 ~chapter 3.1 [5G Physical Layer Principles](https://github.com/zongyi0311/rfsim-intern-log/blob/main/5G%20Physical%20Layer%20Principles.md)
+- 22:00-24:00 :[OAI Layer 1.md]([https://github.com/zongyi0311/rfsim-intern-log/blob/main/DVB-S2X.md](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20Layer%201.md))

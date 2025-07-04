@@ -31,6 +31,131 @@
 
 # [channel_simulation.md](https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/openair1/SIMULATION/TOOLS/DOC/channel_simulation.md#channel-modeling)
 
+##  Channel Modeling（通道建模）
+
+### 定義
+- 通道模型是模擬無線訊號在傳輸媒介中傳播行為的數學模型。
+- 模型會考慮：
+  - 衰減（Attenuation）
+  - 干擾（Interference）
+  - 衰落（Fading）
+
+### 應用目的
+- 用於預測不同環境下無線系統的效能。
+- 幫助設計與測試更可靠的通信系統。
+
+##  OAI Channel Simulation 功能
+
+### 功能說明
+- RFSimulator 提供 **通道模擬功能**。
+- 能夠 **修改時域樣本**，模擬真實通道行為。
+- 使用 **預定模型**（如 3GPP TR 36.873、TR 38.901）。
+
+### 實作架構
+- 通道模擬程式碼存在於：
+  - UE（User Equipment）
+  - gNB（5G 基站）
+  - eNB（4G 基站）
+- 可與：
+  - **RFSimulator**
+  - **L1 Simulator**
+  - **PHY Simulators** 搭配使用。
+
+### 配置方式
+- RFSimulator 提供 **最完整的配置與即時參數調整能力**。
+- PHY 模擬器只能透過 CLI 指令進行部分設定。
+
+## new_channel_desc_scm()
+這個函式是用來建立一個新的通道模型描述子（channel_desc_t 結構），並根據提供的參數初始化相關設定
+```
+channel_desc_t *new_channel_desc_scm(
+  uint8_t nb_tx,
+  uint8_t nb_rx,
+  SCM_t channel_model,
+  double sampling_rate,
+  uint64_t center_freq,
+  double channel_bandwidth,
+  double DS_TDL,
+  double maxDoppler,
+  const corr_level_t corr_level,
+  double forgetting_factor,
+  int32_t channel_offset,
+  double path_loss_dB,
+  float noise_power_dB
+);
+```
+
+| 參數名稱                | 說明                                     |
+| ------------------- | -------------------------------------- |
+| `nb_tx`             | 傳輸天線數（number of TX antennas）           |
+| `nb_rx`             | 接收天線數（number of RX antennas）           |
+| `channel_model`     | 使用的通道模型（例如 AWGN、TDL、CDL）               |
+| `sampling_rate`     | 取樣率（Hz），通常與 numerology 與子載波間距有關        |
+| `center_freq`       | 中心頻率（Hz），模擬通道所運作的載波頻率                  |
+| `channel_bandwidth` | 頻寬（Hz），代表整個頻道覆蓋的頻率範圍                   |
+| `DS_TDL`            | 延遲擴展參數（Delay Spread），TDL 模型中用來調整多徑分佈程度 |
+| `maxDoppler`        | 最大 Doppler 位移（Hz），模擬移動造成的頻率偏移（如用戶移動）   |
+| `corr_level`        | 天線間的相關性等級（Low, Medium, High）           |
+| `forgetting_factor` | 衰減記憶係數，用於模型內部時間相關性運算                   |
+| `channel_offset`    | 通道的初始偏移量，用於測試偏移效應                      |
+| `path_loss_dB`      | 路徑損耗（dB）                               |
+| `noise_power_dB`    | 加入的雜訊功率（dB）                            |
+
+## Channel Model configuration file
+e.g. a simple scenario to with an AWGN channel:
+```
+channelmod = {
+  max_chan = 10; -- 最大支援 10 條通道
+  modellist = "modellist_rfsimu_1";
+  modellist_rfsimu_1 = (
+    {
+      model_name     = "rfsimu_channel_enB0",  -- 下行通道（gNB -> UE）
+      type           = "AWGN";                 -- 通道模型類型：AWGN
+      ploss_dB       = 20;                     -- 路徑損耗：20 dB
+      noise_power_dB = -4;                     -- 雜訊功率：-4 dB
+      forgetfact     = 0;                      -- 忘記因子（時變相關性），0 表示靜態
+      offset         = 0;                      -- 初始偏移
+      ds_tdl         = 0;                      -- TDL 延遲擴散參數（此處為 0 表示不用）
+    },
+    {
+      model_name     = "rfsimu_channel_ue0",   -- 上行通道（UE -> gNB）
+      type           = "AWGN";
+      ploss_dB       = 20;
+      noise_power_dB = -2;                     -- 注意這裡的雜訊功率不同：-2 dB
+      forgetfact     = 0;
+      offset         = 0;
+      ds_tdl         = 0;
+    }
+  );
+};
+
+```
+- `rfsimu_channel_ue0`：UE 端通道（Server），模擬 **Uplink**。
+- `rfsimu_channel_enB0`：gNB 端通道（Client），模擬 **Downlink**。
+- `ue0`、`ue1`、`ue2`...：代表不同 client 的通道模型。
+
+## Set channel simulation parameters via CL:
+
+### Global parameters
+
+| CL 參數名稱            | 類型          | 預設值                  | 說明                                                                               |
+| ------------------ | ----------- | -------------------- | -------------------------------------------------------------------------------- |
+| `modellist`        | char string | `DefaultChannelList` | 指定要載入的通道模型清單名稱，來自設定檔                                                             |
+| `max_chan`         | integer     | `10`                 | 系統允許的最大通道模型數量，必須大於實際使用的模型數量                                                      |
+| `noise_power_dBFS` | integer     | `0`                  | 全域雜訊功率（以 dBFS 表示）。若設定此值，每個模型中的 `noise_power_dB` 將無效。為了產生正的 SNR，請使用低於 -36 dBFS 的值 |
+
+### Model List
+
+| 參數名稱             | 類型           | 預設值      | 說明                                              |
+| ---------------- | ------------ | -------- | ----------------------------------------------- |
+| `model_name`     | 字串 (string)  | **必要**   | 模型的名稱（在代碼中用來識別模型）                               |
+| `type`           | 字串 (string)  | `"AWGN"` | 所使用的通道模型類型，例如：`AWGN`、`TDL`、`CDL`。定義於 `sim.h`    |
+| `ploss_dB`       | 實數 (float)   | `0`      | 通道總路徑損耗（含 shadow fading），單位為 dB                 |
+| `noise_power_dB` | 實數 (double)  | `-50`    | 雜訊功率，用來計算信噪比（SNR），值越大表示雜訊越強                     |
+| `forgetfact`     | 實數 (double)  | `0`      | 忘記因子，用於模擬時間變化。0 代表每個樣本都是新通道；1 則通道保持不變           |
+| `offset`         | 整數 (integer) | `0`      | 對輸入訊號的取樣位移（單位為樣本數）                              |
+| `ds_tdl`         | 實數 (double)  | `0`      | 延遲擴展（Delay Spread），用於 TDL 類型的模型（如 TDL-A, TDL-C） |
+
 # random_channel.c
 -  #include "PHY/TOOLS/tools_defs.h"
 -  #include "sim.h"
@@ -38,4 +163,3 @@
 -  #include "common/config/config_userapi.h"
 -  #include "common/utils/telnetsrv/telnetsrv.h"
 -  #include "common/utils/load_module_shlib.h"
-

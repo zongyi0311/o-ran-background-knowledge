@@ -82,4 +82,4 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
  
 **Daily Logs:**
 - 10:00-12:00 :chapter 2 ~chapter 3.1 [5G Physical Layer Principles](https://github.com/zongyi0311/rfsim-intern-log/blob/main/5G%20Physical%20Layer%20Principles.md)
-- 22:00-24:00 :[OAI Layer 1.md]([https://github.com/zongyi0311/rfsim-intern-log/blob/main/DVB-S2X.md](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20Layer%201.md))
+- 22:00-24:00 :[OAI Layer 1]((https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20Layer%201.md))

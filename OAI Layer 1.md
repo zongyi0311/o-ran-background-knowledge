@@ -163,3 +163,77 @@ channelmod = {
 -  #include "common/config/config_userapi.h"
 -  #include "common/utils/telnetsrv/telnetsrv.h"
 -  #include "common/utils/load_module_shlib.h"
+
+| 標頭檔案                  | 功能簡述                      |
+| --------------------- | ------------------------- |
+| `tools_defs.h`        | 一些底層定義與通用工具               |
+| `sim.h`               | 模擬器參數與模型定義（例如 AWGN、TDL 等） |
+| `scm_corrmat.h`       | SCM correlation matrix 計算 |
+| `config_userapi.h`    | 用來操作 YAML/JSON 設定檔的介面     |
+| `telnetsrv.h`         | 用來啟動 telnet server，支持命令操作 |
+| `load_module_shlib.h` | 支援模組化動態載入（shared library） |
+
+# `random_channel.c` 函式整理
+---
+
+## 通道模型初始化與記憶體管理
+
+| 函式名稱                  | 功能說明                                           |
+|---------------------------|----------------------------------------------------|
+| `new_channel_desc_scm`    | 建立並回傳一個新的通道模型描述子                  |
+| `fill_channel_desc`       | 將模型參數填入 descriptor 結構                    |
+| `init_channelmod`         | 初始化通道模擬模組與 telnet 控制命令註冊          |
+| `free_channel_desc_scm`   | 釋放通道模型所佔的記憶體資源                      |
+
+---
+
+## 通道模擬核心邏輯
+
+| 函式名稱                  | 功能說明                                           |
+|---------------------------|----------------------------------------------------|
+| `random_channel`          | 根據設定參數產生衰落通道樣本（AWGN、TDL...）     |
+| `tdlModel`                | 模擬 TDL 類通道（例如 TDL-A, TDL-C 等）           |
+| `get_cexp_doppler`        | 產生 Doppler 頻移效應所需的複數指數樣本          |
+| `get_normalization_ch_factor` | 計算通道能量正規化係數                           |
+| `get_noise_power_dBFS`    | 將 dBFS 雜訊功率轉換為通道模擬中的真實值         |
+
+---
+
+## 通道模型屬性設定與查詢
+
+| 函式名稱                  | 功能說明                                           |
+|---------------------------|----------------------------------------------------|
+| `set_channeldesc_name`    | 設定通道模型描述子的名稱                          |
+| `set_channeldesc_direction` | 設定為上行/下行通道                               |
+| `set_channeldesc_owner`   | 指定該通道屬於哪個模擬端（如 gNB 或 UE）          |
+| `find_channel_desc_fromname` | 根據名稱尋找通道模型結構                         |
+| `get_channel_params`      | 回傳目前通道參數（for telnet 顯示）              |
+
+---
+
+## Telnet 與 Web 操控支援函式
+
+| 函式名稱                  | 功能說明                                           |
+|---------------------------|----------------------------------------------------|
+| `get_modchannel_index`    | 取得指定模型的通道索引                            |
+| `get_currentchannels_type`| 查詢目前通道模型的型態（AWGN、TDL 等）           |
+
+---
+
+## 模型載入與轉換工具
+
+| 函式名稱                  | 功能說明                                           |
+|---------------------------|----------------------------------------------------|
+| `load_channellist`        | 從設定檔載入 modellist，並建立對應通道模型        |
+| `modelid_fromstrtype`     | 字串模型名稱轉換為內部類型（例如 AWGN → 0）      |
+
+---
+
+## 通道參數與頻率對應工具
+
+| 函式名稱                  | 功能說明                                           |
+|---------------------------|----------------------------------------------------|
+| `N_RB2sampling_rate`      | 根據 N_RB 計算對應的取樣率（Hz）                  |
+| `N_RB2channel_bandwidth`  | 根據 N_RB 推算通道頻寬（Hz）                      |
+
+---

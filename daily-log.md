@@ -75,4 +75,9 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 - 陪家人去醫院
 - 從彰化回台北
 
+## 2025/07/04
+**Short-term Goals**
+- studying 5G Physical Layer: Principles, Models and Technology Components chapter 2 and chapter 3
+- 整理OAI裡面關於channel model的檔案目錄。
+ 
 

@@ -78,8 +78,14 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 ## 2025/07/04
 **Short-term Goals**
 - studying 5G Physical Layer: Principles, Models and Technology Components chapter 2 and chapter 3
-- 整理OAI裡面關於channel model的檔案目錄。
- 
+- 整理OAI裡面關於channel model的檔案目錄
+
 **Daily Logs:**
 - 10:00-12:00 :chapter 2 ~chapter 3.1 [5G Physical Layer Principles](https://github.com/zongyi0311/rfsim-intern-log/blob/main/5G%20Physical%20Layer%20Principles.md)
 - 21:00-23:00 :[OAI Layer 1](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20Layer%201.md)
+
+
+## 2025/07/04
+**Short-term Goals**
+- 整理檔案目錄跟架構圖
+- 研讀程式碼[random_channel.c](https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/openair1/SIMULATION/TOOLS/random_channel.c?ref_type=heads) [sim.h](https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/openair1/SIMULATION/TOOLS/sim.h?ref_type=heads)

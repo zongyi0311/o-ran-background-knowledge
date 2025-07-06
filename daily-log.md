@@ -85,7 +85,7 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 - 21:00-23:00 :[OAI Layer 1](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20Layer%201.md)
 
 
-## 2025/07/04
+## 2025/07/07
 **Short-term Goals**
 - 整理檔案目錄跟架構圖
 - 研讀程式碼[random_channel.c](https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/openair1/SIMULATION/TOOLS/random_channel.c?ref_type=heads) [sim.h](https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/openair1/SIMULATION/TOOLS/sim.h?ref_type=heads)

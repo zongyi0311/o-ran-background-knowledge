@@ -42,7 +42,7 @@ Input: MAC PDU (bytes)
 └────────────┬─────────────────┘
              ↓
 
-                    【🔵 Uplink: gNB RX (模擬接收端)】
+                    【 Uplink: gNB RX (模擬接收端)】
 
 ┌──────────────────────────────┐
 │ OFDM FFT + CP 去除 (ofdm_mod.c) │
@@ -78,6 +78,12 @@ Input: MAC PDU (bytes)
 
 
 ```
+| 項目           | 真實 RF 收發                      | 模擬通道收發                                             |
+| ------------ | ----------------------------- | -------------------------------------------------- |
+| 是否使用硬體       | 是（DAC/ADC、USRP）               | 否，全程軟體模擬                                           |
+| 通道模型         | 真實無線環境                        | 軟體模擬（AWGN、Rayleigh 等）                              |
+| Channel 加入位置 | 在 DAC → 天線之間                  | 在 TX OFDM 輸出 → RX OFDM 輸入                          |
+| 收發資料傳遞       | RF 驅動 / buffer                | 直接函式呼叫、指標傳遞                                        |
 
 
 | 子資料夾                           | 功能                                      | 重點說明                                              |
@@ -137,9 +143,42 @@ Input: MAC PDU (bytes)
 | 子資料夾                  | 說明                                                |
 | --------------------- | ------------------------------------------------- |
 | `SIMULATION/TOOLS/`   | **Channel model 實作主體**（AWGN、EPA、EVA、phase noise） |
-| `SIMULATION/NR_PHY/`  | 5G NR 模擬主程式，如 `nr_dlschsim.c`, `nr_pbchsim.c`    |
+| 檔案名稱                     | 說明                                               |
+| ------------------------ | ------------------------------------------------ |
+| `DOC/`                   | 說明文件夾，包含通道模擬的設計細節（如 `channel_simulation.md`）。    |
+| `abstraction.c`          | PHY層抽象化模組，簡化物理層細節模擬，常搭配 rfsimulator 使用。          |
+| `ch_desc_proto.c`        | 定義 Channel Descriptor 結構與初始化函式，設定通道類型與參數。        |
+| `channel_sim.c`          | 通道模擬主控程式，用來整合不同類型的通道模型。                          |
+| `corr_mat.m`             | MATLAB 腳本，用於生成 MIMO 系統的相關矩陣（Correlation Matrix）。 |
+| `gauss.c`                | 高斯分布隨機數產生器，常用於雜訊與多普勒模擬。                          |
+| `llr_quantization.c`     | 將 LLR（Log-Likelihood Ratio）做有限位元量化，模擬接收端精度限制。    |
+| `multipath_channel.c`    | 多路徑通道模擬，包括 tap delay line、Rayleigh/Rician 測試等。   |
+| `multipath_tv_channel.c` | 時變通道版本，可模擬通道在時間上變化的情況（e.g. UE移動）。                |
+| `phase_noise.c`          | 相位雜訊模擬，模仿 oscillator 中的隨機相位擾動行為。                 |
+| `random_channel.c`       | 支援隨機生成各種通道參數，支援衛星模擬如 NTN LEO。                    |
+| `rangen_double.c`        | 提供 double 型態的隨機數產生，為通道模擬提供隨機性。                   |
+| `scm.m`                  | MATLAB 腳本，產生 SCM (Spatial Channel Model) 通道參數。   |
+| `scm_corrmat.h`          | SCM 相關矩陣參數定義（Header file），配合 `scm.m` 使用。         |
+| `sim.h`                  | 模擬參數與工具函式定義檔（如 uniform bits、亂數產生、初始化等）。          |
+| `taus.c`                 | 多階段隨機數產生器（TAUSWORTHE 演算法），用於模擬中的種子擴增。            |
+| `SIMULATION/NR_PHY/`     | 5G NR 模擬主程式，如 `nr_dlschsim.c`, `nr_pbchsim.c`    |
+| 檔案名稱/資料夾                 | 功能說明                                                  |
+| ------------------------ | ----------------------------------------------------- |
+| `BLER_SIMULATIONS/AWGN/` | 模擬 BLER（Block Error Rate）在 AWGN 通道下的行為，支援 MIMO 2x2。   |
+| `dlschsim.c`             | 下行共享通道（DLSCH）模擬器，含 LDPC 編碼與 HARQ 行為。                  |
+| `dlsim.c`                | NR PHY 模擬總入口，負責整體模擬架構（調用 tx/rx 流程）。                   |
+| `nr_unitary_common.c`    | 提供公用模組，用於 unitary 模擬（如共享資源、初始設定）。                     |
+| `nr_unitary_defs.h`      | 對應 `.c` 的 Header，包含 struct 與模擬參數定義。                   |
+| `pbchsim.c`              | 廣播通道（PBCH）模擬，處理 MIB 傳送與接收流程。                          |
+| `prachsim.c`             | 隨機接入通道（PRACH）模擬器，模擬 UE 接入過程。                          |
+| `psbchsim.c`             | 可能是 P-SBCH（同步廣播通道）模擬器，供初始同步使用。                        |
+| `pucchsim.c`             | 上行控制通道（PUCCH）模擬器，模擬 UCI 傳輸行為（如 HARQ-ACK）。             |
+| `reconfig.raw`           | 原始 reconfiguration 設定檔，提供 Serving Cell 初始化參數。         |
+| `ulschsim.c`             | 上行共享通道（ULSCH）模擬器，包含 LDPC 上行解碼與發送。                     |
+| `ulsim.c`                | NR 上行整體模擬流程入口（呼叫 `ulschsim`, `pucchsim`, `prachsim`）。 |
 | `SIMULATION/RF/`      | RF 模擬收發器邏輯，可模擬 USRP 環境下的傳輸延遲                      |
 | `SIMULATION/LTE_PHY/` | 舊版 LTE PHY 模擬器（4G 測試用）                            |
+
 
 # [channel_simulation.md](https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/openair1/SIMULATION/TOOLS/DOC/channel_simulation.md#channel-modeling)
 

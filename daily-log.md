@@ -93,3 +93,4 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 
 **Daily Logs:**
 -  09:30 - 11:00 : studying 5G Physical Layer: Principles, Models and Technology Components [chapter 3-2](https://github.com/zongyi0311/rfsim-intern-log/blob/main/5G%20Physical%20Layer%20Principles.md#32-propagation-channel-characterization) 
+-  12:30 - 14:00 : 了解架構圖與目錄 [catalog](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20Layer%201.md#catalog)

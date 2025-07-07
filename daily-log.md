@@ -89,4 +89,7 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 **Short-term Goals**
 - 整理檔案目錄跟架構圖
 - 研讀程式碼[random_channel.c](https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/openair1/SIMULATION/TOOLS/random_channel.c?ref_type=heads) [sim.h](https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/openair1/SIMULATION/TOOLS/sim.h?ref_type=heads)
-- 5G Physical Layer: Principles, Models and Technology Components chapter 3-2~3-3
+- 5G Physical Layer: Principles, Models and Technology Components chapter 3-2
+
+**Daily Logs:**
+-  09:30 - 11:00 : studying 5G Physical Layer: Principles, Models and Technology Components [chapter 3-2](https://github.com/zongyi0311/rfsim-intern-log/blob/main/5G%20Physical%20Layer%20Principles.md#32-propagation-channel-characterization) 

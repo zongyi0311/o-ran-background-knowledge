@@ -1,4 +1,44 @@
 # catalog
+```
++-----------------------------+
+|       Application Layer     |   ←openair3/, openair2/RRC/, targets/
+|  (RRC, NGAP, etc.)          |
++-----------------------------+
+            │
+            ▼
++-----------------------------+
+|     RLC / PDCP / SDAP       |   ← openair2/LAYER2/RLC/, openair2/LAYER2/PDCP/
++-----------------------------+
+            │
+            ▼
++-----------------------------+
+|            MAC              |   ← openair2/LAYER2/MAC/
++-----------------------------+
+            │
+            ▼
++-----------------------------+
+|           PHY               |   ← openair1/PHY/
+| (FFT/IFFT, modulation, etc.)|
++-----------------------------+
+            │
+            ▼
++-----------------------------+
+|     RF Front-end (RFIC)     |
+|    or RF Simulator (OAI)    |   ← openair1/SIMULATION/
++-----------------------------+
+```
+
+| 層級      | 功能對比           | gNodeB（基地台）                                  | UE（用戶設備）                  |
+| ------- | -------------- | -------------------------------------------- | ------------------------- |
+|  RF 層 | 實體射頻 / 模擬      | 主要負責 **廣播**、同步傳送、PDCCH/PDSCH 上行資源指派          | 被動接收廣播、偵測同步訊號、上行 PUSCH 傳送 |
+|  PHY  | 實體層收發功能        | 處理 **大量連續 UE 的多工**、MIMO beamforming、多 UE 調度  | 只處理單一連線、自身同步、通道估計         |
+|  MAC  | 資源排程 / HARQ 管理 | **主動排程者**（e.g., uplink grant, HARQ feedback） | 接收排程指令、回報 CSI / BSR       |
+|  RLC  | 分段與重組 / 重傳     | 統整多 UE 資料流，高頻繁率調度                            | 僅針對單一路徑進行處理               |
+|  PDCP | 加密 / Header 壓縮 | 多用戶流管理與完整性驗證                                 | 加解密單一資料流、與 NAS 保密         |
+|  RRC  | 控制訊號管理 / 狀態機   | 負責 **UE 配置、觸發測量、換手指令**                       | 接收指令、回傳狀態、上報測量            |
+|  NAS | 與核心網連接         | 控制面只作轉接與 relay（非實作核心網）                       | 和核心網直接通信（透過 AMF）          |
+
+
 ## PHY/
 ```
                     【 Downlink: gNB TX (模擬傳送端)】
@@ -6,7 +46,7 @@
 Input: MAC PDU (bytes)
         ↓
 ┌──────────────────────────────┐
-│ CRC 附加 (crc_byte.c)         │
+│ CRC 附加 (crc_byte.c)        │
 │ Output: bits + CRC           │
 └────────────┬─────────────────┘
              ↓
@@ -21,12 +61,12 @@ Input: MAC PDU (bytes)
 └────────────┬─────────────────┘
              ↓
 ┌──────────────────────────────┐
-│ Rate Matching + Interleaving │
+│ Rate Matching + Interleaving (nr_rate_matching.c)│
 │ Output: RM bits              │
 └────────────┬─────────────────┘
              ↓
 ┌──────────────────────────────┐
-│ 調變 (Modulation: QPSK, 16QAM) │
+│ 調變 (Modulation: QPSK, 16QAM) │(nr_modulation.h)
 │ Output: complex symbols (IQ) │
 └────────────┬─────────────────┘
              ↓
@@ -45,13 +85,13 @@ Input: MAC PDU (bytes)
                     【 Uplink: gNB RX (模擬接收端)】
 
 ┌──────────────────────────────┐
-│ OFDM FFT + CP 去除 (ofdm_mod.c) │
+│ OFDM FFT + CP 去除 (oai_dfts.c) │
 │ Input: RX samples            │
 │ Output: frequency-domain symbols │
 └────────────┬─────────────────┘
              ↓
 ┌──────────────────────────────┐
-│ 通道估計 / 等化(nr_ulsch_demodulation.c)│
+│ 通道估計 / 等化(nr_ul_channel_estimation.c nr_freq_equalization.c)│
 │ Output: equalized symbols   │
 └────────────┬─────────────────┘
              ↓

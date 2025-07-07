@@ -550,17 +550,16 @@ bzero(acorr, 2×2×sizeof(struct complexd));
 等同於清除 acorr[0] ~ acorr[3] 的所有 r 與 i 欄位 → 都設成 0.0
 ```
 ---
-
+# 7/7
+**根據 Ricean 分布（包含 LOS 路徑 + NLOS multipath）生成多天線之間每個 tap（多徑）的通道響應值 anew**
 ```
 for (i=0; i<(int)desc->nb_taps; i++) {//處理多徑 tap 與 MIMO 通道 為每個 tap × 每對天線產生通道樣本模擬 fading、Doppler、時變通道等效應
     for (aarx=0; aarx<desc->nb_rx; aarx++) {
       for (aatx=0; aatx<desc->nb_tx; aatx++) {
-```
-
-```
 struct complexd *anewp = &anew[aarx + (aatx * desc->nb_rx)];
         anewp->r = sqrt(desc->ricean_factor * desc->amps[i] / 2) * gaussZiggurat(0.0, 1.0) * desc->normalization_ch_factor;
-        anewp->i = sqrt(desc->ricean_factor * desc->amps[i] / 2) * gaussZiggurat(0.0, 1.0) * desc->normalization_ch_factor;
+        anewp->i = sqrt(desc->ricean_factor * desc->amps[i] / 2) * gaussZiggurat(0.0, 1.0) * desc->normalization_ch_factor;//NLOS 成分（Rayleigh）
+
 ```
 模擬 Ricean 通道模型時產生複數通道係數（fading tap）
 
@@ -572,4 +571,155 @@ struct complexd *anewp = &anew[aarx + (aatx * desc->nb_rx)];
 | `desc->normalization_ch_factor` | 通道正規化係數，確保總能量一致                         |
 
 ![image](https://github.com/user-attachments/assets/70af680b-c5de-4eb4-8a3f-cfb3283b732a)
+**gaussZiggurat()** rangen_double.c
+```
+double __attribute__ ((no_sanitize("address", "undefined")))//不要對這個函式啟用某些 sanitizer 檢查，Sanitizer 會插入額外檢查碼，會讓這類數值密集函式變慢。
+gaussZiggurat(double mean, double variance)
+{
+  if (!tableNordDone) {
+    unsigned long seed;
+    fill_random(&seed, sizeof(seed));//把隨機種子放進 seed
+    tableNor(seed);// 用這個種子初始化 Ziggurat 表格
+  }
+  hz = SHR3;//#define SHR3 (jz = jsr, jsr ^= (jsr << 13), jsr ^= (jsr >> 17), jsr ^= (jsr << 5), jz + jsr)
+  iz = hz & 127;
+  return hz != INT32_MIN && abs(hz) < kn[iz] ? hz * wn[iz] : nfix();
+}
 
+void fill_random(void *buf, size_t sz)
+{//用來填滿 buf（任意型別指標）中 sz 個 bytes 的隨機數。
+  const char* fn = "/dev/urandom";//設定亂數來源的檔案名稱為 /dev/urandom是 Linux 提供的偽亂數裝置，可從中讀出高品質的隨機位元
+  FILE* f = fopen(fn, "rb");//以「只讀」且「二進位模式」開啟 /dev/urandom
+  if (f == NULL) {
+    fprintf(stderr, "could not open %s for seed generation: %d %s\n", fn, errno, strerror(errno));
+    abort();// 強制終止程式
+  }
+  int rc = fread(buf, sz, 1, f);//嘗試從 /dev/urandom 中讀取 sz bytes 資料，寫入到 buf 中
+  if (rc < 0) {
+    fprintf(stderr, "could not read %s for seed generation: %d %s\n", fn, errno, strerror(errno));
+    abort();
+  }
+  fclose(f);
+}
+
+void tableNor(unsigned long seed)
+{
+  jsr = seed;//初始化隨機數產生器的狀態（jump shift register），SHR3 隨機函式的種子變數
+  double dn = 3.442619855899;//初始右邊界
+  int i;
+  const double m1 = 2147483648.0;//2^31，這是整數隨機數的最大值，後面會用它來轉換整數範圍成浮點
+  double q;
+  double tn = 3.442619855899;//是一開始的 dn，保存原始值做比例縮放用
+  const double vn = 9.91256303526217E-03;//tail 區域的面積（常數），讓整體面積為 1 = 寬度 × 高度
+  q(寬度) = vn / exp(-0.5 * dn * dn);//計算 q，為了確保第一個區塊的機率密度與面積一致，高度是 exp(-0.5 * dn^2)
+  kn[0] = ((dn / q) * m1);/// 對應整數版本邊界
+  kn[1] = 0;//kn[1] 是底部特例，設為 0
+  wn[0] = (q / m1);//// 對應浮點版本寬度
+  wn[127] = (dn / m1);
+  fn[0] = 1.0;
+  fn[127] = (exp(-0.5 * dn * dn));//fn[i] 是該區間的高度（PDF 值）
+
+  for (i = 126; 1 <= i; i--) {//從第 126 區塊往回推，逐步計算每個區塊的邊界與密度
+    dn = sqrt(-2.0 * log(vn / dn + exp(-0.5 * dn * dn)));//計算新的區塊邊界 dn，利用反函數法 (inverse transform)
+    kn[i + 1] = ((dn / tn) * m1);
+    tn = dn;
+    fn[i] = (exp(-0.5 * dn * dn));//更新 fn[i]: 高斯機率密度值
+    wn[i] = (dn / m1);//更新 wn[i]: 對應區塊的寬度值
+  }
+  tableNordDone=true;//設定初始化完成旗標，確保 gaussZiggurat() 不會重複初始化
+  return;
+}
+//初始化 3 張對照表
+-  kn[128]: 快速取樣區的整數邊界表（cut-off）
+-  wn[128]: 各區間對應的寬度（浮點數權重）
+-  fn[128]: 區間對應的機率密度函數值（exp(-x²/2)）  
+用來加速 gaussZiggurat() 中的高斯亂數取樣
+**Ziggurat 方法的核心理念**
+Ziggurat 演算法把目標分布（例如標準常態分布）劃分為多個長條狀區塊（rectangular layers）：
+-  每個區塊都是長方形，面積相同（例如 vn）
+-  區塊的寬度與高度取決於對應的機率密度函數（PDF）
+-  最上層的區塊覆蓋分布的尾部（最右邊那塊），需要特別處理
+
+                ┌───────────────┐
+                │ tableNor(seed)│
+                └──────┬────────┘
+                       │
+        ┌──────────────▼──────────────┐
+        │ Step 1: 設定初始常數 (dn, vn) │
+        └──────────────┬──────────────┘
+                       │
+        ┌──────────────▼──────────────┐
+        │ Step 2: 計算 kn[0], wn[0],  │
+        │         fn[0], wn[127], ... │
+        └──────────────┬──────────────┘
+                       │
+        ┌──────────────▼──────────────┐
+        │ Step 3: for i=126 downto 1  │
+        │   → 推導 dn                 │
+        │   → 計算 kn[i+1], wn[i], fn[i]│
+        └──────────────┬──────────────┘
+                       │
+        ┌──────────────▼──────────────┐
+        │ Step 4: 設定 tableNordDone  │
+        └─────────────────────────────┘
+
+```
+
+```
+**在 Ricean 通道模擬中加入 LOS（Line-of-Sight）分量的 deterministic 相位貢獻，只針對第一條 path（i == 0）處理**
+if ((i==0) && (desc->ricean_factor != 1.0)) {
+          if (desc->random_aoa==1) {
+            desc->aoa = uniformrandom()*2*M_PI;//如果啟用隨機 AoA（Angle of Arrival），則用 [0, 2π) 的均勻亂數設定 aoa
+          }
+          phase.r = cos(M_PI * ((aarx - aatx) * sin(desc->aoa)));
+          phase.i = sin(M_PI * ((aarx - aatx) * sin(desc->aoa)));
+          anew[aarx + (aatx * desc->nb_rx)].r += phase.r * sqrt(1.0 - desc->ricean_factor) * desc->normalization_ch_factor;
+          anew[aarx + (aatx * desc->nb_rx)].i += phase.i * sqrt(1.0 - desc->ricean_factor) * desc->normalization_ch_factor;//這是對 anew[]（每對 Tx → Rx 天線的通道係數）加上 LOS 分量的實部與虛部。
+        }
+```
+![image](https://github.com/user-attachments/assets/7e350b12-d552-48fa-ac92-36a1d310c0d0)
+
+-  背後物理意義
+  ```
+這是根據 波從某個方向（AoA）進入一個線性天線陣列時，不同天線間所接收到的相位差來建模：
+假設條件：
+-  發射與接收天線都為線性陣列（linear array）
+-  間距為 λ/2（半波長 spacing）
+-  以平面波近似（far-field assumption）
+-  使用一維線性陣列方向上的幾何相位差
+```
+-  sqrt(1.0 - ricean_factor)控制 LOS 路徑在 Ricean 混合中的能量權重（1 表示完全 LOS，0 表示純 Rayleigh）
+![image](https://github.com/user-attachments/assets/8b47821a-d3cf-432e-a645-4f8dbdd3ab32)
+
+
+```
+**double uniformrandom(void)** //輸出：一個 double 精度的隨機數，範圍為 [0, 1)
+{
+  const double mod = 4294967296.0; /* is 2**32 */
+  int j = 1 + 97.0 * iy / mod;
+  iy = ir[j];
+  urseed = a * urseed; /* mod 2**32 */
+  ir[j] = urseed;
+  return (double)iy / mod;
+}
+```
+**Ricean 通道**
+-  基本定義:
+Ricean 通道 是一種無線傳播通道模型，用於描述存在強直射路徑（LOS，Line-of-Sight）的傳輸環境，同時也有多條繞射或反射產生的多徑路徑（Non-LOS）
+-  數學模型
+![image](https://github.com/user-attachments/assets/036eb7b1-155d-4332-9ff0-5b7c3e3cc68d)
+-  Ricean K 因子:
+  ![image](https://github.com/user-attachments/assets/257f05d9-9f04-44c2-b137-6092095b01ee)
+
+**Rayleigh 通道**
+-  基本定義:Rayleigh 通道 是無線通訊中最常見的通道模型，用於描述**無直射路徑（Non-Line-of-Sight, NLOS）**的多徑傳播環境，僅存在多條反射、繞射等散射波。
+-  數學模型:
+-  ![image](https://github.com/user-attachments/assets/dade07f4-e4b9-466d-8899-fd4abd805c44)
+
+
+| 特性       | Ricean       | Rayleigh       |
+| -------- | ------------ | -------------- |
+| 是否含有 LOS | ✅ 有          | ❌ 無            |
+| K-factor | $K > 0$      | $K = 0$        |
+| 分布類型     | Ricean 分布    | Rayleigh 分布    |
+| 適用場景     | 室外可視環境、衛星通訊等 | 密集都市、無 LOS 的環境 |

@@ -6,17 +6,17 @@
 Input: MAC PDU (bytes)
         ↓
 ┌──────────────────────────────┐
-│ CRC 附加 (crc_byte.c)          │
+│ CRC 附加 (crc_byte.c)         │
 │ Output: bits + CRC           │
 └────────────┬─────────────────┘
              ↓
 ┌──────────────────────────────┐
-│ Segmentation (nr_segmentation.c) │
+│ Segmentation (nr_segmentation.c)│
 │ Output: LDPC segments (bits) │
 └────────────┬─────────────────┘
              ↓
 ┌──────────────────────────────┐
-│ LDPC 編碼 (nr_dlsch_coding.c + CODING/) │
+│ LDPC 編碼 (nr_dlsch_coding.c + CODING/)│
 │ Output: encoded bits         │
 └────────────┬─────────────────┘
              ↓
@@ -145,24 +145,24 @@ Input: MAC PDU (bytes)
 | `SIMULATION/TOOLS/`   | **Channel model 實作主體**（AWGN、EPA、EVA、phase noise） |
 | 檔案名稱                     | 說明                                               |
 | ------------------------ | ------------------------------------------------ |
-| `DOC/`                   | 說明文件夾，包含通道模擬的設計細節（如 `channel_simulation.md`）。    |
-| `abstraction.c`          | PHY層抽象化模組，簡化物理層細節模擬，常搭配 rfsimulator 使用。          |
-| `ch_desc_proto.c`        | 定義 Channel Descriptor 結構與初始化函式，設定通道類型與參數。        |
-| `channel_sim.c`          | 通道模擬主控程式，用來整合不同類型的通道模型。                          |
-| `corr_mat.m`             | MATLAB 腳本，用於生成 MIMO 系統的相關矩陣（Correlation Matrix）。 |
+| `DOC/`                   | 說明文件夾，包含通道模擬的設計細節（如 `channel_simulation.md`）    |
+| `abstraction.c`          | PHY層抽象化模組，簡化物理層細節模擬，常搭配 rfsimulator 使用          |
+| `ch_desc_proto.c`        | 定義 Channel Descriptor 結構與初始化函式，設定通道類型與參數        |
+| `channel_sim.c`          | 把 gNB 發射的 time-domain 波形，經過「模擬的無線通道」，產生送給 UE 的接收波形。    |
+| `corr_mat.m`             | MATLAB 腳本，用於生成 MIMO 系統的相關矩陣（Correlation Matrix） |
 | `gauss.c`                | 高斯分布隨機數產生器，常用於雜訊與多普勒模擬。                          |
-| `llr_quantization.c`     | 將 LLR（Log-Likelihood Ratio）做有限位元量化，模擬接收端精度限制。    |
-| `multipath_channel.c`    | 多路徑通道模擬，包括 tap delay line、Rayleigh/Rician 測試等。   |
-| `multipath_tv_channel.c` | 時變通道版本，可模擬通道在時間上變化的情況（e.g. UE移動）。                |
-| `phase_noise.c`          | 相位雜訊模擬，模仿 oscillator 中的隨機相位擾動行為。                 |
-| `random_channel.c`       | 支援隨機生成各種通道參數，支援衛星模擬如 NTN LEO。                    |
-| `rangen_double.c`        | 提供 double 型態的隨機數產生，為通道模擬提供隨機性。                   |
-| `scm.m`                  | MATLAB 腳本，產生 SCM (Spatial Channel Model) 通道參數。   |
-| `scm_corrmat.h`          | SCM 相關矩陣參數定義（Header file），配合 `scm.m` 使用。         |
-| `sim.h`                  | 模擬參數與工具函式定義檔（如 uniform bits、亂數產生、初始化等）。          |
-| `taus.c`                 | 多階段隨機數產生器（TAUSWORTHE 演算法），用於模擬中的種子擴增。            |
+| `llr_quantization.c`     | 將 LLR（Log-Likelihood Ratio）做有限位元量化，模擬接收端精度限制    |
+| `multipath_channel.c`    | 多路徑通道模擬，包括 tap delay line、Rayleigh/Rician 測試等   |
+| `multipath_tv_channel.c` | 時變通道版本，可模擬通道在時間上變化的情況（e.g. UE移動）                |
+| `phase_noise.c`          | 相位雜訊模擬，模仿 oscillator 中的隨機相位擾動行為                 |
+| `random_channel.c`       | 支援隨機生成各種通道參數，支援衛星模擬如 NTN LEO                   |
+| `rangen_double.c`        | 提供 double 型態的隨機數產生，為通道模擬提供隨機性                  |
+| `scm.m`                  | MATLAB 腳本，產生 SCM (Spatial Channel Model) 通道參數   |
+| `scm_corrmat.h`          | SCM 相關矩陣參數定義（Header file），配合 `scm.m` 使用         |
+| `sim.h`                  | 模擬參數與工具函式定義檔（如 uniform bits、亂數產生、初始化等）          |
+| `taus.c`                 | 多階段隨機數產生器（TAUSWORTHE 演算法），用於模擬中的種子擴增            |
 | `SIMULATION/NR_PHY/`     | 5G NR 模擬主程式，如 `nr_dlschsim.c`, `nr_pbchsim.c`    |
-| 檔案名稱/資料夾                 | 功能說明                                                  |
+| 檔案名稱/資料夾            | 功能說明                                                  |
 | ------------------------ | ----------------------------------------------------- |
 | `BLER_SIMULATIONS/AWGN/` | 模擬 BLER（Block Error Rate）在 AWGN 通道下的行為，支援 MIMO 2x2。   |
 | `dlschsim.c`             | 下行共享通道（DLSCH）模擬器，含 LDPC 編碼與 HARQ 行為。                  |
@@ -526,7 +526,7 @@ struct complexd *anewp = &anew[aarx + (aatx * desc->nb_rx)];
 
 | 變數名稱                            | 解釋                                      |
 | ------------------------------- | --------------------------------------- |
-| `gaussZiggurat(0.0, 1.0)`       | 產生一個均值為 0、標準差為 1 的高斯亂數                  |
+| `gaussZiggurat(0.0, 1.0)`       | 產生一個均值為 0、標準差為 1 的高斯亂數                |
 | `desc->amps[i]`                 | 第 i 個 tap 的功率（來自 power delay profile）   |
 | `desc->ricean_factor`           | Ricean K 因子的轉換參數（0 = AWGN，1 = Rayleigh） |
 | `desc->normalization_ch_factor` | 通道正規化係數，確保總能量一致                         |

@@ -1,5 +1,6 @@
 [random_channel()](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20Layer%201.md#random_channelc)
-[tdlModel()]()
+
+[tdlModel()](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20Layer%201.md#tdlmodel)
 
 
 # catalog

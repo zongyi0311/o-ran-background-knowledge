@@ -102,4 +102,7 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 - 研讀3GPP TR 38.901 version 17.0.0 Release 17的7.5 Fast fading model
 - 5G Physical Layer: Principles, Models and Technology Components chapter 3-3
 
-
+**Daily Logs:**
+-  09:30 - 12:00 :studying 5G Physical Layer: Principles, Models and Technology Components [chapter 3-3](https://github.com/zongyi0311/rfsim-intern-log/blob/main/5G%20Physical%20Layer%20Principles.md#33-experimental-channel-characteristics)
+- 14:00 - 18:00 :研讀3GPP TR 38.901[3GPP TR 38.901](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP%20TR%2038.901.md) //原本預計讀7.5 但發現從7.1開始看比較好理解
+- 20:00 - 23:00 : random_channel.c的random_channel()

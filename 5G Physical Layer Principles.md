@@ -362,7 +362,7 @@ $$
 
 ---
 
- 3.8：多普勒域與時域的通道響應
+**多普勒域與時域的通道響應**
 
 | 編號 | 說明 | 多普勒擴散 $\sigma_{f_D}$ | 觀察時間 $T$ | 特殊情況 |
 |------|------|-----------------------------|---------------|-----------|
@@ -398,3 +398,294 @@ $$
 
 - 此定義具備**座標旋轉不變性**，可有效描述多路徑能量在空間中的分佈情形。
 - 與多普勒頻率模型類似，但更適用於**方向性天線**與**三維 MIMO 通道建模**。
+
+## 3.3 EXPERIMENTAL CHANNEL CHARACTERISTICS
+
+為了完整地描述通道特性，需要結合以下幾個面向：
+1. **頻率–延遲域（Frequency-Delay Domain）**
+2. **多普勒–時間域（Doppler-Time Domain）**
+3. **空間/方向域（Spatial/Directional Domain）**
+
+**連續波（CW）法** 是一種常用於量測「傳輸損耗（Transmission Loss）」的技術。
+- 利用固定頻率的**正弦波訊號**進行發射
+- 接收端透過**窄頻濾波器**過濾訊號
+- 搭配**高功率發射**與**低雜訊放大器（LNA）**，可達到高靈敏度接收
+---
+**優點**
+- 硬體架構簡單、成本低
+- 適合進行**大範圍、高速、連續掃描**
+- 常用於量測不同地區的**路徑損耗地圖（path loss map）**
+---
+**缺點**
+- **無法解析多重路徑（Multipath）效應**
+- 多路徑未被分離，導致**空間衰落（Spatial Fading）**
+---
+![image](https://github.com/user-attachments/assets/337c2ba1-7408-423e-bd0d-3dc7a0fbea96)
+
+- 實驗條件：街道微型基地台、NLoS（非視距）環境
+- 頻率：5.1 GHz CW 訊號
+- 為減少快衰落效應，採用 **1.7 公尺滑動平均**
+
+| 線條說明 | 說明 |
+| -------- | ---- |
+| 🔵 `No averaging` | 原始訊號，出現劇烈衰落波動 |
+| 🔴 `Averaging`     | 加上滑動平均後平滑化結果，利於觀察總體衰減趨勢 |
+
+**Vector Network Analyzer**
+
+與 CW 量測方法不同，向量網路分析儀（Vector Network Analyzer, VNA）允許最大的測量頻寬。
+原理與方法
+- 基本原理是進行頻率掃掠，對通道在預定頻寬內進行取樣。
+- 若要得到延遲域的通道響應，可透過離散傅立葉轉換（DFT）。
+---
+**優點**
+- VNA 透過 RF 線纜同時連接發射與接收天線，測量兩者之間的**完全相干比值**。
+- 接收信號與發射信號同步，可實現：
+  - 絕對延遲量測
+  - 長時間平均以抑制雜訊
+- 適合高精度多徑通道分析。
+---
+**缺點**
+- **行動性受限**：由於 RF 線纜連接，裝置難以移動。
+- **測試時間長**：掃頻時間受限於接收端 SNR，可能需數秒。
+- **量測距離有限**：RF 線纜訊號會衰減，每公尺可能衰減數 dB。
+---
+![image](https://github.com/user-attachments/assets/0efb4cbb-0052-464a-9aa7-2980fc55dd09)
+
+- 圖 3.10 展示 58.7 GHz、2 GHz 頻寬下的量測結果，應用於 NLoS 街道場景，使用光纖延伸超過 100 公尺。
+- 高頻寬（2 GHz）使得通道中的大量多徑組件得以清楚分離
+- 頻域響應顯示在整個頻帶內的起伏，反映出豐富的頻率選擇性行為
+
+
+**Correlation-Based Channel Sounding（相關性通道探測）**
+
+**優點**
+- **可移動**與**寬頻**的通道量測技術。
+- 傳送**專用的探測訊號（sounding signal）**，在接收端依據延遲與其做相關（correlation）。
+- 一般使用 **OFDM 或偽隨機序列（PN sequence）** 配合 **滑動相關器（sliding correlator）**。
+- 適用於 **行動裝置量測** 及 **頻寬較大的通道特性分析**。
+
+**取捨與限制**
+- **通道採樣頻率與抗雜訊能力之間的權衡**。
+- 訊號同時具有**相位與振幅調變**，因此 **受限於放大器非線性（amplifier non-linearities）**。
+
+---
+**Directional Characteristics（方向性特性）**
+
+- 通道的方向性特性在進入**毫米波頻段**（mmWave）後顯得特別重要。
+- 使用**全向天線**在高頻下會導致訊號損失增加，**天線口徑變小、覆蓋變差**。
+- 為此，必須採用 **波束成形技術（beam-forming）** 來聚焦訊號收發，**減少損耗並提升性能**。
+
+**Two Methods for Directional Characteristics**
+
+方法一：實體指向性天線（Physical Directive Antennas）
+
+- 使用實體高增益天線，如：
+  - **角喇叭天線（horn antenna）**
+  - **拋物面反射天線（parabolic reflector antenna）**
+- 通過在仰角（elevation）與方位角（azimuth）方向旋轉，來**掃描空間角度**。
+- 特點：
+  - 不易受時變通道影響。
+  - 適用於 **CW** 和 **Correlation-based** 通道探測。
+
+方法二：虛擬天線法（Virtual Antenna Method）
+
+- 使用**單一實體天線**搭配**機械平台（如機器手臂）**，在多個空間點進行量測。
+- 實現空間取樣（spatial sampling），再離線使用 **陣列天線技術（array processing）** 計算方向性資訊。
+
+**優點**：
+- 可實現 **高解析度**。
+- 有效抑制 **副瓣（sidelobes）**。
+
+**缺點**：
+- **量測時間長**（大型陣列可能需數小時以上）。
+- 需**同步鎖相的發射與接收裝置**。
+- 僅適用於 **靜態通道環境**。
+- 多用於 **VNA（Vector Network Analyzer）** 測量。
+
+**Spectral Analysis**
+
+此方法基於對量測信號的頻譜進行直接分析，透過傅立葉轉換（Fourier Transform）獲得頻率–延遲與都卜勒–時間分佈。
+- **應用技術**：需對空間中三個方向（x, y, z）取樣後進行三維 DFT 分析，得到波向量 **k** 的功率譜。
+- **k 值計算**：
+
+$$
+|k| = \sqrt{k_x^2 + k_y^2 + k_z^2}
+$$
+
+**實例說明**：
+  - 使用立方體虛擬天線陣列，共 $25^3 = 625$ 個採樣點（見 Figure 3.11）
+  - 使用 Hann 窗抑制側瓣干擾（side-lobe suppression）
+  - 結果在 k-domain 空間中，設定一固定半徑進行濾波，形成 **directional spectrum**
+
+  **優勢**：
+  - 側瓣抑制超過 50 dB
+  - 遠優於實體天線，後者僅可抑制至約 30 dB
+  - 最終可將光譜量測結果視為多徑組合，對應於每個多徑的相位與幅度
+
+![image](https://github.com/user-attachments/assets/59b8462c-eebb-464a-ae15-4e48394a9ce0)
+**上圖：Measured**  
+  實際量測的室內直視通道（LoS）在 60 GHz 下的空間功率分佈（azimuth × elevation）。
+
+**下圖：Synthesized using 400 MPCs**  
+  使用 400 條多徑成分（MPCs）合成出的通道響應，與實測結果相當吻合。
+
+**說明**：  
+  - 顯示以虛擬立方體天線進行三維空間掃描所得到的結果。
+  - 證明透過 **spectral analysis + multipath component synthesis** 能夠高度準確地重建實際通道特性。
+
+![image](https://github.com/user-attachments/assets/73d1f942-edcd-4d9c-812a-90130362548b)
+-  下方圖（延遲功率輪廓圖）
+顯示了在 5 GHz 下的非視距 (NLoS) 都市巨微蜂窩場景中的功率延遲輪廓（Power Delay Profile, PDP）。
+- 藍色線條：實際量測的 PDP（Measured）
+- 深色線條：根據超解析（super-resolution）估計的模型 PDP（Modeled）
+- X 軸：Delay（μs）
+- Y 軸：Relative Power（dB）
+---
+
+-  上方圖（平面波方向估計）
+
+此圖展示從基地台（BS）觀察方向上的平面波估計結果：
+- 每個白色圓圈代表一個估計的平面波方向，其大小表示相對功率大小（越大圓越強）。
+- 圓的位置對應到波的方位角與仰角。
+- 三角形標記表示行動台（MS）的方向。
+
+**Measurement Comparability **
+
+為了使全球不同的傳播量測資料具可比較性，研究社群需遵守一套統一的準則，以確保在不同實驗條件下獲得的結果可以公平比較。
+-  Requirements for comparability
+- **Equal measurement bandwidth**  
+  ➤ 提供相同的延遲解析度。
+- **Comparable antenna pattern**（either physical or synthesized）  
+  ➤ 確保天線方向圖一致，無論是實體天線還是虛擬天線。
+- **Equal dynamic power range**（in domain of analysis, e.g., delay or angle）  
+  ➤ 確保功率測量的一致性。
+- **Same environment and antenna locations**  
+  ➤ 不同頻段或量測方法需在相同環境下執行，以便比較。
+
+---
+**為何需要等化頻寬？**
+- 在高頻（如毫米波）中，**可使用的量測頻寬通常較大**。
+- 頻寬大 → 延遲解析度高 → **偵測到更多多徑**。
+- 若不同量測使用不同頻寬，會造成誤導性的延遲擴散變化 → **延遲擴散看似減少**，但實際只是解析度提升。
+- 所以：**為了公平比較，應使用相同頻寬** 或將頻寬等化處理。
+
+---
+![image](https://github.com/user-attachments/assets/484e6253-f8d4-41aa-a858-0a94dd988a1d)
+在 NLoS 微蜂窩場景中，分析了兩種頻寬的 power delay profile：
+- **2 GHz 頻寬（左圖）**  
+  - 解析度高  
+  - delay spread ≈ **7 ns**
+- **80 MHz 頻寬（右圖）**  
+  - 解析度低  
+  - delay spread ≈ **28 ns**
+重點：當使用固定的 20 dB 動態功率範圍下進行 RMS delay spread 計算時，**頻寬不同會導致明顯的結果差異**。
+---
+- 頻寬越寬，能解析的多徑越細緻。
+- 使用固定動態功率範圍做統計時，頻寬的選擇對結果影響重大。
+- 在比較不同頻段測量結果時，**務必注意頻寬、天線模式、功率範圍與量測位置的一致性**。
+
+**TRANSMISSION LOSS MEASUREMENTS**
+**測量目的**
+傳輸損耗（Transmission Loss）反映了由於電波傳播造成的接收訊號強度衰減，是無線通道最基本也最關鍵的特性之一
+
+**實驗設計與方法**
+- **頻率範圍**：1–100 GHz。
+- **天線類型**：
+  - 垂直極化 omni dipole 天線（常見，用於所有頻段）
+  - 垂直 patch 天線或 open waveguide（用於戶外傳送時的戶外到室內量測）
+- **短距離 LoS 標準校正**：使用 **0.1–1.0 m 的直視（LoS）距離**，確保資料準確、排除天線頻率響應影響。
+
+**氧氣吸收補償（60 GHz）**
+- 在 60 GHz 附近，會受到 **氧氣吸收（約 1.5 dB / 100 m）** 影響。
+- 為了確保模型可跨頻平滑外推/內插，**在建模時須加入氧氣吸收補償項**。
+
+![image](https://github.com/user-attachments/assets/68e8782b-c517-48f8-86e6-d80760f81906)
+
+**Delay Domain Measurements**
+
+- 延遲領域有助於建構通道的 **頻率選擇性（frequency selectivity）** 特性  
+  （參考 Section 3.2.1）
+- 對於 **傳輸波形最佳化**（例如 OFDM）至關重要，尤其是延遲擴展（delay spread）對循環前綴（Cyclic Prefix, CP）長度的影響
+- 3GPP 選擇 OFDM 作為 NR 調變方式，因此需根據延遲特性設定 CP 長度
+
+
+**延遲領域中的頻率趨勢（General Frequency Trend in Delay Domain）**
+
+實驗觀察總結
+- 除了「戶外到室內」場景外，**實驗資料未顯示明確的頻率趨勢**
+- 根據 3GPP 早期研究：延遲擴展（delay spread）**隨頻率上升而下降**
+
+**3GPP 模型的問題點**
+- 3GPP 在制定模型時，**頻段間可比性要求未完全符合**
+- 導致這些結果在學術上可能不完全可靠
+
+**mmMAGIC 實驗專案（EU-funded）**
+- 採用 15 個量測計畫、6 個組織合作，符合頻段可比性要求
+- 模型包含五種場景的參數，透過統計整合而來
+
+**模型比較結果**
+- 圖 3.25 與模型 (3.29) 顯示：
+  - **3GPP 模型**：延遲擴展明顯隨頻率下降
+  - **mmMAGIC 數據**：**未顯示相同趨勢**
+  - 僅「都市峽谷視距（street canyon LoS）」與「室內視距（indoor office LoS）」略呈現下降趨勢，且落於 95% 信賴區間
+
+結論：3GPP 模型在高頻段的 delay spread 下降趨勢 **不完全被實驗支持**
+
+![image](https://github.com/user-attachments/assets/367aa4e8-a023-4f67-97d9-60a8bf1269f1)
+
+**延遲領域中的頻率趨勢（General Frequency Trend in Delay Domain）**
+
+-  實驗與模型比較分析
+
+- **mmMAGIC 實測資料**：
+  - 大多情境下延遲擴展（Delay Spread）**並未隨頻率明顯下降**
+  - 只有：
+    - Street Canyon LoS
+    - Indoor Office LoS  
+    顯示出輕微下降趨勢（在 95% 信賴區間內）
+
+- **3GPP TR 38.901 模型**：
+  - 預測延遲擴展會**明顯隨頻率上升而下降**
+  - 與 mmMAGIC 測量資料之間存在 **明顯差異（discrepancy）**
+
+---
+![image](https://github.com/user-attachments/assets/2e132b30-c642-4bc4-81fd-5fc7bc17ca91)
+
+**Figure 3.25：模型與實測結果比較圖**
+
+🔹 上圖：延遲頻率係數 α 的比較
+
+- `α` 為 delay spread 對頻率的擬合斜率
+- **3GPP α 明顯為負值**
+- **mmMAGIC α 接近 0 或微負，區間更廣**
+🔹 中圖：Indoor Office 場景
+
+- **3GPP 模型**顯示 LOS 與 NLOS 延遲擴展隨頻率下降
+- **mmMAGIC**：
+  - NLOS 幾乎**不變**
+  - LOS 輕微下降但整體較平坦
+
+🔹 下圖：Street Canyon 場景
+
+- **3GPP 模型**持續呈現下降趨勢
+- **mmMAGIC 資料**則大致維持水平或僅微降
+
+---
+| 特性              | 3GPP 模型                  | mmMAGIC 實測資料          |
+|-------------------|-----------------------------|-----------------------------|
+| 頻率影響趨勢      | 延遲擴展明顯下降             | 多數情境中趨勢不明顯        |
+| 實測驗證一致性    | 模型斜率與實測不符           | 僅少數場景稍具一致性        |
+| 建模依據          | 未完整符合頻段比較要求       | 精心設計，滿足可比性需求     |
+
+結論：3GPP 模型雖簡化設計，但可能**高估高頻延遲擴展下降趨勢**。mmMAGIC 數據提供更符合實際情況的依據。
+
+**方向領域量測（Directional Domain Measurements）**
+- 在高頻（尤其是毫米波）通訊中，必須透過精確控制**發射與接收天線方向**來克服高傳輸損耗  
+- 使用全向天線時，天線孔徑與波長平方成正比，導致在高頻時有效接收面積變小 → **只能支援短距離連結**
+---
+- 探討無線通道的 **方向性特性（Directional Properties）**
+- 特別關注於**高頻段**（如 24–100 GHz）中傳播特性對指向性的影響
+
+---
+目的在於支援毫米波與高頻移動通訊的波束對準與通道建模

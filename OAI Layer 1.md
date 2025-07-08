@@ -1,3 +1,6 @@
+[random_channel()]
+
+
 [7/7](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20Layer%201.md#77)
 # catalog
 ```
@@ -724,3 +727,86 @@ Ricean 通道 是一種無線傳播通道模型，用於描述存在強直射路
 | K-factor | $K > 0$      | $K = 0$        |
 | 分布類型     | Ricean 分布    | Rayleigh 分布    |
 | 適用場景     | 室外可視環境、衛星通訊等 | 密集都市、無 LOS 的環境 |
+
+
+```
+bzero(acorr, desc->nb_tx * desc->nb_rx * sizeof(struct complexd));//清空 acorr 緩衝區（儲存相關性處理後的通道）
+    if (desc->modelid >= TDL_A && desc->modelid <= TDL_E) {//若模型是 TDL-A ～ TDL-E（表示使用空間相關性矩陣）
+      for (aatx = 0; aatx < desc->nb_tx; aatx++) {
+        for (aarx=0; aarx<desc->nb_rx; aarx++) {
+          for (int inside = 0; inside < desc->nb_tx * desc->nb_rx; inside++) {
+            const cd_t tmp = cdMul(anew[aarx + aatx * desc->nb_rx], desc->R_sqrt[aarx + aatx * desc->nb_rx][inside]);//anew為原始通道樣本，乘上 R_sqrt[][]進行「空間相關性建模」
+            csum(acorr[inside], tmp, acorr[inside]);//累加結果
+          }
+        }
+      }
+    } else {
+      for (int inside = 0; inside < desc->nb_tx * desc->nb_rx; inside++) {
+        const cd_t tmp = cdMul(desc->R_sqrt[i / 3][0], anew[inside]);//使用單一複數權重 × 每條通道
+        csum(acorr[inside], tmp, acorr[inside]);
+      }
+    }
+```
+**模擬多天線系統（MIMO）中，TX 與 RX 之間的空間相關性（spatial correlation）**
+**背景知識：空間相關性建模**
+-  在多天線通訊中，理想的 Rayleigh 通道假設每條通道獨立（i.i.d.），但實際上天線之間會有空間上的相關性（correlation），特別是在基地台天線距離近或使用者聚集的情況下。
+
+為了模擬這個現象，我們使用相關矩陣平方根 R_sqrt，進行以下運算：
+![image](https://github.com/user-attachments/assets/5d1dd828-639a-4d5e-b6cb-7a85060f32df)
+
+```
+if (desc->first_run==1) {
+      memcpy(desc->a[i], acorr, desc->nb_tx * desc->nb_rx * sizeof(*acorr));
+    } else {
+      // a = alpha*acorr+beta*a
+      // a = beta*a
+      // a = a+alpha*acorr
+      alpha.r = sqrt(1-desc->forgetting_factor);
+      alpha.i = 0;
+      beta.r = sqrt(desc->forgetting_factor);
+      beta.i = 0;
+      for (int inside = 0; inside < desc->nb_tx * desc->nb_rx; inside++) {
+        desc->a[i][inside] = cdMul(beta, desc->a[i][inside]);
+        const cd_t tmp = cdMul(alpha, acorr[inside]);
+        csum(desc->a[i][inside], tmp, desc->a[i][inside]);
+      }
+    }
+```
+**模擬「通道時間相關性」**
+-  通道會隨時間變化（fading），但不應該每次都完全獨立（否則太抖動）。
+-  引入 記憶機制（forgetting factor） 來模擬時間相關性。
+-  就像 IIR 濾波器或 fading filter。
+-  a[i] = β × a[i] + α × acorr這是經典的指數移動平均（Exponential Moving Average）
+---
+```
+if (abstraction_flag==0) {
+    start_meas(&desc->interp_time);
+
+    for (aarx=0; aarx<desc->nb_rx; aarx++) {
+      for (aatx=0; aatx<desc->nb_tx; aatx++) {
+        if (desc->channel_length == 1) {//這種情況通常代表是 單徑（flat fading）模型，無需插值處理。
+          desc->ch[aarx+(aatx*desc->nb_rx)][0].r = desc->a[0][aarx+(aatx*desc->nb_rx)].r;
+          desc->ch[aarx+(aatx*desc->nb_rx)][0].i = desc->a[0][aarx+(aatx*desc->nb_rx)].i;
+        } else {
+          for (k=0; k<(int)desc->channel_length; k++) {//多 tap 處理：插值實作
+            desc->ch[aarx+(aatx*desc->nb_rx)][k].r = 0.0;
+            desc->ch[aarx+(aatx*desc->nb_rx)][k].i = 0.0;
+
+            for (l=0; l<desc->nb_taps; l++) {//// 對每個 delay tap 進行 sinc 插值
+              if ((k - (desc->delays[l]*desc->sampling_rate) - desc->channel_offset) == 0)
+                s = 1.0;
+              else
+                s = sin(M_PI*(k - (desc->delays[l]*desc->sampling_rate) - desc->channel_offset))/
+                    (M_PI*(k - (desc->delays[l]*desc->sampling_rate) - desc->channel_offset));
+
+              desc->ch[aarx+(aatx*desc->nb_rx)][k].r += s*desc->a[l][aarx+(aatx*desc->nb_rx)].r;
+              desc->ch[aarx+(aatx*desc->nb_rx)][k].i += s*desc->a[l][aarx+(aatx*desc->nb_rx)].i;
+              //        printf("l %d : desc->ch.x %f, s %e, delay %f\n",l,desc->a[l][aarx+(aatx*desc->nb_rx)].x,s,desc->delays[l]);
+            }
+```
+**產生時間域下的通道脈衝響應（Channel Impulse Response, CIR），也就是 desc->ch[aarx + aatx * nb_rx][k]，以便後續進行卷積（convolution）或 OFDM 處理**
+通道建模流程的「插值 / 時域合成階段」，根據 fading tap（desc->a[l][]）與延遲值 desc->delays[l]，將多徑展開為每個時間點的通道響應
+
+### tdlModel
+
+![image](https://github.com/user-attachments/assets/133d9f2e-b9db-43fb-a863-50126c97ab45)

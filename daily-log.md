@@ -114,4 +114,5 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 - 研讀3GPP TR 38.901 version 17.0.0 Release 17的7.2
 - 研讀程式碼[random_channel.c](https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/openair1/SIMULATION/TOOLS/random_channel.c?ref_type=heads) 
 
+**Daily Logs:**
 - 09:30 - 11:00 :5G Physical Layer: Principles, Models and Technology Components [chapter 3-4](https://github.com/zongyi0311/rfsim-intern-log/blob/main/5G%20Physical%20Layer%20Principles.md#34)

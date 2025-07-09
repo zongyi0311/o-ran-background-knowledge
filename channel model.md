@@ -1132,3 +1132,38 @@ for (int i = 0; i < max_chan; i++) {
 ### load_channellist()
 **從設定檔中讀取一系列通道模型設定，依據這些參數建立 channel descriptor**
 -  在simulator.c被呼叫
+
+# 總結
+-  1.通道建立與初始化
+-  2.通道係數產生
+-  3.通道模擬因素
+```
+| 項目                          | 說明                             |
+| --------------------------- | ------------------------------ |
+| **多徑延遲（Multipath Delay）**   | 不同路徑到達時間不同，造成符號間干擾（ISI）        |
+| **快速衰落（Fast Fading）**       | 高斯/雷利/Ricean 衰落，隨時間變化的隨機性增益/相位 |
+| **Doppler 效應**              | 接收端觀察到的頻率偏移，造成通道時間變化（時變通道）     |
+| **路徑損失（Path Loss）**         | 發射功率到達接收端的整體衰減（根據距離與頻率）        |
+| **空間相關性（MIMO Correlation）** | 多天線系統中的通道間相關程度（使用相關矩陣）         |
+| **Ricean K-Factor**         | 表示直射路徑與散射路徑的功率比                |
+| **隨機相位與增益生成**               | 使用高斯亂數或特定分佈來產生通道 tap 的複數係數     |
+| **功率正規化**                   | 確保總能量維持一致，便於比較不同模型             |
+```
+| 模擬功能                            | 對應程式片段/說明                                                              |
+| ------------------------------ | ---------------------------------------------------------------------- |
+|  多徑 taps 系統                     | `desc->nb_taps`, `desc->amps`, `desc->delays`                          |
+|  衰落模型 (Rayleigh/Ricean)           | 使用 `gaussZiggurat()` 產生亂數，含 Ricean 路徑計算                                |
+|  Doppler shift 時域變化               | `desc->max_Doppler` 控制相位變化，模擬 fading process                           |
+|  空間相關性                           | 使用 `R_sqrt` 矩陣對產生的 tap 做相關性混合                                          |
+|  AOA 角度                           | 控制 phase shift：`phase.r = cos(...)`, `phase.i = sin(...)`              |
+|  Ricean 直射路徑                      | 分開處理 LOS 成分與 NLOS 成分，根據 Rice factor 混合                                 |
+|  計算 normalization\_ch\_factor     | 確保通道增益一致性，避免功率失衡                                                       |
+|  支援 TDL/SCM/EPA/EVA/ETU 等標準模型    | 從 channel\_desc 結構中引入不同模型參數                                            |
+|  MIMO 多天線處理                      | `desc->nb_tx * desc->nb_rx` 控制天線對數，對每對天線產生通道係數                         |
+|  支援衛星模擬                           | 特別 model ID 為 `SAT_LEO_TRANS` / `REGEN` 時直接使用單一 tap，channel = identity |
+
+-  4.執行流程
+  -  simulator.c：模擬控制器與主流程，呼叫 random_channel() 來對傳輸資料施加通道效應
+  -  random_channel.c 產生通道係數等
+  -  apply_channelmod.c套用通道模型的封裝工具 把通道係數應用到實際的發射訊號上，模擬「通道後的接收訊號」
+

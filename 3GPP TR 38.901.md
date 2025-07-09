@@ -425,6 +425,9 @@ where K [dB] is the Ricean K-factor
 ### 將延遲縮放
 ![image](https://github.com/user-attachments/assets/84e43009-782a-4fb7-8f64-6e6b4a0a1652)
 
+
+
+
 **LOS 縮放後的延遲不可用於後續的 cluster power 計算。**
 
 

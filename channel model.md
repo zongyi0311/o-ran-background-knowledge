@@ -926,6 +926,7 @@ channel_desc_t *new_channel_desc_scm
 | `TDL_D` | `0.1`（或定義值）   | `tdl_m(d)` | 郊區/半 LOS 環境  |  有    |
 | `TDL_E` | `0.01`（或定義值）  | `tdl_m(e)` | 高速場景（車載、V2X） |  有    |
 
+# 7/9
 ### fill_channel_desc()根據輸入參數配置與初始化一個完整的 channel_desc_t 通道描述結構，包含多徑參數、記憶體分配、相關矩陣與模擬測量控制器
 ```
 ┌──────────────────────────────────────────────┐
@@ -1162,8 +1163,20 @@ for (int i = 0; i < max_chan; i++) {
 |  MIMO 多天線處理                      | `desc->nb_tx * desc->nb_rx` 控制天線對數，對每對天線產生通道係數                         |
 |  支援衛星模擬                           | 特別 model ID 為 `SAT_LEO_TRANS` / `REGEN` 時直接使用單一 tap，channel = identity |
 
--  4.執行流程
+**執行流程**
   -  simulator.c：模擬控制器與主流程，呼叫 random_channel() 來對傳輸資料施加通道效應
   -  random_channel.c 產生通道係數等
   -  apply_channelmod.c套用通道模型的封裝工具 把通道係數應用到實際的發射訊號上，模擬「通道後的接收訊號」
 
+## 相關檔案
+| 類型         | 檔案                       | 功能重點                       |
+| ---------- | ------------------------ | -------------------------- |
+| **Tap 模型** | `random_channel.c`       | Rayleigh、Ricean、SCM tap 產生 |
+| **通道卷積**   | `multipath_channel.c`    | 固定 tap convolution         |
+| **TV 模擬**  | `multipath_tv_channel.c` | 時間變動 tap                   |
+| **隨機數生成**  | `rangen_double.c`        | 高斯亂數、ziggurat              |
+| **LUT 工具** | `gauss.c`                | 高斯查表                       |
+| **高階控制**   | `channel_sim.c`          | 封裝上下行傳輸                    |
+| **雜訊/失真**  | `phase_noise.c`          | 模擬 oscillator 相位雜訊         |
+| **抽象模型**   | `abstraction.c`          | 頻域抽象通道，使用 sin/cos 查表       |
+| **LLR 量化** | `llr_quantization.c`     | soft LLR 裁剪與整數量化           |

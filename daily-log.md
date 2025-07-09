@@ -116,3 +116,4 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 
 **Daily Logs:**
 - 09:30 - 11:00 :5G Physical Layer: Principles, Models and Technology Components [chapter 3-4](https://github.com/zongyi0311/rfsim-intern-log/blob/main/5G%20Physical%20Layer%20Principles.md#34)
+- 12:30 - 16:00 :看完random_channel.c [7/9](https://github.com/zongyi0311/rfsim-intern-log/blob/main/channel%20model.md#79)

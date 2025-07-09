@@ -157,6 +157,57 @@ LCS 到 GCS 的轉換可透過三個角度完成：
   -  ψ 為 GCS 與 LCS 球面基底向量之間的旋轉角差
   -  它定義了：在同一方向 n̂ 下，GCS 的球面基底 (θ̂, φ̂) 和 LCS 的球面基底 (θ̂′, φ̂′) 的夾角
 
+# 7.2 Scenarios 
+
+![image](https://github.com/user-attachments/assets/c455497e-d5bb-44d5-b606-3f926c9b20a3)
+
+- 	UMi - 街道峽谷 (Street Canyon)
+- 	UMa - 城市宏小區 (Urban Macro)
+
+![image](https://github.com/user-attachments/assets/7a9f9331-aab2-4be5-98c7-cd53994e4be1)
+**備註說明**：
+-  LOS 機率差異 是 open office 與 mixed office 的唯一區別。
+-  Open office 模型預設大部分情況是開放無遮蔽，因此 LOS 機率較高。
+-  Mixed office 模型則包含牆壁與隔間，使 LOS 機率降低。
+
+![image](https://github.com/user-attachments/assets/82638bee-9239-42d2-8d13-dbe584e6d5c6)
+
+**場景簡述**
+-  RMa 主要模擬 大範圍、連續性覆蓋 的鄉村場景。
+-  適用於 高速移動車輛 的無線通訊。
+-  通道受限於 熱噪聲與干擾（noise-limited/interference-limited）。
+-  採用 macro TRPs 作為基地台部署形式。
+
+![image](https://github.com/user-attachments/assets/22a48b36-366e-48db-a56d-b994ad00c8a8)
+
+| 分類     | 縮寫                      | 說明            |
+| ------ | ----------------------- | ------------- |
+| InF-SL | Sparse clutter, Low BS  | 雜物少、基地台低於雜物高度 |
+| InF-DL | Dense clutter, Low BS   | 雜物多、基地台低於雜物高度 |
+| InF-SH | Sparse clutter, High BS | 雜物少、基地台高於雜物   |
+| InF-DH | Dense clutter, High BS  | 雜物多、基地台高於雜物   |
+| InF-HH | High Tx, High Rx        | 發送與接收端都高於雜物   |
+
+| 參數                 | 值                     |
+| ------------------ | --------------------- |
+| **Room size**      | 長方形，面積 20–160,000 m²  |
+| **Ceiling height** | 5–25 m（低 BS 為 5–15 m） |
+| **有效雜物高度 $h_c$**   | 0–10 m，且小於天花板高度       |
+
+| 參數                     | InF-SL / SH    | InF-DL / DH  | InF-HH |
+| ---------------------- | -------------- | ------------ | ------ |
+| **牆與天花板**              | 混凝土或金屬牆，金屬塗層窗戶 |              |        |
+| **雜物類型**               | 大型規律金屬機械或倉儲    | 中小型、不規則機械與產線 | 任意     |
+| **雜物大小 $d_{clutter}$** | 10 m           | 2 m          | 任意     |
+| **雜物密度 $r$**           | 低密度（< 40%）     | 高密度（≥ 40%）   | 任意     |
+
+| 參數                 | InF-SL / DL   | InF-SH / DH   | InF-HH     |
+| ------------------ | ------------- | ------------- | ---------- |
+| **BS 高度 $h_{BS}$** | 雜物中（低於雜物高度）   | 高於雜物          | 高於雜物       |
+| **LOS/NLOS**       | LOS 與 NLOS 混合 | LOS 與 NLOS 混合 |  100% LOS |
+| **UT 高度 $h_{UT}$** | 雜物中           | 高於雜物          | 高於雜物       |
+
+
 # 7.5 Fast fading model 
 
 根據 3GPP TR 38.901 V17.0.0，無線通道實現是透過表格 7.5-1 所列的參數產生，並依據圖 7.5-1 所示的步驟流程建立。

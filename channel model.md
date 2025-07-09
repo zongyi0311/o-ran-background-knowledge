@@ -200,7 +200,7 @@ Input: MAC PDU (bytes)
 | `multipath_channel.c`    | 多路徑通道模擬，包括 tap delay line、Rayleigh/Rician 測試等   |
 | `multipath_tv_channel.c` | 時變通道版本，可模擬通道在時間上變化的情況（e.g. UE移動）                |
 | `phase_noise.c`          | 相位雜訊模擬，模仿 oscillator 中的隨機相位擾動行為                 |
-| `random_channel.c`       | 支援隨機生成各種通道參數，支援衛星模擬如 NTN LEO                   |
+| `random_channel.c`       | 支援隨機生成各種通道參數                 |
 | `rangen_double.c`        | 提供 double 型態的隨機數產生，為通道模擬提供隨機性                  |
 | `scm.m`                  | MATLAB 腳本，產生 SCM (Spatial Channel Model) 通道參數   |
 | `scm_corrmat.h`          | SCM 相關矩陣參數定義（Header file），配合 `scm.m` 使用         |

@@ -689,3 +689,138 @@ $$
 
 ---
 目的在於支援毫米波與高頻移動通訊的波束對準與通道建模
+
+
+## 3.4
+### 5G STOCHASTIC CHANNEL MODELS
+-  3GPP 提出的 5G 通道模型，頻率涵蓋範圍為 0.5–100 GHz
+-  mmMAGIC 模型與 3GPP/ITU-R 模型高度一致，僅有少量改善與擴展
+-  ![image](https://github.com/user-attachments/assets/93a41012-c8a6-4162-9719-b7080a53d65b)
+
+### Transmission Loss Modeling
+**基本概念**
+-  傳輸損耗（Path Loss）建模假設雙端使用 等向性天線（isotropic antennas）。
+-  根據 ITU-R P.341 建議定義的基本傳輸損耗進行計算。
+-  特定天線方向性（pattern）影響會另外建模，再與多徑效應結合。
+
+-  LoS（可視）情況：損耗與自由空間損耗相似，直到一個斷點（break point）後，損耗隨距離變化為：Loss∝40log(d)
+-  NLoS（非可視）情況：在 UMa（都市巨微小區）與 RMa（鄉村宏小區）下，損耗對頻率無依賴性
+-  室內與街道峽谷（Street Canyon）情境：自由空間損耗會隨頻率略微上升
+**隨機空間變異性建模**
+-  假設損耗有隨距離變化的 對數常態分布（log-normal stochastic variation） 標準差範圍通常為 4–8 dB
+-  空間上的變化由下式描述的 **指數自相關函數（exponential autocorrelation**控制：![image](https://github.com/user-attachments/assets/5083a7cd-d706-4468-aa98-7855f2589c10)Δ
+Δd：空間中兩點間距離
+dcor：空間相關距離常數
+**Building Penetration Loss**
+-  ![image](https://github.com/user-attachments/assets/afe6e410-6a93-4c76-898c-b873467da748)
+-  α、 β：建築外牆中玻璃與混凝土所佔比例
+-  Lglass、Lconcrete：多層玻璃窗與混凝土的穿透損耗（dB）
+-  γ ：每公尺水平滲透深度對應的額外損耗
+-  ![image](https://github.com/user-attachments/assets/112f6bbd-8c32-42cc-82bd-c6d37cb1241c)
+
+-  ![image](https://github.com/user-attachments/assets/e573cf97-6433-4889-a219-f42d33defb72)
+-  ![image](https://github.com/user-attachments/assets/48210ca1-029f-4948-832d-8cef30a1b57b)
+
+**穿透損失的變異程度（標準差）**
+  -  標準差 σ 的模型為：
+  -  σ = 4 + kσ × f
+  -  其中 kσ = 0.08 dB/GHz（適用於低損失類建築）
+
+**3GPP 與 ITU-R 模型差異比較**
+| 項目    | 3GPP 模型              | ITU-R P.2109 模型 |
+| ----- | -------------------- | --------------- |
+| 模型原理  | 簡化物理法則推導             | 建立於大量實測數據       |
+| 頻率依賴性 | 頻率趨勢較強，>50 GHz 時差異顯著 | 趨勢相對平緩，分布會隨頻率變寬 |
+| 模型精度  | 適用於早期 5G 模擬          | 適合頻譜共用與高頻共存研究   |
+
+### Multipath Directional and Delay Modeling
+在 5G 幾何隨機通道模型中，多徑成分的**振幅、延遲與方向（角度）是透過封閉型機率分佈的一階與二階矩（moment）**來生成，並區分為 **inter-cluster（叢集間**與 intra-cluster（叢集內） 兩個層級：
+-  高層級（Inter-cluster）：建構多徑叢集的統計分佈
+-  低層級（Intra-cluster）：建構叢集內部各多徑的分佈
+
+**延遲領域（Delay Domain）特性**：
+-  多徑叢集的出現機率與功率呈指數衰減分佈
+-  加入**對數常態遮蔽（log-normal shadowing）**以模擬空間變異性
+
+**角度領域（仰角與方位角）建模方式**：
+-  使用**包裹式高斯分佈（wrapped Gaussian）**來模擬叢集功率分佈
+-  問題：此分佈使得多叢集朝同一方向機率過低，與實測數據不符
+
+**模型結構與子徑設計**：
+-  每個叢集含 20 條多徑分量（subpaths）
+-  兩個最強叢集會再被細分為 3 個固定延遲的子層級
+-  子徑間的功率固定，角度分佈使用表列資料（tabulated）以產生Laplacian 型功率角度分佈
+
+![image](https://github.com/user-attachments/assets/2b091603-4a73-49e3-bafd-5d05c56bf3dd)
+**Multipath Component Distributions at 60 GHz (NLoS)**
+該圖展示了在 60 GHz 非視距（NLoS）辦公室場景下，多徑成分在**方位角（Azimuth Angle RX）與傳播距離（Propagation Distance）**上的分佈。
+-  以 點的大小 表示功率（0 dB ~ -30 dB）
+-  x 軸：接收端方位角（deg）
+-  y 軸：傳播距離（m）
+
+---
+-  (A)：實測資料 – for a medium obstructed NLoS scenario
+-  (B)：實測資料 –  for a heavily obstructed NLoS scenario
+-  (C)：3GPP 模型 –  a random realization of the 3GPP model for the base line
+-  (D)：3GPP 模型 – for the high resolution option 
+
+**比較與觀察**
+1.實測資料 (A, B)：
+-  顯示出多方向、多距離的散布特性
+-  並沒有明顯的「長延遲路徑偏離主方向」現象
+-  資料較分散，方向與延遲較自然、多樣
+
+2.3GPP 模型結果 (C, D)：
+-  呈現較規則、集中於特定方向的排列
+-  部分叢集在延遲較長時偏離主方向（這是模型預設）
+-  缺乏實測中觀察到的隨機性與多樣性
+
+| 對比項目   | 實測資料 (A, B) | 3GPP 模型 (C, D)             |
+| ------ | ----------- | -------------------------- |
+| 方位角分布  | 自然、寬廣、具隨機性  | 離散、集中、模型預設方向               |
+| 傳播距離分布 | 連續且涵蓋廣泛距離   | 固定階層、離散                    |
+| 能量分布   | 多中心，強度變化自然  | 固定每 cluster 的強度分布          |
+| 現象再現性  | 符合實際反射與散射情境 | 反映幾何特性但忽略真實場景的複雜性          |
+| 模型缺陷   | -           | 過度簡化、可能導致 delay spread 被低估 |
+
+**3GPP baseline 模型的限制**：
+
+1. 每個 cluster 固定 20 條 subpath，且延遲為固定值：
+-  建立的是合成（synthetic）模型輸出，不符合高解析實測結果。
+-  方位與延遲的分布過於離散，缺乏隨機性與自然性。
+
+2. 功率分布不自然：
+-  根據實測資料，MPC（多徑成分）功率會隨「功率排序的編號」快速下降。
+-  到第 20 條 MPC 時，功率通常比最大值低 7~15 dB。
+-  而 baseline 模型中，每條 subpath 的功率分布是平的（無衰減），這與實際觀測不符。
+
+3. 造成的問題：
+-  若使用大規模陣列（Massive MIMO）或極窄波束（narrow beam），每個 MPC 都有可能被解析出來。
+-  導致過度樂觀的 MIMO 效能預測（例如干擾抑制與容量過高）。
+
+**3GPP 提供的解法：高解析選項（High Resolution Option）**
+1. cluster 的配置與 baseline 相同：
+-  cluster 數量與分佈仍保持一致，符合幾何模型假設。
+
+2. 每個 cluster 允許更多 MPCs（遠超過 20 條）：
+-  角度分布：均勻分佈 + 拉普拉斯加權（Laplacian weighting）
+-  延遲分布：均勻分佈 + 指數加權（Exponential weighting）
+
+3. 結果：
+-  更接近實測的功率遞減現象。
+-  角度與延遲的分布也顯得更自然，提升建模真實性。
+-  在圖 3.37 和 3.38 中顯示該方法的輸出，與實測資料更為吻合。
+
+![image](https://github.com/user-attachments/assets/4fae9482-267f-473e-80fb-148fa1036365)
+| 線條類型             | 表示對象                             | 特性                                                                                 |
+| ---------------- | -------------------------------- | ---------------------------------------------------------------------------------- |
+| 實線（3GPP models）  | Baseline 與 High-Resolution 模型的結果 | - Baseline 模型在 1\~20 條 MPC 上功率幾乎不變，表示功率分布不合理<br>- High-Resolution 模型功率則隨排序遞減，更接近實測 |
+| 虛線（Measurements） | 實際量測資料，三個不同場景                    | 功率隨 MPC 編號明顯衰減，20 條後掉到 -15 dB，顯示真實通道能量集中在少數 MPC                                    |
+
+| 模型類型                | 功率分布合理性   | 建議用途                         |
+| ------------------- | --------- | ---------------------------- |
+| **Baseline**        | 不合理，無功率衰減 | 適合粗略模擬，快速運算但低準確性             |
+| **High Resolution** | 高，符合實測特性  | 適合 Massive MIMO、高頻段系統、精準效能預估 |
+| **實測參考**            | 最接近真實情境   | 建模與校準依據                      |
+
+

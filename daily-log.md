@@ -118,3 +118,10 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 - 09:30 - 11:00 :5G Physical Layer: Principles, Models and Technology Components [chapter 3-4](https://github.com/zongyi0311/rfsim-intern-log/blob/main/5G%20Physical%20Layer%20Principles.md#34)
 - 12:30 - 16:00 :看完random_channel.c [7/9](https://github.com/zongyi0311/rfsim-intern-log/blob/main/channel%20model.md#79)
 - 16:00 - 16:30 :研讀3GPP TR 38.901 version 17.0.0 Release 17的 [7.2](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP%20TR%2038.901.md#72-scenarios)
+
+## 2025/07/010
+**Short-term Goals**
+- 5G Physical Layer: Principles, Models and Technology Components chapter 8
+- 看karl跟richard之前的筆記並做整理
+- 研讀3GPP TR 38.901 version 17.0.0 Release 17的7.3
+- 研讀整理O-DU跟O-RU的架構跟對應3GPP規格

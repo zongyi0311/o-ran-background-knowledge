@@ -207,6 +207,100 @@ LCS 到 GCS 的轉換可透過三個角度完成：
 | **LOS/NLOS**       | LOS 與 NLOS 混合 | LOS 與 NLOS 混合 |  100% LOS |
 | **UT 高度 $h_{UT}$** | 雜物中           | 高於雜物          | 高於雜物       |
 
+# 7.3 Antenna modellin
+**天線面板排列結構**
+-  基站（BS）天線被建模為一個 矩形面板陣列，由下列五元組表示：(M_g, N_g, M, N, P)
+| 參數    | 意義                                                     |
+| ----- | ------------------------------------------------------ |
+| `M_g` | 面板在**垂直方向**的數量                                         |
+| `N_g` | 面板在**水平方向**的數量                                         |
+| `M`   | 每列中具有相同極化的天線元素數量                                       |
+| `N`   | 每列中的列數（即每個面板中的列數）                                      |
+| `P`   | 極化類型：`1` 單極化（Single Polarized），`2` 雙極化（Dual Polarized） |
+
+**面板間距**
+- 水平方向間距：`dg,H`
+- 垂直方向間距：`dg,V`
+
+**面板內的天線元素配置**
+- 在每個天線面板內，天線元素以矩陣排列，具有 M × N 元素。
+- 水平間距：d_H
+- 垂直間距：d_V
+
+**坐標與編號**
+- 天線面板的編號假設觀測方向是從天線正面看（x 軸朝向寬邊方向，y 軸向上表示欄位數遞增）
+- 元素座標 (m, n)，其中：
+  - m：第幾列（垂直方向）
+  - n：第幾欄（水平方向）
+ 
+ **這種模型廣泛用於：**
+-  大規模 MIMO、系統波束賦形設計、通道建模與仿真
+-  
+<img width="786" height="270" alt="image" src="https://github.com/user-attachments/assets/0ea59782-aaa4-42af-b372-156583bd9110" />
+
+---
+
+<img width="786" height="412" alt="image" src="https://github.com/user-attachments/assets/a3c06229-f95f-4224-b33d-b7ecc44107e8" />
+
+- 這些功率圖表示天線對不同方向的發射能力（以 dB 表示）
+- 功率會隨著偏離主波束方向（90°）而下降，下降程度由(3dB beamwidth）決定
+- min{} 是為了確保輻射功率不超過副瓣抑制限制（SLA）或最大衰減（A<sub>max</sub>）
+- 3D 模式表示在整體空間內的輻射衰減，會綜合垂直與水平方向的特性
+- 最大天線增益是指主波束方向的理論最強功率增益
+
+**Antenna port mapping**
+- 如何將傳統基站（Legacy BS）天線陣列的 垂直波束成形（vertical beamforming）使用 固定相位差（fixed phase shifts） 模擬為一組 複數權重（complex weights）
+
+<img width="687" height="74" alt="image" src="https://github.com/user-attachments/assets/64dd7722-e91a-41b9-8d0a-44b05849035d" />
+
+**參數定義**
+| 符號     | 說明                                                                           |
+| ------ | ---------------------------------------------------------------------------- |
+| `m`    | 天線元素索引，m = 1, ..., M                                                         |
+| `M`    | 垂直方向上的天線元素數量                                                                 |
+| `θ` | 垂直方向上的電氣波束掃描角度（Electrical steering angle），定義在 \[0°, 180°]，其中 90° 表示垂直於天線陣列方向 |
+| `λ`    | 波長（Wavelength）                                                               |
+| `dᵥ`   | 垂直天線元素間距（Vertical element spacing）                                           |
+| `j`    | 虛數單位（j = √−1）                                                                |
+
+- 複數權重 wₘ 的相位是根據垂直方向的期望角度 θ 調整，使得所有天線發射訊號在該方向相位對齊、強化波束
+- 係數 1/√M 是為了進行 能量歸一化
+
+**Polarized antenna modelling**
+- 天線的輻射功率圖（Power Pattern）與其輻射場（Radiation Field）之間的關係如下：
+
+<img width="738" height="51" alt="image" src="https://github.com/user-attachments/assets/8e16c052-8e94-47c4-ba80-59784eeaf006" />
+<img width="756" height="82" alt="image" src="https://github.com/user-attachments/assets/2665e17f-6509-4000-9a59-e839e6c34635" />
+
+**Model-1：具有極化斜角的天線元素（Polarization Slant Angle）**
+-  當天線具有極化特性時，假設：
+  - ζ 是極化斜角（Slant angle）
+    - ζ = 0° → 純垂直極化
+    - ζ = ±45° → 交叉極化天線對
+   
+電場分量可透過下列矩陣轉換:
+<img width="749" height="171" alt="image" src="https://github.com/user-attachments/assets/310c62ea-32da-4562-9485-50d9110cc506" />
+
+<img width="749" height="171" alt="image" src="https://github.com/user-attachments/assets/242465d5-fb60-4f65-9829-5ce8612b0851" />
+
+**角度無關的極化建模（Angle-Independent Polarization Model)**
+- 在此模型中，假設極化方向在方位角（azimuth）與仰角（elevation）上均不隨角度變化，適用於局部坐標系（LCS）下的極化建模
+- 對於一個線性極化天線（linearly polarized antenna），天線元素的電場分量如下：
+
+<img width="728" height="122" alt="image" src="https://github.com/user-attachments/assets/e46d7a32-0c00-4171-be14-f3340fdb71bf" />
+
+| 符號                     | 說明                                                        |
+| ---------------------- | --------------------------------------------------------- |
+| F'θ', F'φ'     | 對應垂直與水平極化方向的電場分量                                          |
+| $A'(θ', φ')$           | 方向 $(θ', φ')$ 上的 3D 天線功率圖（由表 7.3-1 定義）                    |
+| $ζ$                    | 極化斜角（0°：純垂直極化；±45°：交叉極化）                                  |
+| $θ', φ'$               | 在局部坐標系（LCS）下的仰角與方位角                                       |
+| $θ' = θ''$, $φ' = φ''$ | 表示 $A'(θ', φ')$ 與 $A''(θ'', φ'')$ 可視為相同方向下的值（此處假設兩套座標系一致） |
+
+| 模型          | 特性          | 電場方向依賴角度？ | 是否需旋轉變換 $ψ$ |
+| ----------- | ----------- | --------- | ----------- |
+| **Model-1** | 考慮方向變化與極化旋轉 |  是       |  需要        |
+| **Model-2** | 假設極化方向固定不變  |  否       |  不需要       |
 
 # 7.5 Fast fading model 
 

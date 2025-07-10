@@ -125,3 +125,6 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 - 看karl跟richard之前的筆記並做整理
 - 研讀3GPP TR 38.901 version 17.0.0 Release 17的7.3
 - 研讀整理O-DU跟O-RU的架構跟對應3GPP規格
+
+**Daily Logs:**
+- 12:00 - 15:00: 看karl的ldpc_encode筆記並加以整理[LDPC](https://github.com/zongyi0311/rfsim-intern-log/blob/main/LDPC.md)

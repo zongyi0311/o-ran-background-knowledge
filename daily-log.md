@@ -121,7 +121,7 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 
 ## 2025/07/10
 **Short-term Goals**
-- 5G Physical Layer: Principles, Models and Technology Components chapter 8
+- 5G Physical Layer: Principles, Models and Technology Components chapter 4
 - 看karl跟richard之前的筆記並做整理
 - 研讀3GPP TR 38.901 version 17.0.0 Release 17 7.3
 - 整理O-DU跟O-RU的架構跟對應3GPP規格
@@ -130,3 +130,10 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 - 12:00 - 16:00: 看karl的ldpc_encode筆記並與他討論跟加以整理[LDPC](https://github.com/zongyi0311/rfsim-intern-log/blob/main/LDPC.md)
 - 16:30 - 17:10 :研讀3GPP TR 38.901 version 17.0.0 Release 17 [7.3](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP%20TR%2038.901.md#73-antenna-modellin)
 - 17:30 - 19:00 :整理O-DU跟O-RU裡PHY層架構跟對應3GPP規格書[PHY layer](https://github.com/zongyi0311/rfsim-intern-log/blob/main/PHY%20layer.md)
+
+## 2025/07/11
+**Short-term Goals**
+- 5G Physical Layer: Principles, Models and Technology Components chapter 4-1
+- 看richard的LDPC decode筆記並做整理
+- 研讀3GPP TR 38.901 version 17.0.0 Release 17 7.4
+- 整理PHY層架構對應到的OAI目錄檔案

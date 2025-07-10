@@ -76,3 +76,64 @@
 | `LDPCencoder()`               | LDPC 編碼核心邏輯        | `ldpc_encoder.c`                  |
 | `nr_rate_matching_ldpc()`     | 碼率匹配               | `nr_rate_matching.c`              |
 | `nr_interleaving_ldpc()`      | 比特交錯               | `nr_interleaving.c`               |
+
+# LDPC編碼架構流程圖(downlink)
+```
+┌────────────────────────────┐
+│ MAC 層傳輸區塊 (TB)          | Output: 傳輸區塊 TB (未編碼) 
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐Input : TB 
+│ nr_segmentation()          │ PHY/NR_TRANSPORT/nr_dlsch_coding.c/nr_dlsch_encoding()
+│ 進行 TB 分段與 CRC 附加      │C 個 segments + 每段附加 CRC 
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐Input : 多個 segments
+│ nrLDPC_coding_encoder()    │ PHY/NR_TRANSPORT/nr_dlsch_coding.c/nr_dlsch_encoding()呼叫
+│ 開始 LDPC 編碼流程           │ nrLDPC_coding_encoder()(實做於nrLDPC_coding_segment_encoder.c)
+└────────────┬───────────────┘Output: 每段交給 nrLDPC_launch_TB_encoding 
+             │
+             ▼
+┌────────────────────────────┐ Input : segment d_i  
+│ nrLDPC_launch_TB_encoding()│ PHY/CODING/nrLDPC_coding/nrLDPC_coding_segment_encoder.c
+│ 建立多個編碼任務              │Output: 任務參數傳給 ldpc8blocks()  
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐Input : segment d_i + encoder_implemparams 
+│ ldpc8blocks() 任務          │PHY/CODING/nrLDPC_coding/nrLDPC_coding_segment_encoder.c
+│ 處理 8 段並行編碼            │Output: 調用 LDPCencoder() 編碼  
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐ Input : 資料 segment d_i      
+│ LDPCencoder()              │PHY/CODING/nrLDPC_encoder/ldpc_encoder.c
+│ 執行 QC-LDPC 編碼           │由ldpc8blocks()呼叫
+└────────────┬───────────────┘ Output: LDPC 碼字 c_i  
+             │
+             ▼
+┌────────────────────────────┐Input : LDPC 碼字 c_i  
+│ nr_rate_matching_ldpc()    │nr_rate_matching.c 由ldpc8blocks()呼叫
+│ 處理碼率匹配 (puncture/rep)  │
+└────────────┬───────────────┘Output: 碼率匹配後位元 e_i (長度 E bits) 
+             │
+             ▼
+┌────────────────────────────┐ Input : e_i   
+│ nr_interleaving_ldpc()     │nr_rate_matching.c 由ldpc8blocks()呼叫
+│ 執行比特交錯                 │ Output: 交錯後位元 f_i   
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐ Input : 多段 f_i                           
+│ write_task_output()        │nrLDPC_coding_segment_encoder.c裡面
+│ 拼接所有 segment 結果        │Output: 拼接成完整 Codeword bits f_all   
+└────────────┬───────────────┘
+             │
+             ▼
+┌────────────────────────────┐
+│ 已拼接的 Codeword bits      │
+└────────────┬───────────────┘
+
+```

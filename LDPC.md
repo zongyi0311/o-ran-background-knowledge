@@ -1,0 +1,78 @@
+![image](https://github.com/user-attachments/assets/e2a79c41-6732-4386-8606-826ecb63a40b)
+
+
+
+| 步驟                                                  | 說明                                       | **為什麼需要？**                                                       |
+| --------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------- |
+| **Code Block (含 CRC)**                              | 每個 Code Block 加上 24-bit CRC，用來獨立檢查錯誤     |  為了 **支援 HARQ 重傳與錯誤檢查**，每個 CB 必須能單獨驗證                          |
+| **Encoding Parameters (BG, Kb, Z, i<sub>LS</sub>)** | 選擇 Base Graph、行列數、Lifting Size           |  為了**適應不同長度與碼率需求**，必須可配置 LDPC 矩陣                               |
+| **Insert Filler bits**                              | 若實際輸入位元不足 (Kb × Z)，需補 0                  |  碼長固定時，確保 **矩陣維度正確且完整填滿**                                      |
+| **Split to Codeword (Kb × Z)**                      | 將資料填入 info 矩陣，準備開始 LDPC 編碼               |  LDPC 是基於 **線性矩陣運算**，資料必須放入指定大小的編碼矩陣中                          |
+| **Read Cycle Shift Coefficient of PCM**             | 從 Base Graph 的 Parity Check Matrix 取得移位值 |  使用循環移位矩陣可以**節省記憶體、提高硬體效率**（quasi-cyclic LDPC）                 |
+| **Obtain Parity Code Block 1/2**                    | 使用矩陣乘法產生 parity bits (兩部分)               |  保證 LDPC 的**檢查條件 H·cᵗ = 0 成立**，達到糾錯能力                          |
+| **Punching, Shortening, Concatenation**             | 依需求刪除部分 parity bits 或重複、再組合成連續比特串        |  **Rate Matching** 的關鍵步驟，讓 LDPC 可支援任意碼率與資源大小（e.g., 不固定的 PDSCH） |
+
+**MAC 層與 PHY 層的 Segmentation & CRC 差異整理**
+| 功能               | MAC 層                                                           | PHY 層                                                |
+| ---------------- | --------------------------------------------------------------- | ---------------------------------------------------- |
+| **Segmentation** | 將 **SDU**（RLC來的資料）分段成 **MAC SDU/PDU** 或多個 Transport Blocks (TB) | 將每個 TB 的內容拆成數個 **Code Blocks (CB)**，用於 LDPC          |
+| **CRC 附加**       | 附加 **Transport Block CRC**（24bit），用來檢查整個 TB                     | 附加 **Code Block CRC**（24bit），每個 CB 各自加，用於 LDPC 解碼後檢查 |
+```
+[RLC SDU]
+   ↓
+[MAC 層]
+   - Segmentation 成多個 TB
+   - 每個 TB 加 Transport Block CRC（24bit）
+   ↓
+[PHY 層]
+   - 若 TB 太大，再分成多個 Code Blocks (CB)
+   - 每個 CB 加 CRC（也是24bit，但不同意義）
+   - 執行 LDPC 編碼 → Rate Matching → 調變
+```
+| 檔案                  | 角色             | 模組層級                    | 實際內容                                          | 主要用途                           |
+| ------------------- | -------------- | ----------------------- | --------------------------------------------- | ------------------------------ |
+| `nr_dlsch_coding.c` | **LDPC 編碼主邏輯** | PHY Layer               | segmentation, CRC, LDPC encode, rate matching | 負責將 TB → bitstream             |
+| `nr_dlsch.c`        | **下行調變/傳送邏輯**  | PHY Layer               | 調變、PDSCH 映射、DMRS/PTRS 資料插入                    | 把 encoded bits 變成 OFDM symbols |
+| `dlschsim.c`        | **功能測試用例**     | Simulation Tool         | 建立簡化 gNB/UE 結構，模擬 `nr_dlsch_encoding()` 整體流程  | 驗證功能與除錯                        |
+| `dlsim.c`           | **大型模擬框架**     | System-level Simulation | 整合 MAC/PHY/調變/通道環境，建立全鏈路模擬                    | 驗證整體系統通聯能力與參數效能                |
+
+
+**PHY/CODING/nr_segmentation.c**
+-  分段（Segmentation）
+-  CRC 附加（CRC Attachment）呼叫crc_byte.c裡的函式
+-  Z、K 等參數計算
+-  F 補零數量（若有）
+- nr_dlsch_coding.c/nr_dlsch_encoding() 裡面呼叫nr_segmentation() 
+
+**nrLDPC_coding_interface_load.c**
+-  載入 NR LDPC 編碼與解碼函式庫（動態連結）
+- 在nr_dlsch_coding.c nr_dlsch_encoding()的290行  gNB->nrLDPC_coding_interface.nrLDPC_coding_encoder(&slot_parameters);
+-  nrLDPC_coding_encoder實做在nrLDPC_coding_segment_encoder.c
+
+**ldpc_encoder.c**
+- 主要實作 5G NR LDPC 編碼器 Base Graph (BG1 或 BG2) 對資料進行編碼
+
+**nrLDPC_coding_segment_encoder.c**
+- 主要負責實作 整體 LDPC 編碼流程的頂層整合，屬於 5G NR 下行/上行傳輸的實體層編碼總控模組
+- **nrLDPC_coding_encoder** 
+- **nrLDPC_launch_TB_encoding** 一個完整傳輸區塊 (TB) 的 LDPC 編碼任務流程控制器，創建並派送對應的執行緒任務給 ldpc8blocks() 處理每 8 個 segments 的編碼
+-  **ldpc8blocks()**  功能是在一個執行緒中處理 最多 8 個 LDPC segments 的編碼與處理流程
+```
+| 步驟  | 函式 / 操作                        | 說明                                          |
+| --- | ------------------------------ | ------------------------------------------- |
+| 1️⃣ | `LDPCencoder()`                | 執行單個 segment 的 **LDPC 編碼（BG + Zc）**         |
+| 2️⃣ | `nr_rate_matching_ldpc()`      | 執行 **比特匹配與填補 (Rate Matching + Filler Bit)** |
+| 3️⃣ | `nr_interleaving_ldpc()`       | 執行 **位元交錯（Bit Interleaving）**               |
+| ✅   | `completed_task_ans()`         | 標記此並行任務已完成                                  |
+```
+-  **write_task_output()** 輸出組裝階段 它讓多個 LDPC 編碼後的 segment 輸出資料，能整齊對齊、打包、串接在一起，形成一條可傳輸的 bit stream
+
+| 函式                            | 作用                 | 所在檔案                              |
+| ----------------------------- | ------------------ | --------------------------------- |
+| `nr_dlsch_encoding()`         | 編碼主流程              | `nr_dlsch_coding.c`               |
+| `nrLDPC_coding_encoder()`     | 呼叫多 CB 編碼          | `nrLDPC_coding_segment_encoder.c` |
+| `nrLDPC_launch_TB_encoding()` | 為每個 CB 建立編碼任務      | 同上                                |
+| `ldpc8blocks()`               | 進行單個 8-block 的編碼處理 | 同上                                |
+| `LDPCencoder()`               | LDPC 編碼核心邏輯        | `ldpc_encoder.c`                  |
+| `nr_rate_matching_ldpc()`     | 碼率匹配               | `nr_rate_matching.c`              |
+| `nr_interleaving_ldpc()`      | 比特交錯               | `nr_interleaving.c`               |

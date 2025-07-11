@@ -137,3 +137,7 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 - 看richard的LDPC decode筆記並做整理
 - 研讀3GPP TR 38.901 version 17.0.0 Release 17 7.4
 - 整理PHY層架構對應到的OAI目錄檔案
+
+**Daily Logs:**
+- 09:30 - 10:30: 看richard的ldpcdecode筆記並與他討論跟加以整理[LDPC](https://github.com/zongyi0311/rfsim-intern-log/blob/main/LDPC.md#decode)
+- 12:00 - 17:30 :整理gNB在uplink作為rx端的流程，找到OAI目錄裡對應的程式碼[PHY layer](https://github.com/zongyi0311/rfsim-intern-log/blob/main/PHY%20layer.md)

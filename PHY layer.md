@@ -24,10 +24,10 @@
   - FFT:把時域 OFDM 信號轉換為頻域資源元素
   - Digital Beamforming:根據方向資訊進行數位波束合成
 - PHY-High
-  - Resource Element Demapping:將接收到的符號從頻域元素位置提取出來//nr_ulsch_extract_rbs()/nr_ulsch_demodulation.c
-  - Equalization:對通道影響進行等化處理（補償多路徑等衰減）//nr_ulsch_channel_compensation/nr_ulsch_demodulation.c
-  - Demodulation:將符號轉換回 bit/nr_ulsch_demodulation.c(控制)和nr_ulsch_llr_computation.c(計算)
-  - Descrambling:解亂數化，回復原始 bit 順序 //nr_codeword_unscrambling()/nr_scrambling.c
+  - Resource Element Demapping:將接收到的符號從頻域元素位置提取出來 **//nr_ulsch_extract_rbs()/nr_ulsch_demodulation.c**
+  - Equalization:對通道影響進行等化處理（補償多路徑等衰減）**//nr_ulsch_channel_compensation/nr_ulsch_demodulation.c**
+  - Demodulation:將符號轉換回 **bit/nr_ulsch_demodulation.c(控制)和nr_ulsch_llr_computation.c(計算)**
+  - Descrambling:解亂數化，回復原始 bit 順序 **//nr_codeword_unscrambling()/nr_scrambling.c**
   - Decoding:執行 LDPC 解碼，提取原始傳輸區塊 TB
   
 **Split Option 7-2x：O-DU 與 O-RU 之間傳送的是 IQ samples（頻域的 OFDM 資料）**

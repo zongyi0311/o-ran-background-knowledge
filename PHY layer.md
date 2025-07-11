@@ -1,6 +1,7 @@
 <img width="659" height="395" alt="image" src="https://github.com/user-attachments/assets/d3416919-842c-472e-af12-eeefb531c2fe" />
 
 - 在 O-RAN 架構下，gNB 基站內部由 O-CU、O-DU、O-RU 組成，並使用 Split Option 7-2x 來將高層與低層 PHY 功能分割
+
 **DL**
 - PHY-High:
   - Encoding:從 MAC 層接收傳輸區塊 (TB)，進行 CRC 附加與 LDPC 編碼。
@@ -23,10 +24,10 @@
   - FFT:把時域 OFDM 信號轉換為頻域資源元素
   - Digital Beamforming:根據方向資訊進行數位波束合成
 - PHY-High
-  - Resource Element Demapping:將接收到的符號從頻域元素位置提取出來
-  - Equalization + IDFT:對通道影響進行等化處理（補償多路徑等衰減）
-  - Demodulation:將符號轉換回 bit
-  - Descrambling:解亂數化，回復原始 bit 順序
+  - Resource Element Demapping:將接收到的符號從頻域元素位置提取出來//nr_ulsch_extract_rbs()/nr_ulsch_demodulation.c
+  - Equalization:對通道影響進行等化處理（補償多路徑等衰減）//nr_ulsch_channel_compensation/nr_ulsch_demodulation.c
+  - Demodulation:將符號轉換回 bit/nr_ulsch_demodulation.c(控制)和nr_ulsch_llr_computation.c(計算)
+  - Descrambling:解亂數化，回復原始 bit 順序 //nr_codeword_unscrambling()/nr_scrambling.c
   - Decoding:執行 LDPC 解碼，提取原始傳輸區塊 TB
   
 **Split Option 7-2x：O-DU 與 O-RU 之間傳送的是 IQ samples（頻域的 OFDM 資料）**
@@ -48,3 +49,47 @@
 
 **TS 38.300**
 - TS 38.300 定義整個 5G 無線接取網路（NG-RAN） 的架構與模組分工，是設計 CU/DU、O-DU/O-RU、gNB、UE 等的總體依據
+
+# 7/11　
+## nr_ulsch.c
+-  5G NR PHY-High 層 的上行接收控制邏輯（PUSCH 任務管理），負責接收 FAPI 封包 → 分配資源 → 初始化 ULSCH 資料結構 → 執行 Beamforming slot 管理，讓後續 FFT、解調、解碼等模組能正確處理該 UE 的上行資料
+
+### static NR_gNB_ULSCH_t *find_nr_ulsch(PHY_VARS_gNB *gNB, uint16_t rnti, int pid()
+- 根據 RNTI（UE 識別碼） 與 HARQ Process ID
+  - 找到對應的 NR_gNB_ULSCH_t（用來儲存 UE 的上行資料）
+  - 如果找不到，就回傳一筆「尚未啟用」的 ULSCH 作為新的資源
+- 常被 nr_fill_ulsch() 呼叫，用於初始化任務
+- 每個 slot 處理時都必須先經過它來找出要用哪個 buffer
+
+**struct NR_gNB_ULSCH_t /defs_gNB.h**
+這個 typedef struct 在 OAI 中代表 gNB 接收 UE 上行資料（UL-SCH）的狀態管理結構
+
+**struct PHY_VARS_gNB /defs_gNB.h**
+這是 gNB（基地台）在實體層（PHY layer）中整體控制與資源儲存的主要結構體，所有 PHY 處理用到的變數都從這裡取出
+
+### nr_fill_ulsch()
+- gNB 上行接收主控流程的初始化函式，負責從 MAC/FAPI 層下來的 nfapi_nr_pusch_pdu_t 中提取參數、配置接收任務，對應 PHY-High 的任務排程管理
+
+| 步驟                 | 功能說明                                                                             | 
+| ------------------ | -------------------------------------------------------------------------------- | 
+| 1️ 尋找或建立任務        | 利用 `find_nr_ulsch()` 查找對應的 UE + HARQ PID 的接收任務，如果沒有就分配新的空位                       | 
+| 2️ 設定基本參數         | 寫入 RNTI、HARQ PID、frame、slot、任務 active 狀態等欄位                                      | 
+| 3️ 設定 Beamforming | 如果啟用 analog beamforming，根據 FAPI beam index 呼叫 `beam_index_allocation()` 決定所使用的波束 | 
+| 4️ HARQ 控制        | 若是新資料（NDI=1）則清除前次狀態，否則累積重傳次數                                                     | 
+| 5️ 記錄 PUSCH PDU   | 將整份 `ulsch_pdu` 複製進 `ulsch->harq_process` 結構中，供後續解碼與統計使用                         | 
+| 6️ 印出 log         | 記錄初始化過程與 HARQ 狀態變化                                                               | 
+
+**struct nfapi_nr_pusch_pdu_t /nfapi/open-nFAPI/nfapi/public_inc/nfapi_nr_interface_scf.h**
+- 這個結構定義了 gNB 接收 UE 上行 PUSCH（Physical Uplink Shared Channel）資料所需的控制參數，根據 3GPP TS 38.212 / 38.214 / 38.331 規範而設計
+
+**SL_to_bitmap**
+- 這是一個將連續的 OFDM symbol 範圍轉換為 位元圖（bitmap） 的小工具函式，用於表示：slot 中哪些 symbol 被佔用來傳輸 PUSCH（或其他物理通道）
+
+**beam_index_allocation**
+- 是在 OpenAirInterface (OAI) 的 gNB 端，針對 上行（UL）傳輸時的 beamforming 資源分配 所使用的邏輯。它會根據 scheduler 下發的 beam index，幫你找一個可以「佔用」的 slot 位置，並寫入 common_vars->beam_id[][]
+
+### nr_ulsch_layer_demapping
+- 將 Layer LLR 結構重新組合為單一 codeword LLR 序列 的重要步驟，屬於 PHY-High 層中 LLR 處理的前處理邏輯
+
+### dump_pusch_stats()
+- 用來列印 gNB (基地台) 端上行鏈路 PUSCH 的統計資訊，屬於除錯 / 日誌輸出用工具函式

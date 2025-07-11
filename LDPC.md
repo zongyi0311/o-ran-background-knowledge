@@ -1,6 +1,6 @@
 ![image](https://github.com/user-attachments/assets/e2a79c41-6732-4386-8606-826ecb63a40b)
 
-
+# encode
 
 | 步驟                                                  | 說明                                       | **為什麼需要？**                                                       |
 | --------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------- |
@@ -137,3 +137,69 @@
 └────────────┬───────────────┘
 
 ```
+# decode
+<img width="388" height="803" alt="image" src="https://github.com/user-attachments/assets/9fa47ab7-b330-4b46-8d48-b4fb31d5da2d" />
+| 流程步驟                      | 說明                               |                                         
+| ------------------------- | -------------------------------- | 
+| Start Decoder             | 啟動解碼器流程                          |
+| Load Parameters / Buffers | 設定 C、K、Z、E、F、LLR 等資訊             | 
+| BN → CN 初始處理              | Variable nodes 傳遞資訊給 Check nodes | 
+| CN → BN 初始處理              | Check nodes 計算校驗並回傳給變數節點         |
+| First Parity Check        | 嘗試解出正確 codeword                  | 
+| Output Bits               | 若成功，輸出 b\[], 否則重傳                | 
+| Iterative Loop            | 進行最多 `max_ldpc_iterations` 次反覆計算 | 
+| CN Processing             | 更新所有 parity constraints          | 
+| CN→BN 回傳                  | 傳遞回 variable node                | 
+| BN Processing             | 更新變數節點訊息                         | 
+
+- 主入口函式為: nrLDPC_decoder_core in nrLDPC_decoder.c
+- Decoder Setup
+   - 載入 LUT（lookup tables）：供後續 CN/BN 運算使用
+   - 初始化緩衝區：分別為 CN、BN 與 LLRs 分配記憶體空間
+   - 資料對齊與 SIMD 準備：便於後續使用 AVX 加速
+**LUT**
+- LUT 是一種預先建立好資料的「表格」，讓演算法可以用索引快速查出對應值，而不是每次都重複計算
+- 為什麼使用 LUT？:
+   - 速度快、節省運算資源、適合定義明確的映射關係
+ 
+**SIMD**
+- SIMD 是一種 CPU 向量運算技術，允許一條指令同時操作多筆資料
+- 在 LDPC 解碼中如何用到 SIMD
+```
+| 階段          | SIMD 加速的用途                               |
+| ----------- | ---------------------------------------- |
+| LLR 輸入處理    | 加速整批 bit 或 symbol 的 LLR 計算與存取            |
+| BN→CN 訊息傳遞  | 同時處理多個 variable node 的 message           |
+| CN→BN 訊息傳遞  | 比對最小值（min-sum），適合用 SIMD 做 parallel min() |
+| CRC 計算      | 多 bit 並行 XOR                             |
+| LLR 解調（調變器） | 輸入 IQ 值轉換為 LLR 時用 SIMD 加速 inner product  |
+```
+- First Pass Processing
+   - BN Pre-processing with nrLDPC_bnProcPc_* (rate & BG-specific)
+   - CN Pre-processing via nrLDPC_bn2cnProcBuf_*
+   - First CN processing: nrLDPC_cnProc_*
+   - Back-propagate to BN via nrLDPC_cn2bnProcBuf_*
+ 
+- Iterative Decoding Loop
+**執行條件**
+  - numIter < numMaxIter
+  - Parity check (or CRC) failed
+ 
+- Steps per iteration
+   - CN 運算
+   - 將 CN 傳回 BN 的訊息
+   - BN 運算（更新 soft LLR）
+   - 準備下一輪 CN 輸入
+   - 進行 Parity Check 或 CRC 驗證
+ 
+- Early Termination
+   - If check_crc is enabled
+     - 解碼後會使用 CRC 驗證硬判定資料
+     - 若通過驗證，提前結束迴圈
+   - 若未啟用 CRC：
+     - 每次都執行 parity-check 決定是否提早終止
+
+- Output Formatting
+- Output mode: LLRINT8, BIT, or BITINT8
+
+

@@ -139,6 +139,7 @@
 ```
 # decode
 <img width="388" height="803" alt="image" src="https://github.com/user-attachments/assets/9fa47ab7-b330-4b46-8d48-b4fb31d5da2d" />
+```
 | 流程步驟                      | 說明                               |                                         
 | ------------------------- | -------------------------------- | 
 | Start Decoder             | 啟動解碼器流程                          |
@@ -151,6 +152,7 @@
 | CN Processing             | 更新所有 parity constraints          | 
 | CN→BN 回傳                  | 傳遞回 variable node                | 
 | BN Processing             | 更新變數節點訊息                         | 
+```
 
 - 主入口函式為: nrLDPC_decoder_core in nrLDPC_decoder.c
 - Decoder Setup

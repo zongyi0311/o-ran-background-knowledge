@@ -140,9 +140,9 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 **Daily Logs:**
 - 09:30 - 10:30: 看richard的ldpcdecode筆記並整理[LDPC](https://github.com/zongyi0311/rfsim-intern-log/blob/main/LDPC.md#decode)
 - 12:00 - 17:30 :整理gNB在uplink作為rx端的流程，找到OAI目錄裡對應的程式碼[PHY layer](https://github.com/zongyi0311/rfsim-intern-log/blob/main/PHY%20layer.md)
-- 19:30 - 22:30 :3GPP TR 38.300 [4-1~5-2](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038%20300.md#4-overall-architecture-and-functional-split)
+- 19:30 - 22:30 :3GPP TS 38.300 [4-1~5-2](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038%20300.md#4-overall-architecture-and-functional-split)
 
 ## 2025/07/12
 **Short-term Goals**
-- 研讀3GPP TR 38.300 5-3~
-- 詳細看ldpc程式碼
+- 研讀3GPP TS 38.300 5 Physical Layer 
+- 研讀3GPP TS 38.211 跟對應的程式碼

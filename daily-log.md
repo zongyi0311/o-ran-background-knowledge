@@ -138,14 +138,17 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 - 整理PHY層架構對應到的OAI目錄檔案
 
 **Daily Logs:**
-- 09:30 - 10:30: 看richard的ldpcdecode筆記並整理[LDPC](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/LDPC.md)
+- 09:30 - 10:30: 看richard的ldpcdecode筆記並整理[LDPC](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/LDPC.md#decode)
 - 12:00 - 17:30 :整理gNB在uplink作為rx端的流程，找到OAI目錄裡對應的程式碼[PHY layer](https://github.com/zongyi0311/rfsim-intern-log/blob/main/PHY%20layer.md)
 - 19:30 - 22:30 :3GPP TS 38.300 [4-1~5-2](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038%20300.md#4-overall-architecture-and-functional-split)
 
 ## 2025/07/14
 **Short-term Goals**
-- 研讀3GPP TS 38.300 5 Physical Layer 
-- 研讀3GPP TS 38.211 跟對應的程式碼
+- 研讀3GPP TS 38.300 5 Physical Layer 5.2 Downlinkand 5.3 Uplink ( 9:30 ~13:00)
+  - 預計產出對於Downlink/Uplink的資料傳輸結構和在gNB跟UE視角要做的事
+- 根據3GPP TS 38.211 4.Frame structure and physical resources(14:00 ~17:00)
+  - 了解實體層的時間與頻率資源分配方式和找到對應的實做程式碼段落
 
 **Daily Logs:**
-- 09:30 - 10:30: 3GPP TS 38.300 5.2 Downlink
+- 09:30 - 10:30: 3GPP TS 38.300 5.2 [Downlink](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038%20300.md#52-downlink)
+- 10:30 - 12:30: 3GPP TS 38.300 5.3 Uplink

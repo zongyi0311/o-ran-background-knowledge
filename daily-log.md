@@ -145,6 +145,7 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 ## 2025/07/14
 **Short-term Goals**
 - 讀完並做筆記gNB RX端MODULATION和NR_TRANSPORT相關的規格書和OAI程式碼(deadline 7/29)
+  -  TS 38.211,TS 38.212,TS 38.214
  
 **Milestones**
 - gNB RX note:

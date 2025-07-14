@@ -491,15 +491,7 @@ graph TD
 
 ---
 
-##  關鍵初始化流程說明
-
-### LTE 系統初始化（eNB / UE）
 
 
-- <img width="574" height="429" alt="image" src="https://github.com/user-attachments/assets/4c7d5f54-b04a-46d4-bae7-54644fe8af3f" />
-
-- <img width="817" height="502" alt="image" src="https://github.com/user-attachments/assets/9e0821c1-b963-47cd-9c49-377ab2a6601e" />
-
-- <img width="828" height="435" alt="image" src="https://github.com/user-attachments/assets/6b3bf5e0-c76c-4498-833a-dfd4f94ae935" />
 
 

@@ -154,8 +154,10 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
   - []3.coding (Decoding)
 
  **Deliverable**
-- **note** TS 38.211 4.Frame structure and physical resources 跟程式碼解釋
+- **note** TS 38.211 4.Frame structure and physical resources and TS 38.300 5.2 and 5.3 
 
 **Daily Logs:**
 - 09:30 - 11:00: 3GPP TS 38.300 5.2 [Downlink](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038%20300.md#52-downlink)
 - 11:00 - 13:00: 3GPP TS 38.300 5.3 [Uplink](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038%20300.md#uplink)
+- 15:00 - 18:00: TS 138 211 [4 Frame structure and physical resources](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038.211%20Physical%20channels%20and%20modulation.md#4-frame-structure-and-physical-resources)
+- 21:00 - 22:00: [catelog](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/catalog.md)

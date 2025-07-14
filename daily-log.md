@@ -145,7 +145,7 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 ## 2025/07/14
 **Short-term Goals**
 - 研讀3GPP TS 38.300 5 Physical Layer 5.2 Downlinkand 5.3 Uplink ( 9:30 ~13:00)
-  - 預計產出對於Downlink/Uplink的資料傳輸結構和在gNB跟UE視角要做的事
+  - 預計產出筆記對於Downlink/Uplink的資料傳輸結構和在gNB跟UE視角要做的事跟名詞解釋
 - 根據3GPP TS 38.211 4.Frame structure and physical resources(14:00 ~17:00)
   - 了解實體層的時間與頻率資源分配方式和找到對應的實做程式碼段落
 

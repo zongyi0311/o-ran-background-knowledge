@@ -161,3 +161,11 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 - 11:00 - 13:00: 3GPP TS 38.300 5.3 [Uplink](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038%20300.md#uplink)
 - 15:00 - 18:00: TS 138 211 [4 Frame structure and physical resources](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038.211%20Physical%20channels%20and%20modulation.md#4-frame-structure-and-physical-resources)
 - 21:00 - 22:00: [catelog](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/catalog.md)
+
+## 2025/07/15
+**Milestones**
+- 1.MODULATION (CP 移除 + FFT → Equalization → 解調（demod）)(deadline 7/18)
+
+ **Deliverable**
+- **note** TS 38.211 5.3.1 OFDM baseband signal generation for all channels except PRACH and RIM-RS
+- **note** slot_fep_nr.c and ofdm_mod.c

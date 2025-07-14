@@ -150,5 +150,5 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
   - 了解實體層的時間與頻率資源分配方式和找到對應的實做程式碼段落
 
 **Daily Logs:**
-- 09:30 - 10:30: 3GPP TS 38.300 5.2 [Downlink](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038%20300.md#52-downlink)
-- 10:30 - 12:30: 3GPP TS 38.300 5.3 [Uplink](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038%20300.md#uplink)
+- 09:30 - 11:00: 3GPP TS 38.300 5.2 [Downlink](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038%20300.md#52-downlink)
+- 11:00 - 13:00: 3GPP TS 38.300 5.3 [Uplink](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038%20300.md#uplink)

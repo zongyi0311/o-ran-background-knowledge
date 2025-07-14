@@ -21,7 +21,7 @@ openair1/
 
 ---
 
-## 📁 PHY 子模組說明
+##  PHY 子模組說明
 
 | 資料夾 | 功能描述 |
 |--------|-----------|
@@ -42,7 +42,7 @@ openair1/
 
 ---
 
-## 📁 通用定義檔
+##  通用定義檔
 
 | 檔案 | 用途 |
 |------|------|
@@ -55,26 +55,26 @@ openair1/
 
 ---
 
-## 📁 SCHED (排程模組)
+##  SCHED (排程模組)
 
-### 📦 SCHED/
+###  SCHED/
 - `phy_procedures_lte_eNb.c`：eNB 端 PHY 處理（TS 36.213）
 - `prach_procedures.c`：隨機接取處理（PRACH）
 - `fapi_l1.c`：與 MAC 層的 FAPI 接口
 - `phy_mac_stub.c`：提供 PHY-only 模式下的 MAC stub
 
-### 📦 SCHED_UE/
+###  SCHED_UE/
 - `phy_procedures_lte_ue.c`：UE 端的 PHY 處理流程
 - `pucch_pc.c / pusch_pc.c / srs_pc.c`：功率控制模組
 
-### 📦 SCHED_NR/、SCHED_NR_UE/
+###  SCHED_NR/、SCHED_NR_UE/
 - 5G NR gNB 與 UE 對應的 PHY 排程模組
 
 ---
 
-## 🧪 SIMULATION 測試模組
+##  SIMULATION 測試模組
 
-### 📦 SIMULATION/LTE_PHY/
+###  SIMULATION/LTE_PHY/
 | 測試檔 | 功能 |
 |--------|------|
 | `pbchsim.c` | 廣播通道模擬（PBCH） |
@@ -83,19 +83,19 @@ openair1/
 | `ulsim.c` | 上行共享通道模擬（PUSCH） |
 | `pucchsim.c` | 上行控制通道模擬（PUCCH） |
 
-### 📦 SIMULATION/RF/
+###  SIMULATION/RF/
 - 模擬射頻（RF）收發行為，含通道模擬
 
 ---
 
-## 🔁 實機 vs 模擬變數定義方式
+##  實機 vs 模擬變數定義方式
 
 - 在真實系統（如 `lte-softmodem.c`）中，變數僅定義一次。
 - 若其他模組需引用該變數，應透過 `extern.h`。
 
 ---
 
-## 🧭 對應 3GPP 規範
+##  對應 3GPP 規範
 
 | 模組 | 對應規範 |
 |------|----------|
@@ -106,17 +106,17 @@ openair1/
 
 ---
 
-> 📌 若你需要針對某個功能（例如 PUSCH 解調或 FFT/IFFT）進一步找函式與檔案位置，也可以再指定，我會幫你標記程式碼入口點。
+>  若你需要針對某個功能（例如 PUSCH 解調或 FFT/IFFT）進一步找函式與檔案位置，也可以再指定，我會幫你標記程式碼入口點。
 
 
 
-# 📑 OAI PHY 層 Header 檔案清單與功能（openair1/PHY/*.h）
+#  OAI PHY 層 Header 檔案清單與功能（openair1/PHY/*.h）
 
 這些 `.h` 標頭檔主要提供結構、常數、變數與函式的宣告，配合 `.c` 實作檔組成 OAI Layer 1 的模組。
 
 ---
 
-## 📁 defs_*.h 系列：模組定義與結構
+##  defs_*.h 系列：模組定義與結構
 
 | 檔案名稱 | 功能摘要 |
 |----------|-----------|
@@ -132,7 +132,7 @@ openair1/
 
 ---
 
-## 📁 impl_defs_*.h 系列：實作相關宏定義（implementation macros）
+##  impl_defs_*.h 系列：實作相關宏定義（implementation macros）
 
 | 檔案名稱 | 功能摘要 |
 |----------|-----------|
@@ -143,7 +143,7 @@ openair1/
 
 ---
 
-## 📁 extern.h 系列：跨模組變數 extern 宣告
+##  extern.h 系列：跨模組變數 extern 宣告
 
 | 檔案名稱 | 功能摘要 |
 |----------|-----------|
@@ -153,7 +153,7 @@ openair1/
 
 ---
 
-## 📁 vars.h 系列：變數定義（與 extern 對應）
+##  vars.h 系列：變數定義（與 extern 對應）
 
 | 檔案名稱 | 功能摘要 |
 |----------|-----------|
@@ -163,7 +163,7 @@ openair1/
 
 ---
 
-## 🧪 其他功能檔案
+##  其他功能檔案
 
 | 檔案名稱 | 功能摘要 |
 |----------|-----------|
@@ -171,7 +171,7 @@ openair1/
 
 ---
 
-## 📌 注意事項
+##  注意事項
 
 - `defs_*.h` 通常用於結構宣告與模組函式 interface。
 - `phy_vars*.h` 實際定義全域變數，對應的 `phy_extern*.h` 提供 extern 宣告。
@@ -181,13 +181,13 @@ openair1/
 
 > 若你要了解某個 `.h` 檔案對應到的 `.c` 功能（例如 `defs_nr_UE.h` 會配合哪幾個檔案處理 uplink），我可以幫你標出具體來源與範例程式碼。
 
-# 📡 OAI 5G NR 參考訊號模組整理（PHY/NR_REFSIG）
+#  OAI 5G NR 參考訊號模組整理（PHY/NR_REFSIG）
 
 此模組處理 NR PHY 中的各類參考訊號產生、對齊與映射，支援 DMRS、PSS、SSS、PTRS、SSB 等功能。
 
 ---
 
-## 📁 檔案功能總覽
+##  檔案功能總覽
 
 | 檔案名稱 | 類型 | 功能描述 |
 |----------|------|-----------|
@@ -213,28 +213,28 @@ openair1/
 
 ---
 
-## 🧩 主要功能模組分類
+## 主要功能模組分類
 
-### 🧶 同步訊號（Synchronization Signals）
+###  同步訊號（Synchronization Signals）
 - `pss_nr.h`, `sss_nr.h`, `ss_pbch_nr.h`: 用於初始小區搜尋（SSB）
 
-### 📡 解調參考訊號（DMRS）
+###  解調參考訊號（DMRS）
 - `dmrs_nr.c`, `nr_dmrs_rx.c`: PUSCH/PDSCH 的解調參考符號
 - `nr_refsig.c`, `nr_refsig.h`: 生成不同型態的 reference signals
 
-### 🎯 相位追蹤參考符號（PTRS）
+### 相位追蹤參考符號（PTRS）
 - `ptrs_nr.c`, `ptrs_nr.h`: 用於頻率偏移補償（e.g. for high-Doppler）
 
-### 🎲 Gold 序列產生器
+###  Gold 序列產生器
 - `nr_gold_ue.c`, `nr_refsig_common.h`: 快速產生 PRS, DMRS 等 pseudorandom sequences
 
-### 🧪 測試與查找表
+###  測試與查找表
 - `nr_gen_mod_table.c/.m`, `nr_mod_table.h`: 產生並測試 modulation LUT
 - `refsig.c`, `refsig_defs_ue.h`: 加速解碼與金序列快取管理
 
 ---
 
-## 🔁 實作對應流程（範例）
+##  實作對應流程（範例）
 
 ```mermaid
 graph TD
@@ -247,13 +247,14 @@ graph TD
   C -->|UL DMRS/SRS| D5[ul_ref_seq_nr.c]
   C -->|CSI-RS| D6[nr_refsig.c]
 
-# 🎛️ OAI 調變與 OFDM 前端模組總覽（openair1/PHY/MODULATION/）
+```
+#  OAI 調變與 OFDM 前端模組總覽（openair1/PHY/MODULATION/）
 
 此資料夾處理調變（modulation/demodulation）與 OFDM 前端流程（如 IFFT、CP 插入、Slot 處理等），涵蓋 4G LTE 與 5G NR。
 
 ---
 
-## 📁 檔案功能對照表
+##  檔案功能對照表
 
 | 檔案名稱 | 功能分類 | 描述 |
 |----------|----------|------|
@@ -266,7 +267,7 @@ graph TD
 
 ---
 
-## 🌀 OFDM 與前端處理模組
+##  OFDM 與前端處理模組
 
 | 檔案名稱 | 功能分類 | 描述 |
 |----------|----------|------|
@@ -280,7 +281,7 @@ graph TD
 
 ---
 
-## 🧪 測試與特殊功能
+##  測試與特殊功能
 
 | 檔案名稱 | 描述 |
 |----------|------|
@@ -290,9 +291,9 @@ graph TD
 
 ---
 
-## 🔁 主要功能流程簡圖（以 5G NR 上行為例）
+##  主要功能流程簡圖（以 5G NR 上行為例）
 
-```mermaid
+```
 graph TD
   A[Encoded Codewords] --> B[nr_modulation.c<br>QAM Mapping]
   B --> C[Resource Mapping]
@@ -300,13 +301,14 @@ graph TD
   D --> E[Slot 封裝<br>(slot_fep_nr.c)]
   E --> F[送往 RF 或通道模擬器]
 
-# 📡 OAI 5G NR 通道估測模組整理（PHY/NR_ESTIMATION/）
+```
+#  OAI 5G NR 通道估測模組整理（PHY/NR_ESTIMATION/）
 
 此模組實作了 5G NR 上行接收端的通道估測、頻域均衡與功率量測等處理步驟，主要用於 gNB 接收端的 PHY 層。
 
 ---
 
-## 📁 檔案總覽與功能說明
+##  檔案總覽與功能說明
 
 | 檔案名稱 | 類型 | 功能描述 |
 |----------|------|-----------|
@@ -317,7 +319,7 @@ graph TD
 
 ---
 
-## 🔁 主要處理流程（以 gNB 上行接收為例）
+##  主要處理流程（以 gNB 上行接收為例）
 
 ```mermaid
 graph TD
@@ -326,13 +328,14 @@ graph TD
   C --> D[nr_measurements_gNB.c<br>功率與 SINR 測量]
   D --> E[回傳 LLR / 資料解調]
 
-# 📦 OAI 5G NR PHY 傳輸模組：檔案功能總覽（openair1/PHY/NR_TRANSPORT）
+```
+#  OAI 5G NR PHY 傳輸模組：檔案功能總覽（openair1/PHY/NR_TRANSPORT）
 
 此模組涵蓋上行/下行共享通道（ULSCH/DLSCH）、隨機接入（PRACH）、同步（PSS/SSS）、DCI、Scrambling 等功能，是 NR PHY 接收與發送處理的核心。
 
 ---
 
-## 🧩 DCI 控制通道模組
+##  DCI 控制通道模組
 
 | 檔案 | 功能描述 |
 |------|----------|
@@ -342,7 +345,7 @@ graph TD
 
 ---
 
-## 📡 DLSCH 下行共享通道模組
+##  DLSCH 下行共享通道模組
 
 | 檔案 | 功能描述 |
 |------|----------|
@@ -353,7 +356,7 @@ graph TD
 
 ---
 
-## 🛰️ 廣播通道
+##  廣播通道
 
 | 檔案 | 功能描述 |
 |------|----------|
@@ -361,7 +364,7 @@ graph TD
 
 ---
 
-## 🆘 隨機接入（PRACH）
+##  隨機接入（PRACH）
 
 | 檔案 | 功能描述 |
 |------|----------|
@@ -371,7 +374,7 @@ graph TD
 
 ---
 
-## 🧿 參考與同步信號（PRS / PSS / SSS）
+##  參考與同步信號（PRS / PSS / SSS）
 
 | 檔案 | 功能描述 |
 |------|----------|
@@ -381,7 +384,7 @@ graph TD
 
 ---
 
-## 🔁 DMRS 與調變輔助模組
+##  DMRS 與調變輔助模組
 
 | 檔案 | 功能描述 |
 |------|----------|
@@ -390,7 +393,7 @@ graph TD
 
 ---
 
-## 🔐 Scrambling 與 LLR 工具
+##  Scrambling 與 LLR 工具
 
 | 檔案 | 功能描述 |
 |------|----------|
@@ -398,7 +401,7 @@ graph TD
 
 ---
 
-## 📦 TBS 與傳輸工具
+##  TBS 與傳輸工具
 
 | 檔案 | 功能描述 |
 |------|----------|
@@ -407,7 +410,7 @@ graph TD
 
 ---
 
-## 📦 傳輸協定定義檔
+##  傳輸協定定義檔
 
 | 檔案名稱 | 功能描述 |
 |----------|-----------|
@@ -416,7 +419,7 @@ graph TD
 
 ---
 
-## 📥 UCI 工具模組
+##  UCI 工具模組
 
 | 檔案名稱 | 功能描述 |
 |----------|-----------|
@@ -424,7 +427,7 @@ graph TD
 
 ---
 
-## 📦 ULSCH 上行共享通道模組
+##  ULSCH 上行共享通道模組
 
 | 檔案名稱 | 功能描述 |
 |----------|-----------|
@@ -436,7 +439,7 @@ graph TD
 
 ---
 
-## 📡 上行控制訊號接收器
+##  上行控制訊號接收器
 
 | 檔案名稱 | 功能描述 |
 |----------|-----------|
@@ -445,9 +448,9 @@ graph TD
 
 ---
 
-## 🔁 上行接收鏈統整流程圖（含控制資訊）
+##  上行接收鏈統整流程圖（含控制資訊）
 
-```mermaid
+```
 graph TD
   A[接收 RF 波形] --> B[slot_fep_nr.c (FFT)]
   B --> C[nr_ul_channel_estimation.c]
@@ -460,3 +463,43 @@ graph TD
   B --> I[srs_rx.c: 頻道響應量測]
 
   B --> J[nr_uci_tools_common.c: SR/ACK 組合]
+
+```
+#  OAI PHY 層初始化模組整理（openair1/PHY/INIT）
+
+此模組負責設定 LTE / NR 的 PHY 結構，包括 frame 參數、buffer 配置、beamforming、FFT 表格等，為收發鏈啟動做準備。
+
+---
+
+##  檔案功能對照表
+
+| 檔案名稱 | 系統別 | 功能說明 |
+|----------|--------|----------|
+| `init_top.c` | 共通 | 初始化全域變數、FFT 表、通用 buffer 結構等 |
+| `lte_init.c` | LTE | 初始化 LTE PHY 層，建立 DLSCH/ULSCH RX/TX 緩衝區 |
+| `lte_init_ru.c` | LTE | RU 模式下的 LTE 初始化（如天線端口） |
+| `lte_init_ue.c` | LTE | LTE UE 端初始化 |
+| `lte_param_init.c` | LTE | 單元模擬（simulation）用，設定全域 eNB/UE 結構 |
+| `lte_parms.c` | LTE | 建立 `init_frame_parms()` 結構，定義 FFT/slot 資訊等 |
+| `nr_init.c` | NR | 初始化 NR 系統（支援 analog beamforming extension） |
+| `nr_init_ru.c` | NR | NR RU 端初始化（天線數、記憶體分配） |
+| `nr_init_ue.c` | NR | NR UE 端初始化，包含 buffer 建立與前處理變數 |
+| `nr_parms.c` | NR | 初始化 NR 頻帶（band），對應 3GPP Rel.17 頻段 |
+| `defs_NB_IoT.h` | NB-IoT | NB-IoT 的定義檔，僅用於早期版本 |
+| `nr_phy_init.h` | NR | 處理 UE 端的 Timing Advance（TA） offset 計算 |
+| `phy_init.h` | 共通 | 含 `processSlotTx` 等啟動前判斷邏輯 |
+
+---
+
+##  關鍵初始化流程說明
+
+### LTE 系統初始化（eNB / UE）
+
+
+- <img width="574" height="429" alt="image" src="https://github.com/user-attachments/assets/4c7d5f54-b04a-46d4-bae7-54644fe8af3f" />
+
+- <img width="817" height="502" alt="image" src="https://github.com/user-attachments/assets/9e0821c1-b963-47cd-9c49-377ab2a6601e" />
+
+- <img width="828" height="435" alt="image" src="https://github.com/user-attachments/assets/6b3bf5e0-c76c-4498-833a-dfd4f94ae935" />
+
+

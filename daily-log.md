@@ -149,7 +149,7 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
  
 **Milestones**
 - gNB RX note:
-  - []1.MODULATION (CP 移除 + FFT → Equalization → 解調（demod）)(deadline 7/18)
+  - []1.MODULATION (CP 移除 + FFT  → 解調（demod）)(deadline 7/18)
   - []2.NR_TRANSPORT (demapping → channel estimation → equalization → descrambling )
   - []3.coding (Decoding)
 
@@ -163,8 +163,12 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 - 21:00 - 22:00: [catelog](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/catalog.md)
 
 ## 2025/07/15
+**Short-term Goals**
+- 讀完並做筆記gNB RX端MODULATION和NR_TRANSPORT相關的規格書和OAI程式碼(deadline 7/29)
+  -  TS 38.211,TS 38.212,TS 38.214
+  
 **Milestones**
-- 1.MODULATION (CP 移除 + FFT → Equalization → 解調（demod）)(deadline 7/18)
+- 1.MODULATION (CP 移除 + FFT  解調（demod）)(deadline 7/18)
 
  **Deliverable**
 - **note** TS 38.211 5.3.1 OFDM baseband signal generation for all channels except PRACH and RIM-RS

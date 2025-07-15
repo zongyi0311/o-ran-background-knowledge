@@ -173,3 +173,6 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
  **Deliverable**
 - **note** TS 38.211 5.3.1 OFDM baseband signal generation for all channels except PRACH and RIM-RS
 - **note** slot_fep_nr.c and ofdm_mod.c
+
+**Daily Logs:**
+- 10:30 - 15:00 : [slot_fep_nr.c](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038.211%20Physical%20channels%20and%20modulation.md#slot_fep_nrc)

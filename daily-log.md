@@ -176,3 +176,4 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 
 **Daily Logs:**
 - 10:30 - 15:00 : [slot_fep_nr.c](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038.211%20Physical%20channels%20and%20modulation.md#slot_fep_nrc)
+- 15:00 - 18:30 : [TS 38.211 5.3](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038.211%20Physical%20channels%20and%20modulation.md#531-ofdm-baseband-signal-generation-for-all-channels-except-prach)

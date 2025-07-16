@@ -169,7 +169,8 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
   
 **Milestones**
 - 1.MODULATION (CP 移除 + FFT  解調（demod）)(deadline 7/18)
-
+- 2.coding (Decoding)
+- 
  **Deliverable**
 - **note** TS 38.211 5.3.1 OFDM baseband signal generation for all channels except PRACH and RIM-RS
 - **note** slot_fep_nr.c and ofdm_mod.c
@@ -184,11 +185,9 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
   -  TS 38.211,TS 38.212,TS 38.214
   
 **Milestones**
-- 1.MODULATION (CP 移除 + FFT  解調（demod）)(deadline 7/18)
-- 2.NR_TRANSPORT (demapping → channel estimation → equalization → descrambling )
+- 1.MODULATION (CP 移除 + FFT → demapping → channel estimation → equalization → demodulation → descrambling )(deadline 7/18)
 
  **Deliverable**
-- **note** TS 38.211 6.3~6.4
 - **note** nr_ulsch_demodulation.c 
 
 **Daily Logs:**

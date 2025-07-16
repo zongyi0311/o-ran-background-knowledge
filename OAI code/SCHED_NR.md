@@ -285,3 +285,16 @@ In 5G TDD systems:
 
 
 # phy_procedures_nr_gNB.c
+## beam_index_allocation()
+- Ensure that the beam corresponding to each slot symbol does not conflict, and assign an analog beam to the transmission data of the slot+symbol if conditions are met
+
+## nr_common_signal_procedures
+- Calculate the starting symbol and starting frequency of SSB
+- Allocate the corresponding analog beam (through beam_index_allocation())
+- Call the function to generate SSB component signals such as PSS, SSS, PBCH, PBCH DMRS, etc.
+- Write the result to the transmit buffer txdataF
+
+## clear_slot_beamid
+- Clear the beam allocation information of all symbols in the specified slot to prepare for new beam allocation (such as SSB or PDSCH, etc.)
+- When a slot has not been configured or needs to be reconfigured, this function needs to be called first to clear the record to avoid beam resource conflicts.
+## phy_procedures_gNB_TX

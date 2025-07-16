@@ -193,3 +193,14 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 **Daily Logs:**
 - 10:30 - 14:00 : [SCHED_NR](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/SCHED_NR.md#fapi_nr_l1)
 - 20:00 - 22:00: [nr_ulsch_demodulation](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/nr_ulsch_demodulation.md)
+
+## 2025/07/17
+**Short-term Goals**
+- 讀完並做筆記gNB RX端MODULATION和NR_TRANSPORT相關的規格書和OAI程式碼(deadline 7/29)
+  -  TS 38.211,TS 38.212,TS 38.214
+  
+**Milestones**
+- 1.MODULATION (CP 移除 + FFT → demapping → channel estimation → equalization → demodulation → descrambling )(deadline 7/18)
+
+ **Deliverable**
+- **note** nr_ulsch_demodulation.c 

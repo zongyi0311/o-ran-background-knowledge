@@ -191,3 +191,5 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 - **note** TS 38.211 6.3~6.4
 - **note** nr_ulsch_demodulation.c 
 
+**Daily Logs:**
+- 10:30 - 15:00 : [SCHED_NR](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/SCHED_NR.md#fapi_nr_l1)

@@ -177,3 +177,17 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 **Daily Logs:**
 - 10:30 - 15:00 : [slot_fep_nr.c](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038.211%20Physical%20channels%20and%20modulation.md#slot_fep_nrc)
 - 15:00 - 18:30 : [TS 38.211 5.3](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038.211%20Physical%20channels%20and%20modulation.md#531-ofdm-baseband-signal-generation-for-all-channels-except-prach)
+
+## 2025/07/16
+**Short-term Goals**
+- 讀完並做筆記gNB RX端MODULATION和NR_TRANSPORT相關的規格書和OAI程式碼(deadline 7/29)
+  -  TS 38.211,TS 38.212,TS 38.214
+  
+**Milestones**
+- 1.MODULATION (CP 移除 + FFT  解調（demod）)(deadline 7/18)
+- 2.NR_TRANSPORT (demapping → channel estimation → equalization → descrambling )
+
+ **Deliverable**
+- **note** TS 38.211 6.3~6.4
+- **note** nr_ulsch_demodulation.c 
+

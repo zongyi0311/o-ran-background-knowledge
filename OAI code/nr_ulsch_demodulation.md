@@ -157,6 +157,9 @@ uint32_t x2 = (x2tmp0 + (nid << 1) + nscid) % (1U << 31);
 this Calculation method in TS 38.211 7.4.1.1 
 call gold_cache()//This function will use x2 as the seed and return a pseudo-random Gold sequence
 ```
+**gold_cache()**//TS 138 211 5.2.1 pseudo-random-sequence generation
+- Calculating the Gold Sequence **lte_gold_generic**
+
 ```
 pusch_dmrs_type_t dmrs_type = pusch_pdu->dmrs_config_type == NFAPI_NR_DMRS_TYPE1 ? pusch_dmrs_type1 : pusch_dmrs_type2;
 3GPP TS 38.211 §6.4.1.1.3//Is it to determine whether the DMRS "Configuration Type" is Type 1 or Type 2, and where it corresponds to?

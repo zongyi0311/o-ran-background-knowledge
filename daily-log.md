@@ -203,7 +203,9 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 - 1.MODULATION (CP 移除 + FFT → demapping → channel estimation → equalization → demodulation → descrambling )(deadline 7/18)
 
  **Deliverable**
-- **note** nr_ulsch_demodulation.c 
+- **note** nr_ulsch_demodulation.c
+- **note** DRMS in TS 38.211
 
 **Daily Logs:**
-- 10:00 - 14:00 : channel estimation [nr_ul_channel_estimation.c](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/nr_ulsch_demodulation.md#nr_pusch_channel_estimationnr_ul_channel_estimaitionc)
+- 10:00 - 15:00 : channel estimation [nr_ul_channel_estimation.c](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/nr_ulsch_demodulation.md#nr_pusch_channel_estimationnr_ul_channel_estimaitionc)
+- 16:00 - 18:30 :  TS 38.211 [5.2](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038.211%20Physical%20channels%20and%20modulation.md#52-sequence-generation) and [6.4.1.1](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038.211%20Physical%20channels%20and%20modulation.md#64-physical-signals)

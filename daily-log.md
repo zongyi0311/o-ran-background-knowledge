@@ -204,3 +204,6 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 
  **Deliverable**
 - **note** nr_ulsch_demodulation.c 
+
+**Daily Logs:**
+- 10:00 - 14:00 : channel estimation [nr_ul_channel_estimation.c](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/nr_ulsch_demodulation.md#nr_pusch_channel_estimationnr_ul_channel_estimaitionc)

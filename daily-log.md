@@ -209,3 +209,14 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 **Daily Logs:**
 - 10:00 - 15:00 : channel estimation [nr_ul_channel_estimation.c](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/nr_ulsch_demodulation.md#nr_pusch_channel_estimationnr_ul_channel_estimaitionc)
 - 16:00 - 18:30 :  TS 38.211 [5.2](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038.211%20Physical%20channels%20and%20modulation.md#52-sequence-generation) and [6.4.1.1](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038.211%20Physical%20channels%20and%20modulation.md#64-physical-signals)
+
+## 2025/07/17
+**Short-term Goals**
+- 讀完並做筆記gNB RX端MODULATION和NR_TRANSPORT相關的規格書和OAI程式碼(deadline 7/29)
+  -  TS 38.211,TS 38.212,TS 38.214
+ 
+**Milestones**
+- 1.MODULATION (CP 移除 + FFT → demapping → channel estimation → equalization → demodulation → descrambling )(deadline 7/18)
+
+ **Deliverable**
+- **note** finish nr_ulsch_demodulation.c 

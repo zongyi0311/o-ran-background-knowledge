@@ -476,3 +476,284 @@ This is the get_delay_idx() function, which is used to map the estimated delay v
 | `c16x32div()`                                       | Complex division (used for averaging)                             |
 | `multadd_real_four_symbols_vector_complex_scalar()` | Type2 interpolation                                               |
 | `completed_task_ans()`                              | Marks this thread task as finished                                |
+
+**nr_gnb_measurements()**
+```
+void nr_gnb_measurements(
+    PHY_VARS_gNB *gNB,
+    NR_gNB_ULSCH_t *ulsch,//ULSCH structure, includes HARQ and measurement fields
+    NR_gNB_PUSCH *pusch_vars,//
+    unsigned char symbol,//	OFDM symbol index being processed
+    uint8_t nrOfLayers//Number of MIMO layers
+)
+```
+
+- Get receiving gain and RX Gain Offset
+```
+rx_gain = ru->rfdevice.openair0_cfg->rx_gain[0];
+  rx_gain_offset = ru->rfdevice.openair0_cfg->rx_gain_offset[0];
+```
+
+- Calculate channel energy and power sum
+```
+for (int aarx = 0; aarx < fp->nb_antennas_rx; aarx++) {
+  rx_power[aarx] = 0;
+  for (int aatx = 0; aatx < nrOfLayers; aatx++) {
+    rx_spatial_power[aatx][aarx] = signal_energy_nodc(...);
+    rx_power[aarx] += rx_spatial_power[aatx][aarx];
+  }
+  rx_power_tot += rx_power[aarx];
+}
+For each receiving antenna aarx and each layer aatx:
+  Take out the channel estimation value array corresponding to DMRS and calculate the energy through signal_energy_nodc().
+  Add up the energy of all layers to get the total received power of this antenna.
+Finally calculate the overall total power rx_power_tot.
+```
+
+- Convert to dB units and store CQI results
+```
+rx_power_tot_dB = dB_fixed(rx_power_tot);//dB conversion function for fixed decimal format
+ulsch_measurements->wideband_cqi_tot = dB_fixed2(rx_power_tot, meas->n0_power_tot);//CQI is calculated based on the ratio of Rx Energy to Noise Power.
+```
+
+- Calculate RSSI (Received Power Index)
+```
+ulsch_measurements->rx_rssi_dBm =
+    rx_power_avg_dB + 30 - SQ15_SQUARED_NORM_FACTOR_DB
+    - (rx_gain - rx_gain_offset) - dB_fixed(fp->ofdm_symbol_size);
+
+The formula for RSSI dBm can be understood as:
+RSSI(dBm) ≈ rx_power_dBFS + 30 - Norm_offset - Gain - log(N_fft)
+
+```
+
+- output
+```
+struct ulsch->ulsch_measurements:
+wideband_cqi_tot //Calculated overall CQI (expressed in dB),
+rx_rssi_dBm//Calculated RSSI (received power per RE, in dBm)
+```
+
+**allocCast2D**
+- Convert the 1D array gNB->measurements.n0_subband_power to a 2D array index n0_subband_power, so you can access the noise power of each receive antenna and each RB using n0_subband_power[receive antenna][RB number]
+
+**1208-1245**
+```
+for (int aarx = 0; aarx < frame_parms->nb_antennas_rx; aarx++) {//Process each receiving antenna one by one (aarx: Antenna Array Rx index)
+
+if (symbol == rel15_ul->start_symbol_index) {//Initialize Energy Slot
+  pusch_vars->ulsch_power[aarx] = 0;
+  pusch_vars->ulsch_noise_power[aarx] = 0;
+}
+
+//Calculate the start and end subcarrier index of RB
+int start_sc = (rel15_ul->bwp_start + rel15_ul->rb_start) * NR_NB_SC_PER_RB;
+int middle_sc = frame_parms->ofdm_symbol_size - frame_parms->first_carrier_offset;
+int end_sc = (start_sc + rel15_ul->rb_size * NR_NB_SC_PER_RB - 1) % frame_parms->ofdm_symbol_size;
+
+for (int s = rel15_ul->start_symbol_index; s < (rel15_ul->start_symbol_index + rel15_ul->nr_of_symbols); s++)//check all OFDM symbols occupied by the PUSCH
+
+//Calculate the memory location of channel data
+int offset0 = ((slot & 3) * frame_parms->symbols_per_slot + s) * frame_parms->ofdm_symbol_size;//The symbol starts in the entire RX buffer.
+int offset = offset0 + (frame_parms->first_carrier_offset + start_sc) % frame_parms->ofdm_symbol_size;//Add carrier offset and PUSCH start subcarrier → Get the subcarrier start point to be analyzed
+c16_t *ul_ch = &gNB->common_vars.rxdataF[beam_nb][aarx][offset];//Frequency domain data pointing to the antenna and the symbol
+
+//Compensation when crossing FFT boundaries
+if (end_sc < start_sc) {// Energy is divided into two parts: first half + second half
+            int64_t symb_energy_aux = signal_energy_nodc(ul_ch, middle_sc - start_sc) * (middle_sc - start_sc);
+            ul_ch = &gNB->common_vars.rxdataF[beam_nb][aarx][offset0];
+            symb_energy_aux += (signal_energy_nodc(ul_ch, end_sc + 1) * (end_sc + 1));
+            symb_energy += symb_energy_aux / (rel15_ul->rb_size * NR_NB_SC_PER_RB);
+          } else {
+            symb_energy += signal_energy_nodc(ul_ch, rel15_ul->rb_size * NR_NB_SC_PER_RB);
+          }
+
+```
+
+**average_u32()**
+- Compute the average of an array of uint32_t and speed it up using AVX2 SIMD instructions
+---
+- nvar /= (rel15_ul->nr_of_symbols * rel15_ul->nrOfLayers * frame_parms->nb_antennas_rx);//normalize
+
+---
+## Time Domain Channel Estimation Averaging 1251~1262
+```
+if (gNB->chest_time == 1)
+    nr_chest_time_domain_avg(frame_parms,
+                             pusch_vars->ul_ch_estimates,//Estimated PUSCH channel (complex frequency domain data)
+                             rel15_ul->nr_of_symbols,
+                             rel15_ul->start_symbol_index,
+                             rel15_ul->ul_dmrs_symb_pos,
+                             rel15_ul->rb_size);
+```
+**nr_chest_time_domain_avg()** //definition in dmrs_nr.c
+
+Why do we need to do “time domain averaging?
+
+When multiple OFDM symbols use the same channel (e.g. multiple symbols containing DMRS), the channel estimates of different symbols can be averaged on the time axis to:
+- Suppress estimation noise
+- Improve estimation stability
+
+## Scrambling Initialization & G-bit Calculation   
+### Scrambling initialization 1264~1285
+- Calculate the number of available REs
+```
+int number_dmrs_symbols = 0;
+for (int l = rel15_ul->start_symbol_index; l < end_symbol; l++)
+  number_dmrs_symbols += ((rel15_ul->ul_dmrs_symb_pos)>>l) & 0x01;//Calculate how many symbols in a slot are configured as DMRS
+
+if (rel15_ul->dmrs_config_type == pusch_dmrs_type1)
+  nb_re_dmrs = 6 * rel15_ul->num_dmrs_cdm_grps_no_data;//type 1 → 6 REs per group
+else
+  nb_re_dmrs = 4 * rel15_ul->num_dmrs_cdm_grps_no_data;//type 2 → 4 REs per group
+```
+```
+if (rel15_ul->pdu_bit_map & PUSCH_PDU_BITMAP_PUSCH_PTRS) {
+    uint16_t ptrsSymbPos = 0;
+    set_ptrs_symb_idx(&ptrsSymbPos,
+                      rel15_ul->nr_of_symbols,
+                      rel15_ul->start_symbol_index,
+                      1 << rel15_ul->pusch_ptrs.ptrs_time_density,
+                      rel15_ul->ul_dmrs_symb_pos);//Calculate which symbols contain PTRS
+    int ptrsSymbPerSlot = get_ptrs_symbols_in_slot(ptrsSymbPos, rel15_ul->start_symbol_index, rel15_ul->nr_of_symbols);//Calculate the number of PTRS symbols in the slot
+    int n_ptrs = (rel15_ul->rb_size + rel15_ul->pusch_ptrs.ptrs_freq_density - 1) / rel15_ul->pusch_ptrs.ptrs_freq_density;//Frequency domain resources occupied by PTRS in each symbol (depending on the frequency domain density)
+    unav_res = n_ptrs * ptrsSymbPerSlot;//How much RE does PTRS occupy in total?
+  }
+```
+**set_ptrs_symb_idx()** definition in ptrs_nr.c
+**get_ptrs_symbols_in_slot** definition in ptrs_nr.c
+
+### get how many bit in a slot 1287~1296
+```
+int G = nr_get_G(rel15_ul->rb_size,
+                   rel15_ul->nr_of_symbols,
+                   nb_re_dmrs,
+                   number_dmrs_symbols, // number of dmrs symbols irrespective of single or double symbol dmrs
+                   unav_res,
+                   rel15_ul->qam_mod_order,
+                   rel15_ul->nrOfLayers);//Calculate the total number of bits available for data transmission in a slot
+```
+**nr_get_G()** definition in nr_tbs_tools.c
+- what is G?
+- Determine based on the following conditions:
+  - How many RBs and symbols are used (i.e., available time and frequency resources)
+  - How many available Resource Elements (REs) are left after deducting DMRS and PTRS
+  - The number of bits that each RE can carry (depends on the modulation order and the number of layers)
+
+### initialize scrambling sequence
+```
+int16_t scramblingSequence[G + 96] __attribute__((aligned(32)));
+
+  nr_codeword_unscrambling_init(scramblingSequence, G, 0, rel15_ul->data_scrambling_id, rel15_ul->rnti);
+//scramblingSequence is a Output Array
+//This code is used to generate the Gold sequence in advance for the subsequent descrambling step.
+```
+**nr_codeword_unscrambling_init()** definition in nr_scrambling.c
+```
+void nr_codeword_unscrambling_init(int16_t *s2, uint32_t size, uint8_t q, uint32_t Nid, uint32_t n_RNTI)
+{
+  const int roundedSz = (size + 31) / 32;//Calculate the required Gold sequence length (32-bit units)
+  uint32_t *seq = gold_cache((n_RNTI << 15) + (q << 14) + Nid, roundedSz);//The returned value is a uint32_t array
+  simde__m128i *s128=(simde__m128i *)s2;//Indicator type conversion
+  for (int i = 0; i < roundedSz; i++) {
+    uint8_t *s8 = (uint8_t *)(seq + i);
+    *s128++ = byte2m128i[s8[0]];
+    *s128++ = byte2m128i[s8[1]];
+    *s128++ = byte2m128i[s8[2]];
+    *s128++ = byte2m128i[s8[3]];
+  }
+}
+```
+```
+//Convert each 32-bit word to the corresponding ±1 (represented as int16_t) format
+for (int i = 0; i < roundedSz; i++) {
+    uint8_t *s8 = (uint8_t *)(seq + i);
+    *s128++ = byte2m128i[s8[0]];
+    *s128++ = byte2m128i[s8[1]];
+    *s128++ = byte2m128i[s8[2]];
+//Each seq[i] is 32-bit (4 bytes), here it is split byte-wise
+//Each s8[k] is 8-bit data, corresponding to 8 scrambling bits
+//byte2m128i[x]: Look up the table to convert the 8-bit scrambling bits to ±1, and expand it to simde__m128i (128 bits = 8 × int16_t)
+//Write 4 groups each time, a total of 4 × 8 = 32 bits (corresponding to 1 seq[i])
+```
+
+### first the computation of channel levels 1302~1312
+```
+int nb_re_pusch = 0, meas_symbol = -1;
+  for(meas_symbol = rel15_ul->start_symbol_index; meas_symbol < end_symbol; meas_symbol++) 
+    if ((nb_re_pusch = get_nb_re_pusch(frame_parms, rel15_ul, meas_symbol)) > 0)
+      break;//Call get_nb_re_pusch(...) to calculate the number of valid REs in the symbol
+
+  AssertFatal(nb_re_pusch > 0 && meas_symbol >= 0,
+              "nb_re_pusch %d cannot be 0 or meas_symbol %d cannot be negative here\n",
+              nb_re_pusch,
+              meas_symbol);
+//The function of this code is to select a symbol that can be used for channel estimation and confirm that it has enough PUSCH RE for energy calculation.
+```
+**get_nb_re_pusch()**
+- Calculate the number of Resource Elements (REs) that can be used to transmit data in the symbol based on the PUSCH settings and symbol positions
+
+---
+```
+int soffset = (slot % RU_RX_SLOT_DEPTH) * frame_parms->symbols_per_slot * frame_parms->ofdm_symbol_size;//Calculate the starting position of the slot in rxdataF (soffset)
+
+  nb_re_pusch = ceil_mod(nb_re_pusch, 16);//Since subsequent processing (such as SIMD vectorization) requires alignment of 16
+  int dmrs_symbol;
+  if (gNB->chest_time == 0)
+    dmrs_symbol = get_valid_dmrs_idx_for_channel_est(rel15_ul->ul_dmrs_symb_pos, meas_symbol);//Return a DMRS symbol index that can be used for channel estimation
+  else // average of channel estimates stored in first symbol
+    dmrs_symbol = get_next_dmrs_symbol_in_slot(rel15_ul->ul_dmrs_symb_pos, rel15_ul->start_symbol_index, end_symbol);//Find the first DMRS symbol position starting from start_symbol_index
+```
+**get_valid_dmrs_idx_for_channel_est()** definition in dmrs_nr.c
+- It is used to obtain a reasonable DMRS symbol index as the basis for channel estimation.
+
+**get_dmrs_symbols_in_slot()**
+- Used to find the "next nearest DMRS symbol" for channel estimation or channel averaging
+
+```
+int size_est = nb_re_pusch * frame_parms->symbols_per_slot;
+//Calculate the size of the channel estimate
+//nb_re_pusch: Number of REs per OFDM symbol
+//symbols_per_slot: Number of symbols in a slot (usually 14)
+
+  __attribute__((aligned(32))) int ul_ch_estimates_ext[rel15_ul->nrOfLayers * frame_parms->nb_antennas_rx][size_est];//Declare an array of channel estimates for multiple layers and multiple receive antennas((layer × antenna) )
+
+  memset(ul_ch_estimates_ext, 0, sizeof(ul_ch_estimates_ext));
+  int buffer_length = rel15_ul->rb_size * NR_NB_SC_PER_RB;//Count the total number of REs used in a symbol
+
+  c16_t temp_rxFext[frame_parms->nb_antennas_rx][buffer_length] __attribute__((aligned(32)));
+```
+
+**nr_ulsch_extract_rbs()**
+- Extract the received symbols and channel estimation values of the corresponding RB from rxdataF and fill in rxFext and chFext. It is a pre-step for uplink demodulation
+
+- Case 1: Non-DMRS Symbol
+```
+if (is_dmrs_symbol == 0)
+Directly copy the entire PRB range (12 subcarriers per PRB) to rxFext and chFext
+```
+
+- Case 2: DMRS type 1 (6 REs per PRB are DMRS)
+```
+else if (pusch_pdu->dmrs_config_type == pusch_dmrs_type1)
+DMRS occupies 6 out of every 12 REs, so only extract data symbols (interleaved)
+Adjust the starting position according to the delta value (currently delta is 0)
+```
+
+- Case 3: DMRS type 2 (4 DMRS per PRB)
+```
+else if (pusch_pdu->dmrs_config_type == pusch_dmrs_type2)
+Type 2 uses CDM (Code Division Multiplex), with different jump point locations
+2*delta and 2*delta+1 in every 6 REs are DMRS
+The rest of the REs are data, copied to the output
+```
+- output
+- temp_rxFext: Received symbols after extraction
+- ul_ch_estimates_ext: Extracted channel estimates
+
+```
+int avgs = 0;
+  int avg[frame_parms->nb_antennas_rx*rel15_ul->nrOfLayers];//Channel energy average variable declaration
+  uint8_t shift_ch_ext = rel15_ul->nrOfLayers > 1 ? log2_approx(max_ch >> 11) : 0;//Decide whether to scale the channel estimate based on the number of layers
+```
+  

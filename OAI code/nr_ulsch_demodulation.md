@@ -758,3 +758,205 @@ int avgs = 0;
   uint8_t shift_ch_ext = rel15_ul->nrOfLayers > 1 ? log2_approx(max_ch >> 11) : 0;//Decide whether to scale the channel estimate based on the number of layers
 ```
   
+## Channel Scaling and log2_maxh calculation
+**nr_ulsch_scale_channel()** definition in 151~185
+```
+ nr_ulsch_scale_channel(size_est,//The total size of the channel estimate (number of elements)
+                         ul_ch_estimates_ext,//The extracted channel estimate array, in the format [layer][antenna][RE]
+                         frame_parms,
+                         meas_symbol,
+                         (rel15_ul->ul_dmrs_symb_pos >> meas_symbol) & 0x01,
+                         nb_re_pusch,
+                         rel15_ul->nrOfLayers,
+                         rel15_ul->rb_size,
+                         shift_ch_ext);//The number of right shifts calculated earlier (e.g., a right shift of 1 means division by 2)
+```
+- This is a necessary processing step after channel estimation:
+  - Avoid numerical overflow or distortion caused by too large/too small channel estimation value during LLR calculation
+  - Improve numerical stability and quantization control
+- Directly modify the contents of the ul_ch_estimates_ext[][][] array → reduce its value to a more stable range, reducing the probability of multiplication overflow
+
+**nr_ulsch_channel_level()** definition in 204~226
+```
+nr_ulsch_channel_level(size_est,
+                       ul_ch_estimates_ext,
+                       frame_parms,
+                       avg,
+                       meas_symbol,
+                       nb_re_pusch,
+                       rel15_ul->nrOfLayers);
+```
+- Calculate the average PUSCH channel energy on each Layer × Rx antenna for subsequent processing
+- simde_mm_average():This is a vectorized sum + average internal function
+- Output:avg[] will be filled with the following:
+        -  Average channel energy for each layer and each Rx antenna
+        -  Used for scaling, subsequent equalization or SNR estimation
+
+
+```
+for (int nl = 0; nl < rel15_ul->nrOfLayers; nl++)
+    for (int aarx = 0; aarx < frame_parms->nb_antennas_rx; aarx++)
+      avgs = cmax(avgs, avg[nl * frame_parms->nb_antennas_rx + aarx]);
+Find the maximum channel energy of all Layer × Rx antennas from avg[], which will be used as a reference for subsequent equalization and scaling.
+
+avgs:Stores the maximum energy value so far (initial value is usually 0)
+```
+
+```
+if (rel15_ul->nrOfLayers == 2 && rel15_ul->qam_mod_order > 6)//2 layers、High Order Modulation
+    pusch_vars->log2_maxh = (log2_approx(avgs) >> 1) - 3; // for MMSE //represents the square root of the channel energy and log2
+  else if (rel15_ul->nrOfLayers == 2)//2 layers
+    pusch_vars->log2_maxh = (log2_approx(avgs) >> 1) - 2 + log2_approx(frame_parms->nb_antennas_rx >> 1);//Considering the antenna composite gain
+  else 
+    pusch_vars->log2_maxh = (log2_approx(avgs) >> 1) + 1 + log2_approx(frame_parms->nb_antennas_rx >> 1);
+
+  if (pusch_vars->log2_maxh < 0)
+    pusch_vars->log2_maxh = 0;//Ensure that log2_maxh is not negative to avoid illegal shift behavior or bit overflow
+```
+**log2_maxh**
+- This variable is passed to the equalizer (such as MMSE equalizer) and LLR calculation module, for example:
+  - Controls channel compensation scaling factor
+  - Affects bit demodulation accuracy
+ 
+```
+int numSymbols = gNB->num_pusch_symbols_per_thread;//The number of symbols that each thread can process
+int total_res = 0;//Variables used to count or accumulate total processing resources (such as total RE number)
+int const loop_iter = CEILIDIV(rel15_ul->nr_of_symbols, numSymbols);//Calculate how many symbols need to be cut to distribute the processing
+puschSymbolProc_t arr[loop_iter];//Each arr[i] corresponds to a symbol processing task
+task_ans_t ans;
+init_task_ans(&ans, loop_iter);
+
+int sz_arr = 0;
+```
+```
+ for(uint8_t task_index = 0; task_index < loop_iter; task_index++) {
+    int symbol = task_index * numSymbols + rel15_ul->start_symbol_index;
+    int res_per_task = 0;
+    for (int s = 0; s < numSymbols && s + symbol < end_symbol; s++) {
+      pusch_vars->ul_valid_re_per_slot[symbol+s] = get_nb_re_pusch(frame_parms,rel15_ul,symbol+s);//Calculate the number of valid PUSCH resource elements (REs) in the OFDM symbol symbol+s
+
+      pusch_vars->llr_offset[symbol+s] = ((symbol+s) == rel15_ul->start_symbol_index) ? 
+                                         0 : 
+                                         pusch_vars->llr_offset[symbol+s-1] + pusch_vars->ul_valid_re_per_slot[symbol+s-1] * rel15_ul->qam_mod_order;
+//Calculate the starting offset of symbol+s in the entire LLR bitstream
+//The initial symbol (the earliest one) starts at offset 0
+//The starting point of each symbol is the sum of the LLR bits of the previous symbol:
+      res_per_task += pusch_vars->ul_valid_re_per_slot[symbol + s];//Add the current symbol's valid RE number to res_per_task
+    }
+total_res += res_per_task;//Accumulate all valid RE numbers in the symbols processed in this loop to total_res
+```
+
+```
+if (res_per_task > 0) {//Create tasks only when there are symbols to be processed
+      puschSymbolProc_t *rdata = &arr[sz_arr];//rdata is the parameter structure passed to the task
+      rdata->ans = &ans;//ans is the shared result structure index
+      ++sz_arr;
+//Set the parameters required for the task
+      rdata->gNB = gNB;
+      rdata->frame_parms = frame_parms;
+      rdata->rel15_ul = rel15_ul;
+      rdata->slot = slot;
+      rdata->startSymbol = symbol;
+      // Last task processes remainder symbols
+      rdata->numSymbols = task_index == loop_iter - 1 ? rel15_ul->nr_of_symbols - (loop_iter - 1) * numSymbols : numSymbols;
+      rdata->ulsch_id = ulsch_id;
+      rdata->llr = pusch_vars->llr;
+      rdata->scramblingSequence = scramblingSequence;
+      rdata->nvar = nvar;
+      rdata->beam_nb = beam_nb;
+
+//Decide whether to execute directly or throw it into the thread pool
+      if (rel15_ul->pdu_bit_map & PUSCH_PDU_BITMAP_PUSCH_PTRS) {
+        nr_pusch_symbol_processing(rdata);
+      }else {
+        task_t t = {.func = &nr_pusch_symbol_processing, .args = rdata};
+        pushTpool(&gNB->threadPool, t);
+      }
+
+      LOG_D(PHY, "%d.%d Added symbol %d to process, in pipe\n", frame, slot, symbol);
+    }
+```
+
+**nr_pusch_symbol_processing()**
+- For each OFDM symbol, perform channel compensated demodulation → LLR calculation → layer demapping → LLR unscrambling
+
+```
+static void nr_pusch_symbol_processing(void *arg)
+{
+//Solving for parameters
+  puschSymbolProc_t *rdata=(puschSymbolProc_t*)arg;
+
+  PHY_VARS_gNB *gNB = rdata->gNB;
+  NR_DL_FRAME_PARMS *frame_parms = rdata->frame_parms;
+  nfapi_nr_pusch_pdu_t *rel15_ul = rdata->rel15_ul;
+  int ulsch_id = rdata->ulsch_id;
+  int slot = rdata->slot;
+  NR_gNB_PUSCH *pusch_vars = &gNB->pusch_vars[ulsch_id];
+//
+  for (int symbol = rdata->startSymbol; symbol < rdata->startSymbol + rdata->numSymbols; symbol++) {//Start processing each symbol
+    if (gNB->pusch_vars[ulsch_id].ul_valid_re_per_slot[symbol] == 0) //Determine whether the symbol has a valid RE
+      continue;
+//Calculate LLR buffer and offset
+    int soffset = (slot % RU_RX_SLOT_DEPTH) * frame_parms->symbols_per_slot * frame_parms->ofdm_symbol_size;//Calculate the symbol start offset (displacement) of the slot in the entire rxdataF buffer
+
+    int buffer_length = ceil_mod(pusch_vars->ul_valid_re_per_slot[symbol] * NR_NB_SC_PER_RB, 16);//Calculate the number of valid PUSCH REs in this symbol (considering NR_NB_SC_PER_RB) and align 16
+
+    int16_t llrs[rel15_ul->nrOfLayers][ceil_mod(buffer_length * rel15_ul->qam_mod_order, 64)];//Allocate LLR space for each layer (int16 format, bit-wise aligned)
+
+    int16_t *llrss[rel15_ul->nrOfLayers];//Create an index array llrss pointing to the LLR buffer of each layer
+
+    for (int l = 0; l < rel15_ul->nrOfLayers; l++)
+      llrss[l] = llrs[l];
+//
+
+    inner_rx(gNB,                                                  //gNB object index
+             ulsch_id,                                            //ULSCH stream ID
+             slot,//slot number
+             frame_parms,                                        //Frame parameters
+             pusch_vars,                                          //Structure for storing PUSCH buffer data
+             rel15_ul,                                            //PUSCH PDU
+             gNB->common_vars.rxdataF[rdata->beam_nb],
+             (c16_t **)gNB->pusch_vars[ulsch_id].ul_ch_estimates,
+             llrss,                                                //Output: temporary storage space for each layer of LLR results (pointer array)
+             soffset,                                              //The starting position of rxdataF offset
+             gNB->pusch_vars[ulsch_id].ul_valid_re_per_slot[symbol],
+             symbol,
+             gNB->pusch_vars[ulsch_id].log2_maxh,
+             rdata->nvar);//Frequency domain reception → Channel compensation → Equalization → LLR calculation
+
+    int nb_re_pusch = gNB->pusch_vars[ulsch_id].ul_valid_re_per_slot[symbol];
+
+
+// layer de-mapping(Multiple layers are required)
+//Rearrange the LLR (Log-Likelihood Ratio) data of each layer and merge them into a codeword (i.e. a one-dimensional llr[] array)
+    int16_t *llr_ptr = llrs[0];
+    if (rel15_ul->nrOfLayers != 1) {
+      llr_ptr = &rdata->llr[pusch_vars->llr_offset[symbol] * rel15_ul->nrOfLayers];//Determines the starting point of the llr output storage for this symbol
+      for (int i = 0; i < (nb_re_pusch); i++)//resource element
+        for (int l = 0; l < rel15_ul->nrOfLayers; l++)//layer
+          for (int m = 0; m < rel15_ul->qam_mod_order; m++)
+            llr_ptr[i * rel15_ul->nrOfLayers * rel15_ul->qam_mod_order + l * rel15_ul->qam_mod_order + m] =
+                llrss[l][i * rel15_ul->qam_mod_order + m];
+    }
+example:
+Layer L0:   [ b0, b1, b2, b3, ... ]
+Layer L1:   [ b0, b1, b2, b3, ... ]
+                ↓ Demapping ↓
+Combined: [L0b0, L0b1, ..., L1b0, L1b1, ..., L0b2, L0b3, ..., L1b2, L1b3, ...]
+
+
+// unscrambling
+//The LLR symbols at the receiving end are restored to the original bit probability information
+    int16_t *llr16 = (int16_t*)&rdata->llr[pusch_vars->llr_offset[symbol] * rel15_ul->nrOfLayers];
+    int16_t *s = rdata->scramblingSequence + pusch_vars->llr_offset[symbol] * rel15_ul->nrOfLayers;
+    const int end = nb_re_pusch * rel15_ul->qam_mod_order * rel15_ul->nrOfLayers;
+    for (int i = 0; i < end; i++)
+      llr16[i] = llr_ptr[i] * s[i];
+  }
+
+  // Task running in // completed
+  completed_task_ans(rdata->ans);
+}
+```
+
+

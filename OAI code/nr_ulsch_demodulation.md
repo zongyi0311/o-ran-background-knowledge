@@ -477,7 +477,7 @@ This is the get_delay_idx() function, which is used to map the estimated delay v
 | `multadd_real_four_symbols_vector_complex_scalar()` | Type2 interpolation                                               |
 | `completed_task_ans()`                              | Marks this thread task as finished                                |
 
-# 7/18
+# 7/18 
 **nr_gnb_measurements()**
 ```
 void nr_gnb_measurements(

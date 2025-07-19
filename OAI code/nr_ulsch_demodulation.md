@@ -911,7 +911,7 @@ static void nr_pusch_symbol_processing(void *arg)
 
     inner_rx(gNB,                                                  //gNB object index
              ulsch_id,                                            //ULSCH stream ID
-             slot,//slot number
+             slot,                                                //slot number
              frame_parms,                                        //Frame parameters
              pusch_vars,                                          //Structure for storing PUSCH buffer data
              rel15_ul,                                            //PUSCH PDU
@@ -958,5 +958,262 @@ Combined: [L0b0, L0b1, ..., L1b0, L1b1, ..., L0b2, L0b3, ..., L1b2, L1b3, ...]
   completed_task_ans(rdata->ans);
 }
 ```
+**inner_rx()**
+```
+int nb_layer = rel15_ul->nrOfLayers;//The number of transmission layers, which is related to the MIMO configuration
+int nb_rx_ant = frame_parms->nb_antennas_rx;//Number of receiving antennas
+int dmrs_symbol_flag = (rel15_ul->ul_dmrs_symb_pos >> symbol) & 0x01;//Check if this symbol is DMRS
+int buffer_length = ceil_mod(rel15_ul->rb_size * NR_NB_SC_PER_RB, 16);
+c16_t rxFext[nb_rx_ant][buffer_length] __attribute__((aligned(32)));//rxFext: extension of received data (one for each antenna)
+c16_t chFext[nb_layer][nb_rx_ant][buffer_length] __attribute__((aligned(32)));//chFext: channel estimation data (one per layer per day)
 
+memset(rxFext, 0, sizeof(rxFext));
+memset(chFext, 0, sizeof(chFext));
+```
 
+```
+if (gNB->chest_time == 0)//0 = Each symbol is estimated !=0  Time average is done after estimating a specific symbol only once
+    dmrs_symbol = dmrs_symbol_flag ? symbol : get_valid_dmrs_idx_for_channel_est(rel15_ul->ul_dmrs_symb_pos, symbol);
+  else { // average of channel estimates stored in first symbol
+    int end_symbol = rel15_ul->start_symbol_index + rel15_ul->nr_of_symbols;
+    dmrs_symbol = get_next_dmrs_symbol_in_slot(rel15_ul->ul_dmrs_symb_pos, rel15_ul->start_symbol_index, end_symbol);
+  }
+```
+
+```
+//Acquisition of RB data and channel estimation
+ for (int aarx = 0; aarx < nb_rx_ant; aarx++) {
+    for (int aatx = 0; aatx < nb_layer; aatx++) {
+      nr_ulsch_extract_rbs(rxF[aarx],
+                           (c16_t *)pusch_vars->ul_ch_estimates[aatx * nb_rx_ant + aarx],
+                           rxFext[aarx],
+                           chFext[aatx][aarx],
+                           soffset+(symbol * frame_parms->ofdm_symbol_size),
+                           dmrs_symbol * frame_parms->ofdm_symbol_size,
+                           aarx,
+                           dmrs_symbol_flag, 
+                           rel15_ul,
+                           frame_parms);
+    }
+  }
+```
+
+```
+//Channel Compensation Initialization
+c16_t rho[nb_layer][nb_layer][buffer_length] __attribute__((aligned(32)));
+c16_t rxF_ch_maga  [nb_layer][buffer_length] __attribute__((aligned(32)));
+c16_t rxF_ch_magb  [nb_layer][buffer_length] __attribute__((aligned(32)));
+c16_t rxF_ch_magc  [nb_layer][buffer_length] __attribute__((aligned(32)));
+
+memset(rho, 0, sizeof(rho));
+memset(rxF_ch_maga, 0, sizeof(rxF_ch_maga));
+memset(rxF_ch_magb, 0, sizeof(rxF_ch_magb));
+memset(rxF_ch_magc, 0, sizeof(rxF_ch_magc));
+
+for (int i = 0; i < nb_layer; i++)
+    memset(&pusch_vars->rxdataF_comp[i*nb_rx_ant][symbol * buffer_length], 0, sizeof(int32_t) * buffer_length);
+
+//Channel Compensation(equalization)
+nr_ulsch_channel_compensation((c16_t*)rxFext,
+                              (c16_t*)chFext,
+                              (c16_t*)rxF_ch_maga,
+                              (c16_t*)rxF_ch_magb,
+                              (c16_t*)rxF_ch_magc,
+                              pusch_vars->rxdataF_comp,
+                              (nb_layer == 1) ? NULL : (c16_t*)rho,
+                              frame_parms,
+                              rel15_ul,
+                              symbol,
+                              buffer_length,
+                              output_shift);
+
+````
+```
+//This code mainly processes the uplink PUSCH with single-layer and Transform Precoding (DFT-s-OFDM) enabled. The process includes:
+1. Frequency Domain Equalization
+2. Then convert back to the time domain (IDFT)
+
+if (nb_layer == 1 && rel15_ul->transform_precoding == transformPrecoder_enabled && rel15_ul->qam_mod_order <= 6) {
+    if (rel15_ul->qam_mod_order > 2)
+      nr_freq_equalization(frame_parms,
+                          &pusch_vars->rxdataF_comp[0][symbol * buffer_length],
+                          (int *)rxF_ch_maga,
+                          (int *)rxF_ch_magb,
+                          symbol,
+                          pusch_vars->ul_valid_re_per_slot[symbol],
+                          rel15_ul->qam_mod_order);
+    nr_idft(&pusch_vars->rxdataF_comp[0][symbol * buffer_length], pusch_vars->ul_valid_re_per_slot[symbol]);//Frequency domain → time domain conversion (IDFT)
+  }
+
+//nr_freq_equalization() definition in nr_freq_equalization.c
+```
+
+```
+//If PUSCH contains PTRS (Phase Tracking Reference Signal), additional processing and deduction are required for these PTRS resources.
+if (rel15_ul->pdu_bit_map & PUSCH_PDU_BITMAP_PUSCH_PTRS) {//Check rel15_ul->pdu_bit_map to see if the corresponding bit for PTRS is set
+    nr_pusch_ptrs_processing(gNB,
+                             frame_parms,
+                             rel15_ul,
+                             ulsch_id,
+                             slot,
+                             symbol,
+                             buffer_length);
+    pusch_vars->ul_valid_re_per_slot[symbol] -= pusch_vars->ptrs_re_per_slot;//Deduction of PTRS resources
+  }
+
+//nr_pusch_ptrs_processing() definition in nr_ul_channel_estimation.c
+Perform uplink PUSCH PTRS (Phase Tracking Reference Signal) phase estimation and compensation at the receiving end.
+Its process covers PTRS demodulation, CPE (Common Phase Error) estimation, interpolation, and data compensation, which is critical for correctly demodulating PUSCH, especially high-order QAM (64QAM, 256QAM).
+Extract PTRS from received resources
+Calculate the corresponding phase compensation coefficient
+Compensate or record subsequent data
+```
+
+```
+For 2-layer PUSCH (Physical Uplink Shared Channel) demodulation, select Maximum Likelihood (ML) demodulation or MMSE (Minimum Mean Square Error) demodulation according to the modulation order qam_mod_order
+  if (nb_layer == 2) {
+    if (rel15_ul->qam_mod_order <= 6) {/Case 1: ML demodulation (qam_mod_order <= 6, up to 64QAM)
+      nr_ulsch_compute_ML_llr(pusch_vars,
+                              symbol,
+                              (c16_t *)&pusch_vars->rxdataF_comp[0][symbol * buffer_length],
+                              (c16_t *)&pusch_vars->rxdataF_comp[nb_rx_ant][symbol * buffer_length],
+                              rxF_ch_maga[0],
+                              rxF_ch_maga[1],
+                              llr[0],
+                              llr[1],
+                              rho[0][1],
+                              rho[1][0],
+                              pusch_vars->ul_valid_re_per_slot[symbol],
+                              rel15_ul->qam_mod_order);
+    }
+//nr_ulsch_compute_ML_llr() definition in nr_ulsch_llr_computation.c
+
+    else {//Case 2: MMSE demodulation (qam_mod_order > 6, 256QAM)
+      nr_ulsch_mmse_2layers(frame_parms,
+                            (int32_t **)pusch_vars->rxdataF_comp,
+                            (int **)rxF_ch_maga,
+                            (int **)rxF_ch_magb,
+                            (int **)rxF_ch_magc,
+                            nb_layer,
+                            nb_rx_ant,
+                            buffer_length,
+                            chFext,
+                            rel15_ul->rb_size,
+                            frame_parms->nb_antennas_rx,
+                            rel15_ul->qam_mod_order,
+                            pusch_vars->log2_maxh,
+                            symbol,
+                            pusch_vars->ul_valid_re_per_slot[symbol],
+                            nvar);
+    }
+  }
+
+| function                    | Selection criteria             | use                                |
+| --------------------------- | ---------------- | --------------------------------- |
+| `nr_ulsch_compute_ML_llr()` | QPSK/16QAM/64QAM | LLR demodulation using ML methods                  |
+| `nr_ulsch_mmse_2layers()`   | 256QAM           | Use MMSE + soft-decision to perform LLR demodulation |
+
+ML demodulation: high accuracy but complex calculation, suitable for low-order variables (≦ 64QAM)
+
+MMSE demodulation: suitable for high-order modulation (256QAM), low complexity, fast speed but slightly lower accuracy
+```
+
+**nr_ulsch_channel_compensation()**
+- Set the amplification factor corresponding to QAM (according to the modulation level)
+
+```
+if (mod_order == 4)  // QAM16
+if (mod_order == 6)  // QAM64
+if (mod_order == 8)  // QAM256
+```
+
+- Each layer is multiplied by the receiving antenna (channel compensation)
+```
+simde__m256i comp = oai_mm256_cpx_mult_conj(chF_256[i], rxF_256[i], output_shift);
+        rxComp_256[i] = simde_mm256_add_epi16(rxComp_256[i], comp);
+
+//Calculate the weighted channel energy for different modulation orders
+if (mod_order > 2) {
+  simde__m256i mag = oai_mm256_smadd(chF_256[i], chF_256[i], output_shift); // |h|^2
+  mag = simde_mm256_packs_epi32(mag, mag);     // 壓縮為 16-bit
+  mag = simde_mm256_unpacklo_epi16(mag, mag);  // 複製低位
+
+  rxF_ch_maga_256[i] = simde_mm256_add_epi16(rxF_ch_maga_256[i], simde_mm256_mulhrs_epi16(mag, QAM_ampa_256));
+
+  if (mod_order > 4)
+    rxF_ch_magb_256[i] = simde_mm256_add_epi16(rxF_ch_magb_256[i], simde_mm256_mulhrs_epi16(mag, QAM_ampb_256));
+
+  if (mod_order > 6)
+    rxF_ch_magc_256[i] = simde_mm256_add_epi16(rxF_ch_magc_256[i], simde_mm256_mulhrs_epi16(mag, QAM_ampc_256));
+}
+
+//Used to calculate the channel conjugate inner product between different layers (cross-correlation for MMSE or interference calculation)
+ if (rho != NULL) {
+        for (int atx = 0; atx < nrOfLayers; atx++) {
+          simde__m256i *rho_256  = (simde__m256i *   )&rho[(aatx * nrOfLayers + atx) * buffer_length];
+          simde__m256i *chF_256  = (simde__m256i *)&chFext[(aatx * nb_rx_ant + aarx) * buffer_length];
+          simde__m256i *chF2_256 = (simde__m256i *)&chFext[ (atx * nb_rx_ant + aarx) * buffer_length];
+          for (int i = 0; i < buffer_length >> 3; i++) {
+            rho_256[i] = simde_mm256_adds_epi16(rho_256[i], oai_mm256_cpx_mult_conj(chF_256[i], chF2_256[i], output_shift));
+          }
+        }
+      }
+
+//The purpose of this code is to calculate the channel correlation between different layers (correlation between spatial layers):
+It is used to perform MMSE, interference suppression, or channel inverse matrix operations in multi-layer transmission (MIMO).
+The rho variable is usually used in the subsequent equalization step (such as MMSE) to assist LLR calculation.
+```
+
+```
+if (nb_layer != 2 || rel15_ul->qam_mod_order > 6)//If it is not 2 Layer MIMO or  High-order modulation (Qm > 6) (i.e. 256QAM)
+    for (int aatx = 0; aatx < nb_layer; aatx++)
+      nr_ulsch_compute_llr((int32_t *)&pusch_vars->rxdataF_comp[aatx * nb_rx_ant][symbol * buffer_length],
+                           (int32_t *)rxF_ch_maga[aatx],
+                           (int32_t *)rxF_ch_magb[aatx],
+                           (int32_t *)rxF_ch_magc[aatx],
+                           llr[aatx],
+                           pusch_vars->ul_valid_re_per_slot[symbol],
+                           symbol,
+                           rel15_ul->qam_mod_order);
+//nr_ulsch_compute_llr() definition in nr_ulsch_llr_computation.c
+Call the corresponding LLR function according to the modulation order:
+nr_qpsk_llr QPSK (Qm=2)
+nr_16qam_llr 16QAM (Qm=4)
+nr_64qam_llr 64QAM (Qm=6)
+nr_256qam_llr 256QAM (Qm=8)
+}
+```
+
+# Summarize
+- nr_rx_pusch_tp() — Top-Level Function for PUSCH Reception
+- Purpose:
+  - Handles the entire PUSCH reception for a UE: from OFDM symbols to LLR output. It includes DMRS-based channel estimation, equalization, demodulation, descrambling, and LLR layer demapping.
+ 
+- Main Processing Steps:
+  - 1. Obtain the PUSCH PDU: via nfapi_nr_pusch_pdu_t *rel15_ul
+  - 2. Calculate subcarrier offset: using rb_start, bwp_start, and first_carrier_offset
+  - 3. Channel Estimation:
+    - Calls nr_pusch_channel_estimation()
+    - Uses DMRS to estimate the channel per symbol
+  - 4. Calls nr_pusch_symbol_processing():
+    - This runs in parallel across symbols
+    - Internally invokes inner_rx() for symbol-level demodulation
+  5. Optional: PTRS processing and rotation compensation
+  6 LLR Layer Demapping and buffer copying to scope monitor
+
+- inner_rx() — Symbol-Level Demodulation Core
+- Purpose:
+- Performs demodulation and equalization for one OFDM symbol:
+  - 1. Extracts frequency-domain symbols (rxFext)
+  - 2. Extracts matching channel estimates (chFext)
+  - 3. Channel compensation and equalization
+  - 4. LLR demodulation (based on modulation and number of layers)
+  - 5. Writes LLRs into output buffer
+   
+| Function                         | Description                                     | Called From                    |
+| -------------------------------- | ----------------------------------------------- | ------------------------------ |
+| `nr_ulsch_extract_rbs()`         | Extracts relevant RBs for this symbol           | Called from `inner_rx()`       |
+| `nr_ulsch_channel_estimation()`  | Performs DMRS-based channel estimation          | Called from `nr_rx_pusch_tp()` |
+| `nr_ulsch_mmse_2layers()`        | Computes LLRs via MMSE equalization for 2-layer | Called from `inner_rx()`       |
+| `nr_pusch_codeword_scrambling()` | Descrambles the LLRs                            | After LLRs are computed        |
+| `nr_ulsch_layer_demapping()`     | Splits LLRs by MIMO layers                      | Called from `nr_rx_pusch_tp()` |

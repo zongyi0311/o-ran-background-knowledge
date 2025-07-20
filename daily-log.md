@@ -1,3 +1,27 @@
+## 2025/7/21
+
+**Short-term Goals**
+- 讀完並做筆記gNB RX端MODULATION和NR_TRANSPORT相關的規格書和OAI程式碼
+  -  TS 38.211,TS 38.212,TS 38.214
+
+**Milestones**
+- [done]1.MODULATION (code)(CP 移除 + FFT → demapping → channel estimation → equalization → demodulation → descrambling )(deadline 7/18)、TS 38.211
+- 2.channel coding (Decoding)、TS 38.212
+
+ **Deliverable**
+- TS 38.212 5.Generic functions and 7 Downlink 
+
+
+
+
+
+
+
+
+
+
+
+
 ## 2025/06/21
 
 **Short-term Goals**

@@ -9,9 +9,10 @@
 - 2.channel coding (Decoding)、TS 38.212
 
  **Deliverable**
-- TS 38.212 5.Generic functions and 7 Downlink 
+- TS 38.212 5.Generic functions and 7 Downlink and find the corresponding code
 
-
+**Daily Logs:**
+- 10:00 - 15:00 : TS 38.212 [5.1 ~ 5.3](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038%20212.md#51-crc-calculation)
 
 
 

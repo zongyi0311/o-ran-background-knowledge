@@ -17,7 +17,7 @@
 - TS 38.212 5.4 Rate matching and 7 Downlink and find the corresponding code
 
 **Daily Logs:**
-- 10:00 - 15:00 : TS 38.212 [5.4~5.5 and 7.1~7.2](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038%20212.md#54-rate-matching)
+- 10:00 - 15:00 : TS 38.212 [5.4 ~ 5.5 and 7.1 ~ 7.2](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038%20212.md#54-rate-matching)
 
 ## 2025/7/21
 

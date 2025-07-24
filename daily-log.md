@@ -12,7 +12,10 @@
 - [done]1.MODULATION (code)(CP 移除 + FFT → demapping → channel estimation → equalization → demodulation → descrambling )(deadline 7/18)、TS 38.211
 - 2.channel coding 、TS 38.212
 
- **Deliverable** progress slides
+**Deliverable** progress slides
+ 
+**Daily Logs:**
+- 10:30 - 13:00 - [progress slides](https://docs.google.com/presentation/d/1oL0ryCDZP9eY0Cqdk84rJv6PlwWLCq5jNAooPdPvkrM/edit?slide=id.p#slide=id.p)
 
 ## 2025/7/22
 

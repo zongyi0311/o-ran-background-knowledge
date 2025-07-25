@@ -11,6 +11,7 @@
 **Milestones**
 - [done]1.MODULATION (code)(CP 移除 + FFT → demapping → channel estimation → equalization → demodulation → descrambling )(deadline 7/18)、TS 38.211
 - 2.channel coding 、TS 38.212
+- 3.reading Aerial CUDA-Accelerated RAN and compare with OAI
 
 **Daily Logs:**
 - 10:00 - 13:00 - reading [NVIDIA Docs](https://docs.nvidia.com/aerial/aerial-cuphy/current/text/cuphy.html?utm_source=chatgpt.com#) [Aerial cuPHY](https://github.com/zongyi0311/rfsim-intern-log/blob/main/CuPHY.md)

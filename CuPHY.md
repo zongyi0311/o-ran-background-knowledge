@@ -47,11 +47,12 @@ Demodulation → Descrambling → De-Rate Match → HARQ → LDPC Decode → CRC
 ```
 
 **Relationship with cuBB and cuMAC 
-| name        | Function                           | Location                       |
-| --------- | ---------------------------- | ------------------------ |
-| **cuPHY** | Upper PHY (demodulation, estimation, coding, etc.)        | Belongs to cuBB                 |
-| **cuBB**  | 	Complete DU-side Stack (including cuPHY)  | Located in O-DU                 |
-| **cuMAC** | L2 MAC layer + Scheduling module | Combined with cuPHY to provide complete O-DU processing capabilities |
+| name      | Function                                         | Location            |
+| --------- | ------------------------------------------------ | ------------------- |
+| **cuPHY** | L1 Upper PHY (demodulation, estimation, coding)  | **Part of cuBB**    |
+| **cuMAC** | L2 MAC + Scheduler                               | **Part of cuBB**    |
+| **cuBB**  | Complete O-DU side stack (cuPHY + cuMAC modules) | **Located in O-DU** |
+
 
 - So cuBB(including cuPHY) and cuMAC are both in the O-DU and correspond to the High PHY + MAC processing part in the O-RAN Split 7.2x architecture.
 

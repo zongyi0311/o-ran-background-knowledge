@@ -13,7 +13,9 @@
 - 2.channel coding 、TS 38.212
 
 **Daily Logs:**
-- 10:00 - 12:30 - reading [NVIDIA Docs](https://docs.nvidia.com/aerial/aerial-cuphy/current/text/cuphy.html?utm_source=chatgpt.com#) [Aerial cuPHY](https://github.com/zongyi0311/rfsim-intern-log/blob/main/CuPHY.md)
+- 10:00 - 13:00 - reading [NVIDIA Docs](https://docs.nvidia.com/aerial/aerial-cuphy/current/text/cuphy.html?utm_source=chatgpt.com#) [Aerial cuPHY](https://github.com/zongyi0311/rfsim-intern-log/blob/main/CuPHY.md)
+- 14:00 - 16:30 - reading [Aerial CUDA-Accelerated RAN](https://docs.nvidia.com/aerial/cuda-accelerated-ran/index.html) and compare with OAI [note](https://github.com/zongyi0311/rfsim-intern-log/blob/main/Aerial%20CUDA-Accelerated%20RAN.md)
+
 
 ## 2025/7/24
 **Short-term Goals**

@@ -13,7 +13,7 @@
 - 2.channel coding 、TS 38.212
 
 **Daily Logs:**
-- 10:00 - 12:30 - [Aerial cuPHY](https://github.com/zongyi0311/rfsim-intern-log/blob/main/CuPHY.md)
+- 10:00 - 12:30 - reading [NVIDIA Docs](https://docs.nvidia.com/aerial/aerial-cuphy/current/text/cuphy.html?utm_source=chatgpt.com#) [Aerial cuPHY](https://github.com/zongyi0311/rfsim-intern-log/blob/main/CuPHY.md)
 
 ## 2025/7/24
 **Short-term Goals**

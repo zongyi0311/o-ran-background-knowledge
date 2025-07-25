@@ -54,7 +54,7 @@ Demodulation → Descrambling → De-Rate Match → HARQ → LDPC Decode → CRC
 | **cuBB**  | Complete O-DU side stack (cuPHY + cuMAC modules) | **Located in O-DU** |
 
 
-- So cuBB(including cuPHY) and cuMAC are both in the O-DU and correspond to the High PHY + MAC processing part in the O-RAN Split 7.2x architecture.
+- So cuMAC and cuPHY are both submodules of cuBB, which altogether implement the full high-PHY + MAC functions within the O-DU in O-RAN split 7.2x.
 
 # cuPHY Architecture Design Description
 - cuPHY is NVIDIA’s CUDA-based implementation of the 5G NR physical layer. It offloads and parallelizes key PHY signal processing functions on the GPU to accelerate performance, scalability, and cell density. 

@@ -12,6 +12,8 @@
 - [done]1.MODULATION (code)(CP 移除 + FFT → demapping → channel estimation → equalization → demodulation → descrambling )(deadline 7/18)、TS 38.211
 - 2.channel coding 、TS 38.212
 
+**Daily Logs:**
+- 10:00 - 12:30 - [Aerial cuPHY](https://github.com/zongyi0311/rfsim-intern-log/blob/main/CuPHY.md)
 
 ## 2025/7/24
 **Short-term Goals**

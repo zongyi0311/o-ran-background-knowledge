@@ -1,3 +1,18 @@
+## 2025/7/28
+**Short-term Goals**
+- 讀完並做筆記 對於gNB的收發機架構相關的規格書和OAI程式碼
+  -  TS 38.211(Physical channels and modulation )
+  -  TS 38.212(channel coding)
+  -  TS 38.213(Physical procedures for control)
+  -  TS 38.214(Physical procedures for data)
+- code folfer
+  - OAI openair1/PHY
+ 
+**Milestones**
+- 1.channel coding 、TS 38.212
+- 2.reading Aerial CUDA-Accelerated RAN and compare with OAI
+
+
 ## 2025/7/25
 **Short-term Goals**
 - 讀完並做筆記 對於gNB的收發機架構相關的規格書和OAI程式碼

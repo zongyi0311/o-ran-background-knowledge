@@ -12,6 +12,8 @@
 - 1.channel coding 、TS 38.212
 - 2.reading Aerial CUDA-Accelerated RAN and compare with OAI
 
+**Deliverable** PDCCH note
+
 **Daily Logs:**
 - 13:00 - 17:00 - TS 38.212 7.3 [DCI coding steps and nr_dci.c](https://github.com/zongyi0311/rfsim-intern-log/edit/main/3GPP/TS%2038%20212.md#73-downlink-control-information)
 - 20:00 - 22:30 - TS 38.211 7.3.2 [PDCCH and nr_dci.c](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038.211%20Physical%20channels%20and%20modulation.md#732-physical-downlink-control-channelpdcch) 

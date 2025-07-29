@@ -1,4 +1,4 @@
-## 2025/7/28
+## 2025/7/29
 **Short-term Goals**
 - 讀完並做筆記 對於gNB的收發機架構相關的規格書和OAI程式碼
   -  TS 38.211(Physical channels and modulation )

@@ -1,8 +1,15 @@
+## 2025/8/05
+**Short-term Goals**
+
+
+
+
+
 ## 2025/7/29
 **Short-term Goals**
 - 讀完並做筆記 對於gNB的收發機架構相關的規格書和OAI程式碼
-  -  TS 38.211(Physical channels and modulation )
-  -  TS 38.212(channel coding)
+  -  [TS 38.211(Physical channels and modulation )](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038.211%20Physical%20channels%20and%20modulation.md)
+  -  [TS 38.212(channel coding)](https://github.com/zongyi0311/rfsim-intern-log/blob/main/3GPP/TS%2038%20212.md)
   -  TS 38.213(Physical procedures for control)
   -  TS 38.214(Physical procedures for data)
 - code folfer
@@ -16,8 +23,6 @@
 
 **Daily Logs:**
 - 10:00 - 13:00 - [nr_dlsch.c](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/nr_dlsch.md)
-
-
 
 
 ## 2025/7/28
@@ -354,3 +359,4 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 **Daily Logs:**
 - 10:00 - 15:00 : [nr_ulsch_demodulation.c](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/nr_ulsch_demodulation.md#718)
 - 20:00 - 23:00: continue nr_ulsch_demodulation.c
+

@@ -1,6 +1,9 @@
-## 2025/8/05
+## 2025/8/06
 **Short-term Goals**
+reading Aerial CUDA-Accelerated RAN and compare with OAI 
 
+**Daily Logs:**
+- 10:00 - 15:00 : [MIMO Comparison](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/nr_dlsch.md#comparison-with-nvidia-aerial-ran)
 
 
 
@@ -359,4 +362,5 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 **Daily Logs:**
 - 10:00 - 15:00 : [nr_ulsch_demodulation.c](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/nr_ulsch_demodulation.md#718)
 - 20:00 - 23:00: continue nr_ulsch_demodulation.c
+
 

@@ -232,3 +232,77 @@ Insert data, DMRS, and PTRS symbols into the corresponding OFDM symbol and subca
 ## dump_pdsch_stats()
 - Outputs DLSCH transmission statistics for each active UE of the gNB to a file or the screen only once per frame, aiding debugging or performance analysis.
 
+# **Comparison with NVIDIA Aerial RAN**
+
+**OAI** 
+
+Single-User MIMO (SU-MIMO) multi-antenna transmission is supported, but only at a lower number of layers. Currently, OAI supports up to 4 layers of MIMO transmission in the downlink and up to 2 layers in the uplink.
+
+OAI gNB can send data to a single UE using up to 4 parallel Spatial Streams (typically with a 4x4 antenna configuration).
+
+However, it does not yet support spatial reuse of co-frequency resources for Multi-User MIMO (MU-MIMO).
+
+In the current OAI scheduling, each time-frequency resource block is still allocated to only one UE, and it is not possible to spatially multiplex multiple UEs through beamforming.
+
+**Aerial CUDA-Accelerated RAN** 
+
+PUSCH **SU-MIMO layers: up to 4** **MU-MIMO layers: up to 8**
+PDSCH **SU-MIMO layers: up to 4** **MU-MIMO layers: up to 16** **Precoding (4 layers)**
+MIMO Features Support 64 Transmit and Receive antenna ports
+## nr_layer_mapping() definition in nr_modulation.c
+- Layer Mapping = assigning modulation symbols to multiple independent "transmission channels" (Layers)
+
+- case 2
+
+<img width="719" height="53" alt="image" src="https://github.com/user-attachments/assets/fcc8914a-80aa-41cc-8f52-d9b96d6076d9" />
+
+```
+for (; i < n_symbs; i += 2) {
+        *tx0++ = mod[i];// Layer 0
+        *tx1++ = mod[i + 1];//Layer 1
+      }
+    }
+```
+
+- case 3
+
+```
+for (; i < n_symbs; i += 3) {
+        *tx0++ = mod[i];// Layer 0
+        *tx1++ = mod[i + 1];// Layer 1
+        *tx2++ = mod[i + 2];// Layer 2
+      }
+```
+
+- case 4
+
+```
+for (; i < n_symbs; i += 4) {
+        *tx0++ = mod[i];
+        *tx1++ = mod[i + 1];
+        *tx2++ = mod[i + 2];
+        *tx3++ = mod[i + 3];
+}
+```
+- case 5 ~ case 8 are not yet implemented
+
+
+## do_txdataF() //precoding
+- Currently supported
+
+<img width="805" height="176" alt="image" src="https://github.com/user-attachments/assets/44b6137b-b5e9-40c6-b3c5-8dc3ef64f3c8" />
+
+<img width="805" height="513" alt="image" src="https://github.com/user-attachments/assets/4e20e51a-ce6b-4d8e-b991-83d1e55f0399" />
+
+<img width="772" height="190" alt="image" src="https://github.com/user-attachments/assets/e47b30ca-3694-4738-8da2-905de5017872" />
+
+<img width="772" height="714" alt="image" src="https://github.com/user-attachments/assets/78c39f20-11d2-46fb-a77d-5b4135121f67" />
+
+<img width="782" height="373" alt="image" src="https://github.com/user-attachments/assets/02313df9-6ca0-4113-baae-ed8e6d8face7" />
+
+<img width="827" height="335" alt="image" src="https://github.com/user-attachments/assets/b2f5eca9-9ff8-4c95-8fb8-4f183fbc6c1b" />
+
+- output **txdataF_precoded**
+  - txdataF_precoded is the frequency domain signal data of a single antenna after precoding. Each element corresponds to a subcarrier and is used to feed the IFFT → DAC → transmitter.
+ 
+

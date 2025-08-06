@@ -68,3 +68,62 @@ Overall PHY capabilities include:
 | **Gold Sequence Generation** |  Yes            |  Yes   | 
 | **Low-PAPR Type 1**          |  Yes            |  Yes   | 
 | **Low-PAPR Type 2**          |  Yes            |  Yes   | 
+
+## TS 38.211 Channels
+**Aerial CUDA-Accelerated RAN Overall Channel - PDSCH(PHY DL Shared Channel)**
+
+<img width="817" height="490" alt="image" src="https://github.com/user-attachments/assets/af9382c1-ddef-414d-b710-e91240451df5" />
+
+<img width="800" height="305" alt="image" src="https://github.com/user-attachments/assets/7a6323a5-e088-4822-a77e-97f554740285" />
+
+**OAI PDSCH** 
+
+| **Feature**                     | **Configuration**               | **OAI support** | 
+| ------------------------------- | ------------------------------- | ---------- | 
+| **Scrambling**                  | -                               | Y          | 
+| **Modulation schemes**          | QPSK / 16QAM / 64QAM / 256QAM   | Y          | 
+| **Transmission Mode**           | 4T4R SU-MIMO（最多 4 layers）       | Y          | 
+|                                 | 64T64R MU-MIMO（最多 16 layers）    | N     | 
+| **Number of codewords**         | 1                               | Y          | 
+|                                 | 2                               | Y          | 
+| **Number of antenna ports**     | 1000–1011                       | Y          | 
+| **Number of physical antennas** | 4                               | Y          | 
+|                                 | 64                              | N     | 
+| **Beamforming weights**         | Manual matrix (BF m2)           | Y      | 
+| **Precoding**                   | Non-codebook                    | Y          | 
+|                                 | Pre-coding weight (manual)      | Y          | 
+|                                 | Type I Single-Panel Codebook    | Y）      | 
+|                                 | Type I Multi-Panel Codebook     | N          | 
+|                                 | Type II Codebook                | N          | 
+|                                 | Type II Port Selection Codebook | N          | 
+| **PDSCH Mapping Type**            | Type A/B                 | Y          | 
+| **Resource Allocation Type**      | Type 0 (bitmap-based)  | Y          | 
+|                                   | Type 1                 | Y          | 
+| **VRB to PRB Mapping**            | Non-interleaved        | Y          | 
+|                                   | Interleaved            | Y          | 
+| **PDSCH DMRS CDM Groups**         | 1                      | Y          | 
+|                                   | 2                      | Y          | 
+|                                   | 3                      | (N/A)    | 
+| **Number of PDSCH users per TTI** | 16                     | Y          | 
+| **Power Control**                 | PDSCH                  | Y          |
+|                                   | DMRS - PDSCH           | Y          | 
+
+
+| **Feature**                       | **Configuration**                  | **Aerial 支援** | **OAI 支援** | 
+| --------------------------------- | ---------------------------------- | ------------- | ---------- |
+| **Scrambling**                    | Up to 2 codewords                  | N             | only1      |
+| **CORESET**                       | Normal / RMSI                      | Y             | Y          | 
+| **SSB-RMSI CORESET multiplexing** | Pattern 1                          | Y             | Y          | 
+| **Aggregation Level**             | 1, 2, 4, 8, 16                     | Y             | Y          | 
+| **Modulation**                    | QPSK                               | Y             | Y          | 
+| **Layer Mapping**                 | Supported                          | Y             | Y          | 
+| **Antenna Port Mapping**          | Supported                          | Y             | Y          | 
+| **Mapping to VRBs**               | Supported                          | Y             | Y          | 
+| **VRB to PRB Mapping**            | Non-interleaved                    | Y             | Y          | 
+| **Polar Code**                    | Block length up to 128 bits        | Y             | Y          | 
+| **DMRS**                          | m-sequence                         | Y             | Y          | 
+| **CCE to REG Mapping**            | Non-interleaved / Interleaved      | Y             | Y          | 
+| **OFDM Symbols per CORESET**      | 1 / 2 / 3                          | Y             | Y          | 
+| **Power Control**                 | PDCCH / DMRS-PDCCH                 | Y             | Y          | 
+| **DCI Format**                    | 0\_0 / 0\_1 / 1\_0 / 1\_1 / 2\_x   | NA        | Y      | 
+| **Precoding**                     | Precoding Matrix Index-based in DU | Y             | Y          | 

@@ -108,10 +108,11 @@ Overall PHY capabilities include:
 | **Power Control**                 | PDSCH                  | Y          |
 |                                   | DMRS - PDSCH           | Y          | 
 
+## PDCCH
 
 | **Feature**                       | **Configuration**                  | **Aerial 支援** | **OAI 支援** | 
 | --------------------------------- | ---------------------------------- | ------------- | ---------- |
-| **Scrambling**                    | Up to 2 codewords                  | N             | only1      |
+| **Scrambling**                    | Up to 2 codewords                  | N             | N      |
 | **CORESET**                       | Normal / RMSI                      | Y             | Y          | 
 | **SSB-RMSI CORESET multiplexing** | Pattern 1                          | Y             | Y          | 
 | **Aggregation Level**             | 1, 2, 4, 8, 16                     | Y             | Y          | 
@@ -127,3 +128,56 @@ Overall PHY capabilities include:
 | **Power Control**                 | PDCCH / DMRS-PDCCH                 | Y             | Y          | 
 | **DCI Format**                    | 0\_0 / 0\_1 / 1\_0 / 1\_1 / 2\_x   | NA        | Y      | 
 | **Precoding**                     | Precoding Matrix Index-based in DU | Y             | Y          | 
+
+## CORESET 
+**OAI code**
+```
+ // dmrs index depends on reference point for k according to 38.211 7.4.1.3.2
+        int dmrs_idx;
+        if (pdcch_pdu_rel15->CoreSetType == NFAPI_NR_CSET_CONFIG_PDCCH_CONFIG)
+          dmrs_idx = (reg_list[d][reg_count] + pdcch_pdu_rel15->BWPStart) * 3;
+        else
+          dmrs_idx = (reg_list[d][reg_count] + rb_offset) * 3;
+```
+
+## PUSCH
+| **Feature**                   | **Configuration**                     | **Aerial 支援** | **OAI 支援** | 
+| ----------------------------- | ------------------------------------- | ------------- | ---------- | 
+| **Number of codewords**       | 1                                     | Y             | Y          | 
+| **Scrambling**                | -                                     | Y             | Y          |
+| **Modulation schemes**        | Pi/2-BPSK, QPSK, 16QAM, 64QAM, 256QAM | Y             | Y          |
+| **PUSCH transform precoding** | Enable / Disable                      | Y             | Y          | 
+| **Precoding**                 | UE 端實作                                | Y             | Y        |
+| **HARQ Process**              | Number = 1                            | Y             | Y          | 
+|                               | Max = 16                              | Y             | Y          | 
+| **VRB to PRB mapping**        | Non-interleaved                       | Y             | Y          | 
+|                               | Interleaved                           | N             | N          | 
+| **Transmission Mode**         | SU-MIMO (max 4 layers)                | Y             | Y          | 
+|                               | MU-MIMO (max 8 layers)                | Y             | N          | 
+| **PUSCH DMRS CDM groups**     | CDM group 1 / 2                       | Y             | Y          | 
+| **PUSCH users per TTI**       | 16                                    | Y             | Y          | 
+| **Uplink algorithm**          | UL HARQ control                       | Y             | Y          | 
+|                               | Channel Estimation LS                 | Y             | Y          | 
+|                               | Equalizers: MRC/MMSE/IRC              | Y             | Y          | 
+|                               | Frequency Offset Correction           | Y             | Y          | 
+| **Rate Matching**             | I\_LBRM = 1 / 0                       | Y             | Y          | 
+
+## PUCCH
+| **Feature**                      | **Configuration**           | **Aerial 支援** | **OAI 支援** | 
+| -------------------------------- | --------------------------- | ------------- | ---------- | 
+| **PUCCH Format**                 | Format 0                    | Y             | Y          |
+|                                  | Format 1                    | Y             | Y          | 
+|                                  | Format 2                    | Y             | Y          | 
+|                                  | Format 3                    | Y             | Y          | 
+|                                  | Format 4                    | N             | N          | 
+| **UCI Sched Coding / DFT**       | Format 1 特有                | N             | Y          | 
+| **Modulation schemes**           | Pi/2-BPSK, BPSK, QPSK       | Y             | Y          | 
+| **Scheduling Request (SR)**      | SR 支援                      | Y             | Y          | 
+| **Group Hopping**                | Disable / Enable            | Y             | Y          | 
+| **Sequence cyclic shift**        | Zadoff-Chu sequence         | Y             | Y          | 
+| **Intra-slot Frequency hopping** | Support                     | Y             | Y          | 
+| **Inter-slot Frequency hopping** | Support                     | Y             | Y          | 
+| **PUCCH over multiple slots**    | 2 / 4 / 8 slots             | Y             | Y          | 
+| **Frequency Offset Correction**  | PUCCH Format 1, 3           | Y             | Y          | 
+| **Multi-UE support**             | 24 UEs / TTI                | Y             | Y          | 
+| **PUCCH UCI HARQ-ACK Polar**     | CB size < 359, liftsize = 8 | Y             | Y          | 

@@ -4,7 +4,8 @@
  
 **Daily Logs:**
 - 10:00 - 12:00 : https://github.com/zongyi0311/rfsim-intern-log/blob/main/Aerial%20CUDA-Accelerated%20RAN.md
-- 13:00 - 14:30 : install CUDA 
+- 13:00 - 14:30 : install CUDA
+- 14:30 - 17:30 : read **paper Software-defined Acceleration in 5G CDU** 
 
 
 ## 2025/8/06
@@ -371,6 +372,7 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 **Daily Logs:**
 - 10:00 - 15:00 : [nr_ulsch_demodulation.c](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/nr_ulsch_demodulation.md#718)
 - 20:00 - 23:00: continue nr_ulsch_demodulation.c
+
 
 
 

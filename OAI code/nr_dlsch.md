@@ -48,7 +48,8 @@
 ╚════════════════════════════════════════════════════════╝
 
 ```
-
+**struct nfapi_nr_dl_tti_pdsch_pdu_rel15_t definition in nfapi_nr_interface_scf**
+- PDSCH data channel configuration description structure
 
 ```
 /* PTRS */
@@ -174,6 +175,19 @@
 ║ → Output: txdataF[ant][samples]                ║
 ╚════════════════════════════════════════════════╝
 ```
+**set_ptrs_symb_idx in nr_generate_pdsch**
+- It will call set_ptrs_symb_idx() to calculate which symbols contain PTRS 
+**set_ptrs_symb_idx in do_one_dlsch**
+- The PTRS time and frequency positions need to be recalculated (by calling the same function again).
+
+This function's purpose is to map PTRS symbols to corresponding REs based on ptrsSymbPos and frequency distribution.
+
+This also requires handling:
+- RE overlap detection (DMRS and PTRS cannot be occupied simultaneously)
+- Interleaving and priority (PTRS mapping takes precedence, followed by data mapping).
+
+
+
 ## do_onelayer()
 - Key function that maps modulation symbols of a single layer to Resource Elements (REs):
 Insert data, DMRS, and PTRS symbols into the corresponding OFDM symbol and subcarrier positions according to TS 38.211 standard and output them to the precoding buffer

@@ -58,3 +58,225 @@ The ACC100 is specifically designed for FEC codec acceleration. For 5G NR, it ac
 For 4G LTE, the ACC100 accelerates Turbo code encoding/decoding, also performing coded block CRC generation/checking and rate matching.
 a single ACC100 card can simultaneously support 5G and 4G FEC workloads, accelerating both uplink and downlink channel coding tasks.
 In addition, the card features a hardware queue manager that manages resource scheduling and load balancing across multiple tasks, ensuring efficient scheduling of uplink and downlink codec requests.
+
+### O-RAN Architecture: 
+The ACC100's design is highly aligned with the open ecosystem advocated by the O-RAN Alliance. First, the ACC100 utilizes the open API (DPDK BBDev) adopted by O-RAN as its interface, facilitating software integration across vendors.
+
+Second, within O-RAN's base station functional split, the ACC100 perfectly fills the role of O-DU physical layer acceleration and can be used with any radio unit (O-RU) that conforms to the O-RAN fronthaul interface. Because the ACC100 is a standard PCIe card, telecom system integrators can deploy it in common COTS servers to implement multi-vendor DU solutions without relying on closed, proprietary baseband hardware. In short, the ACC100 provides a plug-and-play FEC acceleration solution for 5G base stations within the O-RAN architecture and is widely adopted in applications such as 5G open vRAN and private networks.
+
+### DPDK（Data Plane Development Kit）
+- It is a high-performance network data processing framework, mainly used to accelerate packet processing in user space.
+- Its characteristics
+  - Bypassing the Linux kernel network stack (zero-copy)
+  - Direct access to hardware using hugepage and poll mode driver (PMD)
+
+<img width="887" height="461" alt="image" src="https://github.com/user-attachments/assets/6ca8feb8-013e-474d-b686-7deaa65b6bd8" />
+
+**Role of DPDK**
+Accelerates packet flow between:
+- Central Unit (CU)
+- Distributed Unit (DU)
+- User Plane Function (UPF)
+- gNB (base station)
+- CU–DU interface (E1-F)
+- RAN Intelligent Controller (RIC)
+- Provides high-speed packet processing & scheduling
+- Bypasses kernel bottlenecks for low-latency transmission (critical for both user-plane data & control messages)
+
+**How DPDK Improves Performance**
+- Offloads packet handling for CU/DU and UPF
+- x86 CU/DU example:
+  - Uses DPDK APIs to offload data-plane processing to:
+    - FPGA-based SmartNIC
+    - Intel ACC100
+  - Reduces CPU load and improves latency
+
+**Near Real-Time RIC Communication**
+- gNB → E2 Agent → E2 Application Protocol (EAP) → RIC Service Models (SM/E2) → xApps
+
+**Key Benefits**
+- Handles both:
+  - High-speed user-plane traffic
+  - Timing-critical control-plane messages
+- Maintains software-defined flexibility (network functions stay configurable)
+- Maximizes CPU & hardware utilization
+- Meets 5G performance demands for throughput & low latency
+
+### BBDev(BaseBand Device API）
+It is a set of APIs provided by DPDK specifically for accelerating baseband processing, mainly targeting 4G LTE / 5G NR PHY layer computing tasks, such as:
+- LDPC（5G NR）
+- Turbo（LTE）
+- Rate Matching / De-Matching
+- CRC
+
+BBDev API = allows software to use a unified interface to call baseband acceleration hardware (ASIC / FPGA / GPU / CPU SIMD) from different manufacturers
+
+**Purpose of the BBDev API**
+- Abstracts hardware differences → Uses the same API regardless of backend: Intel QuickAssist (QAT), FPGA, or GPU
+- Allows hardware acceleration to coexist with pure software implementation → Use software simulation during development and switch to hardware acceleration during deployment
+
+
+### Bypassing the Linux kernel network stack
+It's actually about a technique that "processes network data directly in user space, bypassing the traditional Linux TCP/IP stack." This technique is commonly used in high-performance networks (HPC, 5G, trading systems, etc.) to reduce CPU overhead and data replication latency.
+
+Core Concepts:
+- Avoids the Linux TCP/IP stack
+- Directly transfers data from the NIC to user-space memory
+- Applications are responsible for their own protocol handling (or use hardware offload)
+
+## CPU-only Architecture
+
+<img width="790" height="751" alt="image" src="https://github.com/user-attachments/assets/0fad3d97-8b01-4671-b33d-11becc3a10fd" />
+
+**All baseband processing done on CPU**
+
+- Advantages: Software-defined flexibility
+- shortcoming :
+  - High CPU load, especially under 100+ UEs
+  - Latency bottlenecks at PHY decoding and L2 scheduling
+  - No hardware acceleration
+ 
+## CPU vs CUDA Mode
+
+| mode   | features                           | dalay (L2)          | UE Scalability |
+| ---- | ---------------------------- | ---------------- | ------- |
+| CPU  | Sequential processing, serialized stacking                   | \~24ms           | Restricted      |
+| CUDA | Parallel GPU core processing (PDCP+RLC+MAC simultaneously) | **0.38ms** (63×) | Highly scalable    |
+
+## CUDA Implementation Details
+- Shared memory sync
+  - **Host-pinned ring buffer**: Host-side fixed-memory ring buffer for fast data exchange between CPU ↔ GPU
+  - **Zero-copy access**: The CPU and GPU can directly access memory (no data copying required), reducing latency.
+ 
+- CUDA Advantages
+  - High concurrency: It is particularly effective for MAC layer logic and can handle scheduling and control tasks for a large number of UEs simultaneously.
+  - Scalability: •Scales up to 5000 UEs using 5000 CUDA threads (1 per UE)
+  - Latency improvement: ~3× faster than CPU loop
+
+
+## Design Partitioning for Multi-Hardware Offload
+
+- **ACC100 (PHY Layer)**: Handles LDPC encoding/decoding for UL/DL and Processes HARQ feedback loop in hardware.
+- **CPU（MAC Layer & I/O**: Responsible for physical layer signal processing and data plane transmission
+- **GPU（CUDA Offload – Control Plane)**: Responsible for control plane scheduling and encryption
+
+<img width="703" height="633" alt="image" src="https://github.com/user-attachments/assets/7994fefa-9708-450c-b076-939a011ce310" />
+
+**Shared Host-Pinned Ring Buffer**
+- Semaphore Lock-free Ring: Reduce lock contention
+- Supports Double-Buffering: allows processing while preparing the next batch of data
+
+### Double-Buffering
+- Double-Buffering = Using two buffers (Buffer A and Buffer B) to alternately read and write, allowing data transmission and calculation to proceed in parallel, thereby reducing waiting time.
+
+- **No Double-Buffering**：First transfer data → perform computation → return results → then process the next batch (transfer and computation cannot overlap) → The GPU waits for data, while the CPU waits for the GPU, wasting time.
+- **Double-Buffering**： While the GPU is computing data in Buffer A, the CPU is simultaneously preparing and transferring data from Buffer B. → Overlapping transfer and computation increases efficiency.
+
+### cudaMemcpyAsync
+- Asynchronous data transfer between the host (CPU) and the device (GPU)
+- Asynchronous = Return immediately after the command call, and continue to perform other work without waiting for the transfer to complete
+
+## Original RX Flow (Baseline) 
+<img width="887" height="480" alt="image" src="https://github.com/user-attachments/assets/dedd50f4-ff19-4288-8984-b6661689ec05" />
+
+- **rx_func()**: The wireless radio receiving function is responsible for coordinating each frame or slot to receive data from the radio front end.
+
+- Initial Procedure:
+  - PRACH procedure: Random access channel processing, used to process uplink access requests.
+  - PUCCH decode: Decodes uplink control information (UCI).
+ 
+- PUSCH procedure:
+
+| Step                               | Function Description                                                                                                |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **`slot_fep()`**                   | Time-frequency conversion (FFT) that transforms the time-domain signal of an entire slot into the frequency domain. |
+| **Channel Estimation**             | Estimates the wireless channel response using reference signals.                                                    |
+| **Channel Scaling / Compensation** | Applies the inverse of the channel response to the received signal to correct fading and distortion.                |
+| **Equalization**                   | Performs equalization to restore the original symbols.                                                              |
+| **`rx_llr_computation()`**         | Converts equalized symbols into soft bits (Log-Likelihood Ratios, LLR).                                             |
+| **LDPC Decoding**                  | Uses the LDPC decoder to convert LLRs into the original bit sequence.                                               |
+| **CRC Check**                      | Verifies the integrity of each decoded transport block.                                                             |
+| **MAC SDU Extraction**             | Extracts the MAC subpacket from the physical layer frame.                                                           |
+| **RLC Reassembly**                 | Reassembles segmented packets.                                                                                      |
+| **PDCP Decipher & Reorder**        | If encryption is applied, performs decryption and reorders data into the correct sequence.                          |
+| **IP/SDAP Delivery**               | Delivers the fully reassembled and decrypted data to the core network layer.                                        |
+
+- performance bottleneck:
+- In this baseline design, each sub-stage from FFT to decoding to PDCP is implemented in software on a general-purpose CPU.
+- When uplink throughput is high, the CPU can easily become a performance bottleneck.
+
+## Modified RX Flow (Accelerated)
+
+<img width="887" height="525" alt="image" src="https://github.com/user-attachments/assets/6c00d2a0-db76-4ad8-b14e-55201bc67af1" />
+
+| Step                                                     | Baseline Processing                   | Accelerated Processing                         |
+| -------------------------------------------------------- | ------------------------------------- | ---------------------------------------------- |
+| **`slot_fep()`**<br>Time-Frequency Conversion (FFT)      | FFT executed on CPU (single-threaded) | CPU (SIMD or OpenMP) or GPU acceleration       |
+| **UL Channel Estimation**                                | CPU (single-threaded)                 | CPU (OpenMP) or CUDA (optional)                |
+| **UL Channel Compensation**                              | CPU (single-threaded)                 | Offloaded to CUDA (T4 GPU)                     |
+| **`rx_llr_computation()`**<br>Soft Bit Calculation (LLR) | CPU (single-threaded)                 | Offloaded to CUDA (T4 GPU)                     |
+| **LDPC Decoding**                                        | CPU (software decoding)               | Offloaded to Intel ACC100 hardware accelerator |
+| **CRC Check**                                            | CPU (single-threaded)                 | CPU                                            |
+| **MAC SDU Extraction**                                   | CPU                                   | CPU                                            |
+| **RLC Reassembly**                                       | CPU                                   | CPU (multi-threaded buffering)                 |
+| **PDCP Decipher & Reorder**                              | CPU                                   | Partially offloaded to CUDA                    |
+| **IP/SDAP Delivery**                                     | CPU                                   | Software or `iperf`                            |
+
+**Key Points**
+- GPU (CUDA): Responsible for highly parallel computations, such as LLR calculations and some PDCP decryption.
+- ASIC (Intel ACC100): Responsible for computationally intensive FEC tasks such as LDPC decoding.
+- CPU (OpenMP/SIMD): Handles parallelizable but latency-sensitive tasks such as FFT, channel estimation, and channel compensation.
+- Flexible Switching: If hardware accelerators are unavailable, the system automatically falls back to pure CPU processing, maintaining consistent functionality.
+
+## Original TX Flow (Baseline)
+
+1. Entry Point — tx_func() (MAC Layer)
+- Starts the transmission for the current scheduling interval.
+- MAC scheduler allocates time-frequency PRBs (Physical Resource Blocks) for downlink data.
+
+2. PDCP Layer
+- Ciphering (Encryption): Ensures confidentiality of transmitted packets.
+
+3. RLC Layer
+- Segmentation: Splits PDCP SDU into smaller RLC PDUs if needed.
+- Sequence Numbering: Assigns sequence numbers for correct reassembly at the receiver.
+
+4. MAC Layer — Transport Block Creation
+- Logical Channel Multiplexing: Combines PDUs from multiple logical channels into one transport block.
+- MAC PDU Assembly: Adds necessary MAC headers and finalizes the MAC PDU.
+
+5. PHY Layer — Encoding & Modulation
+- Code Block Segmentation: Splits large transport blocks into smaller code blocks (per LDPC size limit).
+- CRC Addition: Appends CRC to each code block for error detection.
+- LDPC Encoding: Applies forward error correction to improve reliability.
+- Rate Matching: Adapts the coded bitstream to available PRBs (puncturing/repetition).
+- Modulation Mapping: Converts bits into modulation symbols (QPSK, 16-QAM, 64-QAM).
+- Resource Element Mapping: Places symbols into the OFDM grid, inserts reference signals (DMRS).
+
+6. IFFT & OFDM Signal Generation
+- IFFT (slot_fep_tx): Converts frequency-domain symbols to time-domain OFDM waveforms.
+- Cyclic Prefix Insertion: Adds CP to each OFDM symbol to mitigate multipath effects.
+
+7. RF Front-End Transmission
+- Digital Baseband Output: Produces time-domain baseband signal.
+- DAC + RF Front-End (USRP B210):
+
+## Modified TX Flow
+
+<img width="601" height="653" alt="image" src="https://github.com/user-attachments/assets/467b7d8d-d511-438d-9230-68c6f33e3de7" />
+
+| Processing Stage             | Baseline (Original)                         | Enhanced (Optimized)                                                               |
+| ---------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------- |
+| **MAC Scheduling**           | Static scheduling by MAC scheduler.         | Dynamic BLER-aware scheduling; adjusts PRB allocation and MCS per user each frame. |
+| **PDCP Ciphering**           | CPU-based ciphering.                        | GPU offload (NVIDIA T4) using CUDA for parallel encryption.                        |
+| **PDCP Header Compression**  | CPU handles ROHC.                           | Remains on CPU.                                                                    |
+| **RLC Segmentation**         | CPU sequential segmentation.                | Optimized with vectorized/memory-efficient code.                                   |
+| **RLC Buffering**            | Single-threaded buffer.                     | Thread-safe multi-threaded buffer enabling parallel PDU handling.                  |
+| **MAC PDU Assembly**         | Per-packet assembly.                        | Batched PDU packing by UE; improved cache/timing efficiency.                       |
+| **LDPC Encoding**            | CPU-based software encoding.                | Offloaded to Intel ACC100 hardware encoder.                                        |
+| **Rate Matching**            | CPU sequential bit selection/puncturing.    | CPU SIMD acceleration (AVX2/AVX-512) for bit selection/pruning.                    |
+| **CB Segmentation**          | CPU handles segmentation.                   | Still on CPU but benefits from upstream accelerations.                             |
+| **Modulation Mapping**       | CPU sequential mapping to QPSK/16QAM/64QAM. | CPU optimized, remains on CPU.                                                     |
+| **Resource Element Mapping** | CPU maps symbols and inserts DMRS.          | CPU optimized, remains on CPU.                                                     |
+| **IFFT (slot\_fep\_tx)**     | CPU sequential IFFT.                        | Parallelized via OpenMP or offloaded to GPU (CUDA).                                |
+| **RF Transmission**          | USRP B210 DAC + RF upconversion.            | Same hardware but can sustain higher bandwidth due to faster pipeline.             |

@@ -280,3 +280,100 @@ Core Concepts:
 | **Resource Element Mapping** | CPU maps symbols and inserts DMRS.          | CPU optimized, remains on CPU.                                                     |
 | **IFFT (slot\_fep\_tx)**     | CPU sequential IFFT.                        | Parallelized via OpenMP or offloaded to GPU (CUDA).                                |
 | **RF Transmission**          | USRP B210 DAC + RF upconversion.            | Same hardware but can sustain higher bandwidth due to faster pipeline.             |
+
+
+## LDPC Decoding Offload with ACC100
+
+<img width="480" height="741" alt="image" src="https://github.com/user-attachments/assets/86f9b678-b4f3-4361-921d-8f224e5bd010" />
+
+**Uplink LDPC Decoding Flow with Intel ACC100 in OAI gNB**
+- This flow shows how OAI’s gNB switches between:
+  - Software LDPC decoding (CPU-based)
+  - Hardware LDPC decoding (Intel ACC100 offload via DPDK BBDEV API)
+
+- Common Entry
+  - LDPC decoding stage: Function ldpc_decoder_opt() is reached after receiving an uplink transport block (UL TB).
+  - Decision Point: Checks whether ACC100 offload is enabled.
+ 
+## OAI Architecture and Processing Paths
+
+<img width="640" height="730" alt="image" src="https://github.com/user-attachments/assets/88c3a8d9-146c-4db3-a3b3-c76ffc006007" />
+
+### PDCCH (control signals)
+- phy_procedure_gNB_TX0
+- nr_common_signal_procedure
+- PDCCH Processing
+- nr_generate_dci_top_Generate_DCI() 
+
+### PBCH (broadcast signal)
+- nr_generate_pbch → Generates PBCH data
+- nr_pbch_scrambling → Scrambles the PBCH
+- Channel_Coding_Polar (Polar Code Encoding)
+  - polar_encoder_fast / polar_generate_u → Polar Code Encoding
+  - polar_rate_matching → Polar Code Rate Matching
+- Modulation and Resource Mapping
+  - Modulation_CUDA / nr_modulation_cuda → Modulation (GPU acceleration supported)
+  - nr_pbch_codeword_scrambling → Codeword scrambling
+  - nr_layer_mapping → Layer mapping
+  - nr_dmrs_DMRS_Generation → Generate DMRS reference signals
+  - nr_ptrs_PTRS_Generation → Generate PTRS reference signals
+ 
+### PDSCH
+- nr_generate_pdsch → **Generate PDSCH data**
+- nr_pdsch_codeword_scrambling → **Scramble PDSCH codewords**
+- nr_segmentation → **Segmentation processing**
+- **LDPC encoding (hardware acceleration)**
+  - LDPC_Encoding_ACC100 → **LDPC encoding using the Intel ACC100**
+  - ldpcBlocks_acc100 → **Process LDPC blocks**
+  - nr_rate_matching_ldpc → **LDPC rate matching**
+  - nr_interleaving_ldpc → **LDPC interleaving**
+- **Modulation and resource mapping**
+  - Scrambling → **Scrambling**
+  - Modulation_CUDA → **Modulation (GPU acceleration supported)**
+  - nr_layer_mapping → **Layer mapping**
+  - nr_resource_element_mapping → **Resource element mapping**
+
+### Waveform generation and transmission
+- OFDM_Symbol_Generation_CUDA → **OFDM symbol generation (GPU-accelerated)**
+- nr_ofdm_modulation_cuda → **OFDM modulation**
+- Cyclic_Prefix_Insertion / nr_cp_insertion → **Cyclic prefix insertion**
+- Transmission_via_Antenna_Array / nr_transmit_antenna_array → **Antenna transmission**
+
+<img width="640" height="730" alt="image" src="https://github.com/user-attachments/assets/b4146611-15ae-408e-a739-10d7cf813e22" />
+
+### PRACH Path (Random Access)
+- UL Processing → PRACH Reception (rx_func) Receives the PRACH signal and performs preliminary processing.
+- L1_nr_prach procedures PRACH physical layer processing procedures.
+- apply_nr_rotation_R: Performs PRACH frequency rotation compensation.
+- rx_nr_prac: Completes PRACH reception and detection, obtaining the UE's random access information.
+
+### PUSCH
+- UL Processing → phy_procedures_gNB_uespec_rx Handles UE-specific uplink receive procedures.
+- nr_decode_pusch / nr_decode_pusch_t Main entry point for PUSCH reception, responsible for demodulation, symbol processing, etc.
+- nr_srs_channel_estimation Performs channel estimation based on the Sounding Reference Signal (SRS).
+- nr_pusch_channel_estimation Performs PUSCH dedicated channel estimation based on the DMRS.
+- nr_ulsch_extract_rbs Extracts the REs (Resource Elements) corresponding to the PUSCH from the received frequency domain resources.
+- nr_pusch_symbol_processing Symbol-level processing, including channel compensation, equalization, and descrambling.
+- Inner RX (inner_rx) Inner layer receive processing (including LLR calculation, layer demapping, etc.).
+- ULSCH Procedures Uplink Shared Channel (UL-SCH) processing, including decoding and error checking.
+- Post Decode (nr_postDecode) Post-decoding processing (e.g., CRC verification, retransmission control).
+
+**Importance and Load Characteristics of Low-Density Parity-Check Code (LDPC) Encoding and Decoding**
+- High Computational IntensityLDPC encoding and decoding is one of the most computationally intensive tasks in the 5G PHY layer.
+- Pure CPU Mode: Completely implemented in software, this consumes significant CPU cycles, especially at high modulation and coding order (MCS) levels and full PRB configurations.
+- Coding Load Position: Primarily affects the gNB downlink path.
+- Decoding Load Position: Affects both the gNB uplink path and the UE downlink path.
+
+**Advantages of Intel ACC100 Hardware Acceleration**
+- Dedicated Hardware Path
+  - Once configured, the OAI software stack sends LDPC tasks to the ACC100 via the BBDev interface.
+  - The ACC100 performs the encoding or decoding and transmits the results back with extremely low latency.
+- Benefits
+  - Frees up CPU resources: Reduces the computational burden on the PHY layer, preventing CPU saturation.
+  - Increased decoding throughput: Enables processing of larger code blocks or higher traffic rates without missing deadlines.
+  - Improves HARQ timing: Ensures feedback messages are sent within their deadlines, reducing retransmission delays and maintaining link stability.
+ 
+**Pure software mode: Highly resilient, but prone to latency and excessive CPU stress under high load.**
+
+**Hardware acceleration mode (ACC100): Reduces CPU stress, improves throughput, and ensures stable timing. It is a key optimization method for high-performance 5G base stations.**
+

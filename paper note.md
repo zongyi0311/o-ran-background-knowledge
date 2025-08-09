@@ -377,3 +377,77 @@ Core Concepts:
 
 **Hardware acceleration mode (ACC100): Reduces CPU stress, improves throughput, and ensures stable timing. It is a key optimization method for high-performance 5G base stations.**
 
+| Mode            | Hardware     | Acceleration Layer | Accelerated Tasks                                       | Advantages                                              | Limitations                                                     |
+| --------------- | ------------ | ------------------ | ------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------- |
+| Mode 1 CPU-only | None         | L1–L2 all on CPU   | All software execution                                  | Easy to deploy                                          | CPU bottleneck under high load, severe latency and jitter       |
+| Mode 2 ACC100   | Intel ACC100 | L1                 | LDPC encoding/decoding, HARQ                            | Reduces PHY load, stabilizes subframe timing            | L2 remains CPU-bound, queuing issues under large UE/bursty load |
+| Mode 3 GPU      | NVIDIA T4    | L2                 | RLC segmentation, PDCP reordering, MAC SDU multiplexing | Reduces L2 CPU load by 20%, improves multi-UE stability | No L1 acceleration, LDPC decoding still on CPU                  |
+
+## Framing the Problem
+### Background
+- Prior results:
+  - CPU-only execution and ACC100 PHY offload improved specific areas.
+  - Layer 2 bottlenecks remained, even after L1 acceleration.
+ 
+- Main issues in L2:
+  - PDCP SDU reordering under multi-UE burst traffic.
+  - RLC block segmentation for high-throughput, multi-user cases.
+  - These tasks consumed significant CPU cycles, causing:
+    - Scheduling jitter.
+    - Missed scheduling opportunities.
+   
+- Core Idea
+- Question: Can a general-purpose GPU, originally built for graphics, handle telecom-grade Layer 2 packet manipulation?
+- Rationale:
+  - CUDA programming model supports:
+    - Parallel streams — multiple tasks processed concurrently.
+    - Kernel isolation — separation of workloads for predictable performance.
+  - This could match the parallelizable nature of PDCP and RLC operations.
+ 
+## Integration Phase — Wiring CUDA into OAI
+- Embed CUDA execution paths into the OAI Layer 2 stack
+- Key Integration Tasks
+  - Enable Host–Device Data Transfers
+  - CUDA Stream Insertion
+  - Pinned Memory Allocation
+  - CPU–GPU Synchronization
+
+- Impact
+  - L2 operations that were previously sequential now run concurrently on the GPU.
+  - Increased processing throughput and reduced L2-related queuing delays.
+ 
+## Functional Validation
+- Validation Strategy
+  - HARQ Combining Parity
+    - Compared GPU-accelerated HARQ soft combining against CPU routines.
+    - Tested even under deep retransmission chains.
+    - Result: Identical retransmission feedback in all cases.
+  - PDCP Reordering Checks
+    - Verified packets maintained strict sequence integrity.
+    - Tested under both real UE traffic and simulated UE reordering stress.
+  - Buffer Boundary Safety
+    - Used CUDA debug flags to monitor memory access patterns.
+    - Confirmed no:
+      - Memory leaks
+      - Overwrites
+      - Misalignments
+     
+## System Architecture
+
+<img width="1092" height="674" alt="image" src="https://github.com/user-attachments/assets/76400991-a8d4-4e72-9893-f964a0276e2b" />
+
+- Component Roles
+  - USRP B210 — RF Front End
+- Intel ACC100 — PHY Layer Offload
+  - Positioned in the uplink & downlink PHY chain.
+  - Offloads most CPU-intensive PHY tasks:
+    - LDPC encoding.
+    - LDPC decoding.
+    - HARQ retransmissions.
+  - Removes L1 bottlenecks in CPU-only setups.
+ 
+- NVIDIA T4 GPU — Layer 2 Offload
+- Handles L2 processing:PDCP、RLC
+- Uses CUDA streams for parallel execution.
+- Reduces L2 processing latency and CPU load.
+

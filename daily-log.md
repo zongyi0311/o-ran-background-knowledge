@@ -1,3 +1,10 @@
+## 2025/8/11
+**Short-term Goals**
+- enhance the quality of my presentation.
+
+**Daily Logs:**
+- 10:30 - 15:00 : https://docs.google.com/presentation/d/11d4zIR09Lqf6ADyqg_TpVauhbAJtsRCP_GbFwW9AW_U/edit?usp=sharing
+
 ## 2025/8/08
 **Short-term Goals**
 - Study papers Software-defined Acceleration in 5G CDU
@@ -379,6 +386,7 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 **Daily Logs:**
 - 10:00 - 15:00 : [nr_ulsch_demodulation.c](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/nr_ulsch_demodulation.md#718)
 - 20:00 - 23:00: continue nr_ulsch_demodulation.c
+
 
 
 

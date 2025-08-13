@@ -1,8 +1,16 @@
+## 2025/8/13 
+**Short-term Goals**
+- read SRS definition
+
+**Daily Logs:**
+- 19:00 - 23:00: https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/SRS.md
+
 ## 2025/8/12
 **Short-term Goals**
 - Organize the notes abou gNB TX process and make a presentaion
 
-
+**Daily Logs:**
+- 11:00 - 16:00 : flowchart of the OAI PHY https://docs.google.com/presentation/d/11d4zIR09Lqf6ADyqg_TpVauhbAJtsRCP_GbFwW9AW_U/edit?usp=sharing
 
 
 ## 2025/8/11
@@ -393,6 +401,7 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 **Daily Logs:**
 - 10:00 - 15:00 : [nr_ulsch_demodulation.c](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/nr_ulsch_demodulation.md#718)
 - 20:00 - 23:00: continue nr_ulsch_demodulation.c
+
 
 
 

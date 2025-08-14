@@ -266,7 +266,7 @@ Without that knowledge—as in most passive radar—you’re stuck with non-cohe
   - Calibration & sync: per-beam/ per-channel phase & delay calibration to enable coherent sensing.
 
 
-
+---
 
 
 

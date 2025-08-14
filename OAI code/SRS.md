@@ -55,7 +55,7 @@
 - RAN: Performs SRS→ToA estimation in the OAI gNB; implements NRPPa functionality and sends it to the AMF.
 - Core: Integrates with the TU-Dresden LMF; communicates NRPPa PDUs between the gNB and AMF, and between the AMF and LMF; implements built-in/pluggable positioning algorithms in the LMF; and connects to the Fraunhofer IIS PaaS.
 - API: Externally triggers positioning; accurately aligns antenna and UE positions using Cartesian coordinates.
-
+---
 
 
 

@@ -139,16 +139,131 @@ JCAS = one system, one signal, jointly designed for both functions.
   - Pulsed radar: sample roughly at 2× the pulse bandwidth, or at a lower rate set by the desired range (delay) resolution.
   - FMCW radar: sample only the beat frequency, at a rate much smaller than the sweep bandwidth, sized to the maximum delay to detect.
  
-- 
+- What communication signals look like
+  - They’re built to carry lots of data: heavily modulated, packetized, and often include non-modulated training (preambles/pilots) as in Fig. 1.2.
+  - To serve many devices and QoS levels, they can be complex: discontinuous/fragmented in time–frequency, high PAPR, and use advanced modulations across time, frequency, and space (MIMO/beamforming).
+ 
+- Can they be used for sensing?
+  - Yes—potentially you can estimate delay, Doppler, angle, path power, etc. from comms signals.
+  - But sensing needs more than the usual comms channel estimate.
+
+- “Channel coefficients” vs “channel composition”
+  - Comms receiver: estimates a compact set of channel coefficients (effective complex gains on pilots/subcarriers) good enough for equalization/decoding.
+  - Sensing: needs the composition of the channel—i.e., the set of multipath components with their individual delays, Dopplers, angles, and amplitudes.
+  That’s a finer, higher-resolution description and is hardware-limited (ADC rate, dynamic range/linearity, clocks/calibration) and algorithmically harder than standard channel estimation.
+
+- Why new sensing algorithms are needed
+  - Comms signals’ fragmentation, high PAPR, and rich structures make them unlike classic radar waveforms, so radar processors can’t be used as-is.
+  - To do coherent sensing, you must know the exact signal structure (resource mapping in time/frequency/space and even the data symbols if you want data-aided processing).
+Without that knowledge—as in most passive radar—you’re stuck with non-coherent detection, which yields fewer parameters and worse performance.
+
+- Two real-world blockers for comm-integrated sensing:
+  - Full-duplex (FD) with co-located TX/RX—as in monostatic radar—remains hard in communications (self-interference is tough).
+  - Asynchrony between spatially separated TX/RX nodes—clocks aren’t aligned—hurts the fine time/phase info sensing needs.
+
+- Why classic radar tricks don’t port cleanly
+- Pulsed radar: uses transmit → long silence → receive (effectively TDD) to dodge FD. Great for sensing, but those long quiet windows conflict with high-throughput/low-latency comms.
+- Continuous-wave (FMCW): uses the TX signal as the LO reference at the receiver and only processes the beat frequency (difference between TX and echo). This is low-complexity and efficient for sensing, but:
+  - The availability and bandwidth of the beat signal are uncertain, so it’s unreliable for data carriage.
+  - Overall, these designs constrain integration of communication functions and limit achievable data rates.
+
+- Impact on ISAC/JCAS in communications
+  - FD for comms is still immature (requires deep self-interference cancellation, high linearity, large ADC dynamic range).
+  - Clock asynchrony across nodes degrades time-/phase-based sensing (precise ToA/TDoA, coherent processing).
+  - Bottom line: simply dropping monostatic radar FD techniques into current comm systems hits reliability and throughput limits—you need new sensing solutions and system designs.
 
 
+| Specification                | **Radar**                                                                                                                                                            | **Communications**                                                                                                                   | **JCAS system**                                                                                                                            |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Signal waveform**          | Usually simple, **unmodulated** single-carrier; pulsed or CW/FMCW; orthogonal across time/freq/space/code for MIMO; **low PAPR**; emerging radar-OFDM / freq-hopping | Mix of **unmodulated** (pilots/training) + **modulated** data; complex structures and resource usage (OFDMA, MU-MIMO); **high PAPR** | Can adopt radar or comms waveforms and **modify/co-design** to support and jointly optimize both functions                                 |
+| **Tx power / link distance** | Typically **high** (long-range); lower for short-range (e.g., automotive FMCW)                                                                                       | Typically **low**, link up to a few km                                                                                               | Comms integrated into radar → **very long** links; sensing integrated into comms → shorter per-link but **wide area** via network coverage |
+| **Bandwidth**                | **Large**; range resolution ∝ bandwidth (FMCW beat bandwidth may be narrow)                                                                                          | **Smaller** than radar                                                                                                               | **mmWave** bandwidth is very promising; some sensing works even with **low BW** (e.g., Wi-Fi sensing)                                      |
+| **Signal band**              | **X/S/C/Ku**                                                                                                                                                         | **Sub-6 GHz** and **mmWave**                                                                                                         | Choice of band impacts operating distance and resolution                                                                                   |
+| **Duplex**                   | **Full-duplex** (CW) or **half-duplex** (pulsed)                                                                                                                     | Co-located TX/RX usually cannot operate same time & freq; systems are **TDD** or **FDD**                                             | **FD preferred** but **not essential**                                                                                                     |
+| **Clock synchronization**    | TX and RX **clock-locked**                                                                                                                                           | Co-located nodes may share a clock; distributed nodes typically do **not**                                                           | **Clock-level sync** removes sensing ambiguities; helpful but not always required                                                          |
+
+- Waveform: Radar favors low-PAPR, ambiguity-friendly waveforms; communications favors complex, packetized, high-PAPR signals; JCAS can use either and co-design to optimize both functions.
+- Tx power & range: Radar is typically high-power (long range); communications is lower-power (up to a few km). JCAS embedded in radar can reach very long links; sensing embedded in comms has shorter per-link range but benefits from network coverage.
+- Bandwidth: Radar uses large bandwidth for range resolution; comms is typically smaller. mmWave bandwidth is especially attractive for JCAS, though low-BW sensing (e.g., Wi-Fi) is also possible.
+- Bands: Radar often in X/S/C/Ku; comms in sub-6 GHz and mmWave. Available band directly impacts JCAS distance and resolution.
+- Duplexing: Radar can be FD (CW) or HD (pulsed). Comms co-located TX/RX rarely operate same-time/same-frequency (mostly TDD/FDD). JCAS: FD is nice to have, not strictly required.
+- Clock sync: Radar TX/RX typically share a clock. In comms, only co-located nodes share a clock; distributed nodes don’t. JCAS: clock-level sync removes ambiguity for sensing, but isn’t mandatory for all apps.
+
+## 1.2.2 Communications-Centric Design
+- CC-JCAS
+  - CC-JCAS adds radio sensing to an existing communication system as a secondary function.
+  - The main signals/protocols stay largely unchanged; you may need some infrastructure tweaks or feature extensions.
+
+- Two fundamental hurdles
+  - Monostatic full-duplex (FD): TX and sensing RX are co-located and must transmit and receive simultaneously on the same band.
+  - Clock asynchrony in bi/multi-static setups: spatially separated TX/RX nodes usually don’t share clocks, so timing/phase errors corrupt sensing estimates.
+ 
+- Why classic radar tricks don’t port to comms
+  - Pulsed radar avoids FD by separating TX/RX in time (TDD), which creates near-field blind zones and clashes with continuous high-throughput comms.
+  - FMCW radar uses the TX signal as the LO reference and only processes the beat frequency, which carries little of the transmitted data; modern comms use continuous waveforms with sinusoidal LOs, so this approach isn’t practical unless you bolt on FMCW-like sensing hardware.
+
+- FD cancellation for communications is a promising long-term solution for monostatic sensing, but not yet mature for broad deployment.
+- Clock sync in bi/multi-static radar is often done via cables or GPS disciplining—workable in some comm setups, but not a general solution.
 
 
+- CC-JCAS by network topology
+- Two subcategories
+  - Point-to-point (P2P) JCAS – sensing added to a single comms link (common in vehicular networks).
+  - Network JCAS – sensing realized in a multi-node network (e.g., cellular/mobile).
+
+- Geometry analogy for sensing
+  - Monostatic: TX and sensing RX co-located.
+  - Bistatic: TX and sensing RX at different nodes.
+  - Multistatic: multiple spatially separated TX/RX nodes.
+
+| Aspect                             | Wi-Fi networks (vs Mobile)                                                   | Implications for **Wi-Fi-JCAS** (vs PMN)                                                                              |
+| ---------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **Signal format & transmission**   | Simpler, flexible packets; timing/channel structure less rigid than cellular | More freedom to optimize waveforms; sensing opportunities are **more random in time** (less deterministic scheduling) |
+| **Multiuser access**               | Simpler MAC; cellular has complex resource allocation & mixed MU access      | Parameter estimation can be **simpler**; more algorithm choices (but fewer tightly scheduled pilots)                  |
+| **Deployment environment**         | Mostly **indoor**, low speed                                                 | Richer **multipath** but **stable clutter** → sensing is often **easier** than outdoor cellular                       |
+| **Network infrastructure & scale** | Smaller networks; less powerful infra (e.g., smaller arrays)                 | Limited **networked sensing** potential; typically **lower sensing resolution** than large cellular arrays            |
 
 
+## 1.2.3 Radar-Centric (RC) Design
+- What RC-JCAS is
+  - Start from a radar (often long-range, military/aviation) and add communications on top of the radar waveform/hardware.
+  - Often called Dual-Function Radar–Communications (DFRC); in this book DFRC ≈ RC-JCAS.
+
+- Very long range links (hundreds of km possible) and lower latency than satellite, since you reuse high-power radar transmitters and narrow, directive beams.
+
+- Main limitation
+  - Data rate is constrained by the radar waveform (pulsed or CW/FMCW). You can convey data, but not at cellular-like throughputs unless you change the waveform/receiver.
+ 
+- Core technical challenge: information embedding
+  - Embed data into pulsed or continuous-wave radar signals while barely disturbing radar performance.
+  - Techniques surveyed in the literature include various information embedding schemes; goal = minimal radar impact + as high a data rate as feasible.
 
 
+- Index Modulation (IM) for RC-JCAS
+  - Carry bits via the indices/combinations of resources in space, time, frequency, code (e.g., which subcarriers or TX antennas are active).
+  - Key advantage: IM does not alter the basic radar waveform/structure, so sensing performance is essentially preserved while enabling data transfer.
 
+1.2.4 Joint Design without an Underlying System
+- Design JCAS from scratch—not constrained by legacy comms or radar—so waveform/beamforming/scheduling can be jointly optimized to trade off comms throughput and sensing accuracy.
+- Design freedom: choose waveforms, frames, pilots, beams, and MAC specifically for joint goals.
+- Better trade-offs: tune metrics (rate, latency, range/angle/Doppler resolution) explicitly.
+
+- mmWave & sub-THz JCAS
+  - Pros: huge bandwidth + short wavelength ⇒ high data rates and fine sensing resolution.
+  - Status: standards still emerging; ideal for new designs.
+
+- Multichannel / Frequency-Hopping JCAS
+- Use one (or a few) channels at a time, but hop across many over a period (e.g., Bluetooth-like FH).
+- Net effect: large aggregate sensing bandwidth without large instantaneous comm bandwidth → lower RF/ADC cost and fits spectrum usage.
+- Key challenge: stitching channels—remove per-channel distortions/offsets (gain/phase/timing/LO drift) and concatenate coherently.
+- JCAS twist: co-design signals/frames to ease concatenation while not hurting comm rate/latency.
+
+- Design levers
+  - Waveform: OFDM/PMCW/SC, guard intervals, PAPR control, pilot density/placement.
+  - Beams: multibeam patterns, update cadence, hybrid precoder splitting power/time across tasks.
+  - Scheduling: mini-frames or sensing bursts that preserve HARQ/latency budgets.
+  - Resources: subcarrier/PRB partition (static, dynamic, interleaved) for comms vs sensing.
+  - Calibration & sync: per-beam/ per-channel phase & delay calibration to enable coherent sensing.
 
 
 

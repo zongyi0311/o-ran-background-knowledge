@@ -1,3 +1,84 @@
+# from https://openairinterface.org/wp-content/uploads/2025/05/OAI-Kista-Workshop-NEU-1.pdf
+## Localization Architecture in 5G NR
+- It illustrates control-plane positioning (CP-LCS) in 5G: the main entities, the interfaces between them, and which protocol is used by whom.
+- UE — User Equipment.
+- gNB — 5G base station (NG-RAN node).
+- AMF — Access and Mobility Management Function in the 5G Core. It relays LPP messages to the LMF and provides UE context.
+- LMF — Location Management Function. The brain of positioning: configures measurements/assistance, collects reports, and computes the position.
+
+- Interfaces / protocols
+  - NR-Uu (UE ↔ gNB): the radio interface. Carries the actual positioning reference signals and reports, e.g., DL-PRS/CSI-RS/SSB (downlink) and SRS/PRACH (uplink).
+  - NG-C (N2) (gNB ↔ AMF): control-plane interface that transports RRC/NAS signaling.
+  - LPP (UE ↔ LMF): LTE/NR Positioning Protocol (extended for NR in Rel-16).
+    - Goes via NAS: the UE wraps LPP in NAS to the AMF, which forwards it to the LMF (the slide draws UE↔LMF, but AMF relays it).
+    - Purpose: measurement configuration, assistance data, measurement reports, and results between UE and LMF.
+  - NRPPa (gNB ↔ LMF): NR Positioning Protocol-A (Rel-15).
+    - Purpose: LMF↔RAN coordination. The LMF requests/provides assistance (e.g., PRS scheduling) and measurement tasks; the gNB returns results (time/angle/power, etc.).
+  - Nls / Nlmf_Location (AMF ↔ LMF): a 5GC service-based interface used for the AMF to forward LPP and exchange location-related context/events with the LMF.
+
+- Two typical flows
+  - Downlink positioning
+    - LMF → gNB (NRPPa): send assistance/measurement requests (PRS config, timing, etc.).
+    - gNB → UE (RRC over NR-Uu): deliver PRS/measurement config; the gNB transmits DL-PRS/CSI-RS as scheduled.
+    - UE measures (ToA/TDoA, RSRP, AoD…) → UE → LMF (LPP over NAS via AMF): send measurement report.
+    - LMF fuses/estimates the position → returns via LPP to the UE or exposes to applications.
+  - Uplink positioning
+    - LMF → gNB (NRPPa): ask one or more gNBs to measure the UE’s SRS/PRACH (arrival time/angle).
+    - UE transmits SRS/PRACH (NR-Uu); gNB measures and reports via NRPPa to the LMF.
+    - LMF combines multi-cell measurements to compute the position; if needed, informs the UE via LPP.
+
+
+<img width="1401" height="664" alt="image" src="https://github.com/user-attachments/assets/a702d3b3-b790-40e3-b608-bec339a70b76" />
+
+- The UE transmits uplink SRS (or PRACH). Multiple synchronized gNBs receive it and estimate the Time of Arrival (ToA).
+- Each gNB sends its ToA to the LMF via NRPPa (relayed by the AMF).
+- The LMF converts ToAs to TDoAs (pairwise differences), solves for the UE’s coordinates from the intersection of the resulting hyperbolas, and exposes the position through an LCS API.
+
+- Signaling / interfaces (matching the figure)
+  - NR-Uu: UE → gNB radio link carrying SRS.
+  - NRPPa (NG-C / Nls): gNB reports ToA to LMF (via AMF).
+  - LPP (not drawn): used in UE-based flows between UE and LMF; this slide focuses on the network-based case.
+  - LCS: external location service interface (HTTP).
+
+- In TDoA = ToAᵢ − ToAⱼ, the UE transmit clock bias cancels, so only inter-gNB synchronization must be tight (GNSS, IEEE-1588/TSN, etc.).
+- Geometry: for gNBs 𝑖,𝑗
+- <img width="650" height="129" alt="image" src="https://github.com/user-attachments/assets/10ec49c2-ce77-4c00-8f41-4c7f3ca6bc2c" />
+
+- More bandwidth ⇒ finer ToA resolution: ideal timing resolution ≈ 1/BW; ~400 MHz can approach sub-meter (needs high SNR and calibration).
+- Inter-gNB synchronization is critical: clock error maps directly to range-difference error.
+- Multipath/NLOS: mitigate with peak selection, RANSAC/consistency checks, or add AoA aids.
+- Geometry/observability: at least 3 gNBs (≥2 TDoAs) for robust intersections; poor geometry inflates error (GDOP).
+- Uplink references: typically SRS (wideband, repeatable); PRACH is possible but with bandwidth/interpolation constraints.
+
+
+- Implementation of 3GPP UL-TDoA Positioning in OAI
+- RAN: Performs SRS→ToA estimation in the OAI gNB; implements NRPPa functionality and sends it to the AMF.
+- Core: Integrates with the TU-Dresden LMF; communicates NRPPa PDUs between the gNB and AMF, and between the AMF and LMF; implements built-in/pluggable positioning algorithms in the LMF; and connects to the Fraunhofer IIS PaaS.
+- API: Externally triggers positioning; accurately aligns antenna and UE positions using Cartesian coordinates.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 - TS 38.211 — Physical channels and modulation (UL reference signals: SRS) → §6.4.1.4 (sequence generation & resource mapping), comb, cyclic shift, group/sequence hopping, antenna ports.
 - TS 38.213 — Physical layer procedures (UL timing/power/control; SRS configuration & triggering) → §4 (Transmission timing adjustments / TA), §7 (UL power control), §9 (SRS: periodic/semi‑persistent/aperiodic, bandwidth configuration, hopping, resource sets, triggering via DCI), plus multiplexing constraints.
 - TS 38.214 — Physical layer procedures for data (use of measurements for link adaptation, subband/wideband metrics that gNB may derive from SRS; CSI framework linkage).

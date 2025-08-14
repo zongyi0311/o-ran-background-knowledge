@@ -1,10 +1,10 @@
 ## 2025/8/14
 **Short-term Goals**
 - read https://openairinterface.org/wp-content/uploads/2025/05/OAI-Kista-Workshop-NEU-1.pdf
-
+- read https://ieeexplore-ieee-org.ntust.idm.oclc.org/document/9963506
 **Daily Logs:**
 - 11:00 - 12:30 :https://github.com/zongyi0311/rfsim-intern-log/edit/main/OAI%20code/SRS.md#from-httpsopenairinterfaceorgwp-contentuploads202505oai-kista-workshop-neu-1pdf
-
+- 14:00 - 15:00 :https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/SRS.md#httpsieeexplore-ieee-orgntustidmoclcorgxplebooksbookpdfwithbannerjspfilename9963506pdfbkn9962820pdftypechapter
 
 
 
@@ -411,6 +411,7 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 **Daily Logs:**
 - 10:00 - 15:00 : [nr_ulsch_demodulation.c](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/nr_ulsch_demodulation.md#718)
 - 20:00 - 23:00: continue nr_ulsch_demodulation.c
+
 
 
 

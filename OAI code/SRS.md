@@ -57,12 +57,89 @@
 - API: Externally triggers positioning; accurately aligns antenna and UE positions using Cartesian coordinates.
 ---
 
+# https://ieeexplore-ieee-org.ntust.idm.oclc.org/xpl/ebooks/bookPdfWithBanner.jsp?fileName=9963506.pdf&bkn=9962820&pdfType=chapter
+## 1.1 Background
+- Communications and radar have evolved separately but share algorithms, hardware, and partially architectures.Driven by spectrum/cost/energy sharing, there’s growing interest in coexistence → cooperation → joint design (JCAS/ISAC).
+- Traditional coexistence: Two independent systems transmit **separate signals** (possibly overlapping in time/frequency) and rely on **interference management** (beamforming, cooperative/dynamic sharing, primary–secondary access).**Limits**: requires tight mobility constraints and information exchange; spectral-efficiency gains are limited and conditions are stringent.
+- Passive sensing: Use arbitrary radio signals (TV, Wi-Fi, cellular) for sensing because the environment imprints on received signals.
+
+  Pros: no dedicated radar waveform needed.
+  
+  Two major drawbacks:
+  - TX/RX not synchronized → unknown, time-varying time/frequency/phase offsets ⇒ timing/ranging ambiguity and hard-to-fuse measurements.
+  - Unknown signal structure → poor interference suppression and multi-user separation; waveforms are not optimized for sensing.
+
+- From “radar” to broader “radio sensing”:
+  - Radio sensing = extracting information from received radio signals (not from the carried comms data).
+  - Two processing tracks: sensing parameter estimation (delay, AoA/AoD, Doppler, path magnitudes) and pattern recognition (device/object/activity “radio signatures”).
+  - Works over existing infrastructures (IoT, Wi-Fi, 5G). Many studies show low-bandwidth comms signals can support sensing (e.g., Wi-Fi, RFID, ZigBee).
+ 
+- JCAS/ISAC core idea: One jointly designed transmit signal serves both communications and sensing.
+  - Hardware sharing: most TX modules and much of RX hardware are shared (baseband processing diverges).
+  - Advantages over passive sensing: controllable synchronization, known signal structure, multi-user separation/interference suppression, and waveform/scheduling optimized for sensing.
+  - Different from:
+    - Separated waveforms (time/frequency/code partition),
+    - Conventional coexistence (two independent systems avoiding interference),
+    - Cognitive radio (secondary users opportunistically access spectrum).
+JCAS = one system, one signal, jointly designed for both functions.
+
+| Approach                  | Signal strategy             | Main mechanism                        | Pros                                                    | Cons                                                 |
+| ------------------------- | --------------------------- | ------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------- |
+| Separated comms + sensing | Two waveforms               | Time/freq/code separation             | Simple, no mutual interference                          | Resource split → lower efficiency                    |
+| Coexistence               | Two waveforms (may overlap) | Interference management/sharing       | Reuse spectrum; incremental deployment                  | Needs coordination/sync; limited net gain            |
+| Passive sensing           | Any broadcast signals       | No TX changes                         | No dedicated radar TX                                   | Desync, unknown structure, poor interference control |
+| Cognitive radio           | Comms-centric               | Sense spectrum → opportunistic access | Better spectrum utilization                             | Not designed for sensing tasks                       |
+| **JCAS/ISAC**             | **Single, joint waveform**  | **Joint design + shared HW**          | **Sync/structure known; can optimize; high efficiency** | Design complexity; requires standard & HW support    |
+
+## 1.2 Three Categories of JCAS Systems
+
+| Aspect                  | Communication-centric                      | Radar-centric                                 | Joint design & optimization                           |
+| ----------------------- | ------------------------------------------ | --------------------------------------------- | ----------------------------------------------------- |
+| Design priority         | Communications first                       | Radar/sensing first                           | Balanced (tunable)                                    |
+| Waveform basis          | Reuse comms (e.g., OFDM)                   | Reuse radar (pulse/chirp/FMCW)                | New or hybrid, co-designed (DFRC/ISAC)                |
+| Comms performance       | **High**, standard-friendly                | Constrained throughput/SE                     | Potentially high (by design)                          |
+| Sensing performance     | Scenario-dependent, harder to optimize     | **Near-optimal**                              | Potentially high (by design freedom)                  |
+| Standards compatibility | Minor extensions                           | Radar-led, loosely tied to comms standards    | May need new specs / larger changes                   |
+| HW changes              | Small–medium                               | Small (keep radar chain)                      | Medium–large (high sharing/co-design)                 |
+| Typical strength        | Fast deployment, easy in existing networks | Excellent radar accuracy/range                | Best spectrum/energy efficiency; system-level optimum |
+| Typical weakness        | Limited sensing flexibility/accuracy       | Limited data rate                             | Design complexity; ecosystem/standardization effort   |
+| Good fit                | Add sensing inside 3GPP/Wi-Fi systems      | Radar-centric domains (automotive/industrial) | Greenfield/6G R\&D, private networks                  |
 
 
+### 1.2.1 Major Differences Between Communications and Sensing
+- Radar/radio-sensing signals are built to estimate physical parameters (range, Doppler, angle) accurately and simply.
+- Communication signals are built to carry as much information as reliably as possible across many users and QoS profiles.
+- Because the design goals differ, their preferred waveforms/structures conflict, so you can’t drop one into the other without tweaks.
+
+| Dimension            | Radar / Sensing                                                                                                                                                                                                  | Communications                                                                                                                                       |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Primary goal**     | High-accuracy localization & tracking; simple parameter estimation                                                                                                                                               | Maximize information rate & reliability across users/QoS                                                                                             |
+| **Waveform traits**  | Low **PAPR** → efficient PA & long range; **sharp ambiguity function** (narrow/steep mainlobe, low sidelobes) for high range/Doppler resolution; often deterministic (pulses, chirps, constant-envelope options) | Rich **modulation/coding** across time/frequency/space; **packetized**, scheduler-driven; may be **discontinuous/fragmented** over RBs, slots, beams |
+| **Resource use**     | Typically contiguous time–frequency blocks, long coherent processing intervals                                                                                                                                   | Highly dynamic allocation (OFDMA/TDMA/beam hopping, CA), multiuser multiplexing                                                                      |
+| **Receiver focus**   | Matched filtering, range–Doppler–angle estimation, CFAR                                                                                                                                                          | Sync, channel estimation, equalization, decoding, HARQ                                                                                               |
+| **Typical waveform** | Pulsed/linear-FM (chirp), CW/FMCW, radar-OFDM with sensing-friendly design                                                                                                                                       | OFDM/OFDMA with high PAPR and data payloads + pilots/DMRS                                                                                            |
+
+- Using comms for sensing suffers from high PAPR, fragmented resources, and an OFDM ambiguity function that isn’t ideal (range–Doppler coupling, sidelobes) → needs dedicated pilots/PRS, windowing, guard resources, or PAPR reduction.
+- Using radar for comms preserves sensing accuracy, but limits data rate/spectral efficiency unless you relax radar optimality.
+- Joint design can tune: pilot density, burst timing, bandwidth, beam scheduling, and waveform shaping to get both good sensing resolution and acceptable throughput/latency.
 
 
-
-
+- Two conventional radar families:
+  - Pulsed radar: transmits short, wideband pulses, then stays silent to receive echoes.
+  - Continuous-wave radar (e.g., FMCW): transmits continuously (often chirps), sweeping over a wide frequency range.
+  
+  Both are typically non-modulated and used in SISO or MIMO (with orthogonal waveforms for MIMO).
+  
+- Design goals for radar waveforms:
+  - Low PAPR → efficient power amplifiers and long-range operation.
+  - Sharp ambiguity function (narrow/steep mainlobe, low sidelobes) → high range/Doppler resolution.
+  - Simple receiver processing to estimate delay, Doppler, and angle of arrival.
+  
+- Sampling/processing differences:
+  - Pulsed radar: sample roughly at 2× the pulse bandwidth, or at a lower rate set by the desired range (delay) resolution.
+  - FMCW radar: sample only the beat frequency, at a rate much smaller than the sweep bandwidth, sized to the maximum delay to detect.
+ 
+- 
 
 
 

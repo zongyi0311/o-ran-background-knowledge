@@ -418,12 +418,12 @@ Practical tips:
 - Use spherical-wave models and range–angle separable estimators to reduce dimension.
 - Exploit subarray/subcarrier joint processing to mitigate beam squint.
 - Algorithms: near-field MUSIC/ESPRIT, sparse recovery, factor-graph inference.
-
-7) D-MIMO (Distributed MIMO)
+---
+D-MIMO (Distributed MIMO)
 
 Idea: Antennas are split across phase- or frequency-coherent nodes over an area (cell-free / distributed arrays), not co-located like conventional MIMO.
 Why it helps positioning: Wider spatial aperture → stronger geometry, diversity, and robustness; more anchors without adding base stations.
-What research shows:
+- What research shows:
 
 Fiber-assisted D-MIMO for precise localization; JRC (joint radar–comms) strategies that co-optimize sensing & comms; extensions even to underwater.
 
@@ -435,6 +435,39 @@ Phase-coherent (shared phase) → best for fine-grained ranging/angle but harder
 
 Frequency-coherent (per-antenna channels, relaxed phase) → easier at mmWave; still valuable for positioning.
 Where it shines: dense urban venues, stadiums, factories—high user density + frequent blockage.
+
+---
+ISAC (Integrated Sensing and Communications)
+
+- Idea: One infrastructure does both sensing and comms → shared waveforms/hardware, real-time multi-sensor fusion.
+- Positioning benefits: Better accuracy (data fusion), redundancy for reliability, adaptability to dynamics; adds new sensing functions (radar-/spectroscopy-like).
+- Evidence: ISAC-based SLAM/data association can localize UEs without priors; road-safety case studies show promise.
+- Comms side bonus: ISAC can cut beam training/handover overhead via sensing-assisted prediction.
+
+---
+- 6D Positioning (3D position + 3D orientation/pose)
+
+- Why now: B5G apps (C-ITS, assisted living, UAV SAR, VR/AR, robots, digital twins) need pose, not just position.
+- Limits of GNSS+IMU: Indoors GNSS fails; IMU drifts.
+- Cellular approach: Use multiple BSs/arrays (possibly D-MIMO/mmWave) to estimate both position and heading/orientation natively.
+
+---
+Sidelink (SL) & Cooperative Positioning (CP)
+
+- Sidelink: Direct D2D (e.g., V2V) → low latency, works out-of-coverage, supports accurate relative positioning; can leverage maps/CSI priors.
+- Standard direction: Unify UL/DL/SL so comms+localization+sensing converge in 6G.
+- Cooperative positioning: Centralized or distributed fusion across agents—key for IoT, C-ITS, maritime, cobots, UAV swarms. RIS can serve as known-pose anchor nodes.
+
+---
+- AI for Positioning
+
+Two classes:
+
+- AI/ML-assisted (enhancing geometry-based pipelines): measurement estimation/correction (e.g., NLOS mitigation), better Bayesian tracking, CSI prediction/compression.
+
+- Direct AI/ML (fingerprinting): learn mapping from channel features (CIR/CSI) to position; focus on generalization & feature design.
+- Toolkit: classic ML (SVM/RVM for NLOS ID), DNN/CNN/Autoencoders on full CIR (indoor/outdoor), GNNs, Federated Learning (privacy-preserving map matching), BNNs for uncertainty (and BNN-augmented tracking under NLOS).
+Near-term 3GPP uses: RB allocation, mobility, channel estimation, scheduling, beam management; Rel-18 seeds, broader 6G adoption.
 
 
 

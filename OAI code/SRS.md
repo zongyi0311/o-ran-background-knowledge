@@ -270,6 +270,176 @@ Without that knowledge—as in most passive radar—you’re stuck with non-cohe
 
 ---
 # [A Tutorial on 5G Positioning](https://ieeexplore-ieee-org.ntust.idm.oclc.org/document/10644093)
+## II. 5G POSITIONING: HISTORY, PRESENT, AND FUTURE
+- Goal of the section: start from use-case requirements, review the evolution of cellular positioning, then zoom in on 5G (Rel-15 → Rel-19) features and trends—building an end-to-end picture from past to future.
+- II-A (Use-case requirements): enumerates KPIs/constraints for localization across verticals—accuracy, latency, availability/reliability, power, update rate, coverage (indoor/outdoor)—as design targets.
+- II-B (Technological evolution): traces how positioning advanced from early analog/2G through 3G/4G to 5G, highlighting improvements in measurements, synchronization, network assistance, signals, and algorithms.
+- II-C (5G specifics): summarizes key enhancements from Rel-15 up to forthcoming Rel-19:
+  - New/enhanced measurements & reference signals (e.g., PRS/SRS), beam-based AoA/AoD, and multi-site cooperation;
+  - Stronger system/architectural support in RAN and core (positioning functions, protocols);
+  - Capability extensions targeting verticals and future directions.
+
+### A. Cellular Positioning Use Cases
+- KPI
+  - Accuracy: bound on position error;
+  - Availability/Coverage: where/how often positioning is offered;
+  - Latency: time to deliver a position fix;
+  - Update rate: refresh frequency;
+  - Energy: device/network power budget;
+  - Reliability/Integrity: trustworthiness and fault/Degradation alerts.
+
+- Terminal speed matters: higher speeds make it harder to guarantee the same accuracy/latency/integrity; meeting static-like accuracy under high dynamics is more challenging.
+
+
+### B. Evolution of Cellular Positioning Technology From
+- 4G/LTE (E-UTRA): OFDMA in DL, SC-FDMA in UL; designed PRS for downlink positioning as a backup to A-GPS when satellites are not visible.
+- Release-9 (2009) leap: introduced eCID and OTDOA (using PRS), and specified
+  - LPP (TS 36.355) for LTE positioning,
+  - A-GNSS (TS 36.305).
+
+- Rel-10 (LTE-A):
+  - Introduced UL-TDOA based on SRS to complement A-GNSS (useful when GNSS is blocked).
+  - PRS improvements to boost hearability—i.e., the UE’s ability to receive and distinguish PRS from multiple cells vs. ordinary DL signals.
+
+- Rel-13 (LTE-A Pro) (targeting strict indoor):
+  - OTDOA enhancements: new PRS patterns and bandwidth extension.
+  - MIMO/beamforming added to improve measurement SNR/directionality.
+
+- Rel-14: continued LTE evolution and set the starting point for 5G.
+
+### C. 5G Positioning From Rel-15 to Rel-19
+- Rel-15 (2017–2018, Phase-1: foundation)
+  - Bands: sub-6 GHz + mmWave.
+  - Use cases: eMBB, mMTC, URLLC (practical focus on eMBB).
+  - System enablers: network slicing, MEC, enhanced V2X.
+  - Positioning: no major enhancements vs. LTE; mainly lays NR groundwork.
+ 
+- Rel-16 (end-2018→, Phase-2: expansion)
+  - Focus: URLLC and mMTC; 6 GHz support.
+  - Positioning architecture: 5G LCS defined in TS 23.273.
+  - Reference signals: DL-PRS and UL-SRS (enhanced PRS/SRS).
+    - PRS enables simultaneous TOA reports from multiple gNBs and RTT computation.
+    - Lower overhead, higher accuracy.
+  - Bands: FR1 (410 MHz–7.125 GHz) and FR2 (24.25–52.6 GHz); wider BW ⇒ better ranging.
+  - Outlook: possible FR3 (7–24 GHz) in future releases.
+
+- Rel-17 5G positioning
+- Overview
+  - Built on Rel-16: adds 2.5/4.5 GHz, extends FR2 to 71 GHz, increases gNB coverage, and improves MEC, slicing, and V2X.
+
+- Key positioning upgrades
+  - Tx/Rx timing-error mitigation via TEGs
+    - Signals from the same TRP share similar Tx delay → tag them with a Timing Error Group; different TRPs may use different groups.
+    - Using TEG IDs, UE mitigates residual Tx/Rx delay, improving ranging.
+   
+  - UL-AOA / DL-AOD
+    - UL-AOA: extra assistance (expected AOA + search window) and multi-angle reporting to pick the LOS among similar-delay MPCs; introduces UL-SRS RSRPP (path-specific power).
+    - DL-AOD: adds DL-PRS RSRPP and a search window (path-level metric vs. channel-level RSRP) to reduce multipath bias.
+   
+  - Multipath mitigation
+    - Report up to 8 additional paths along with the main one for timing estimation.
+  - LOS/NLOS identification
+    - Provide binary or likelihood (0–1, step 0.1) indicators to aid measurement selection/weighting.
+  - Integrity (GNSS-like) in Rel-17
+    - AL (max allowable error), TTA (max time to raise an alert), TIR (probability error > AL without alert within TTA).
+
+<img width="1317" height="395" alt="image" src="https://github.com/user-attachments/assets/b651ff19-01dc-4435-ab86-60867be7117e" />
+- Design takeaway: plan for PRS/SRS in Rel-16; exploit TEGs/RSRPP/LOS flags in Rel-17; start evaluating AI-assisted fusion and new signals/methods as you move into Rel-18/19.
+
+- 5G-Advanced (Rel-18) is the bridge toward 6G, infusing pervasive AI/ML across layers.
+- Network upgrades span energy savings, coverage, mobility, MIMO, MBMS, and positioning.
+- Positioning in Rel-18:
+  - CPP (carrier-phase positioning) adapted to NR signals for cm-level outdoor accuracy;
+  -LPHAP (low-power, high-accuracy) requirements;
+  - RedCap UE positioning;
+  - AI/ML for beam management, fingerprinting, and measurement inference/refinement;
+  - Sidelink positioning with SL-PRS.
+- Rel-19 and beyond: address industrial needs (e.g., metaverse with pose + position, energy-harvesting tags for asset tracking); push decentralized on-device AI/ML with device-to-device data/model sharing; study service/performance needs for direct AI/ML; enhance assisted/direct AI/ML positioning, beam management, and CSI feedback (May 2024 discussions).
+
+### D. Positioning Trends Beyond 5G
+- Beyond-5G trends span THz, RIS, CPP, near-field, D-MIMO, NTN, UAV, ISAC, 6D pose, sidelink/coop positioning, AI.
+
+- THz bands:
+  - Pros: very wide bandwidth → finer delay resolution; antenna miniaturization → larger arrays and better angular resolution; enable THz imaging/SLAM, even leveraging NLOS multipath.
+  - Cons: high path loss and atmospheric absorption, leading to short range; requires advanced precoding/beam management to maintain links.
+- Net effect: huge accuracy gains are feasible, provided coverage and robustness are handled via narrow high-gain beams, dense TRPs/relays, and agile beam tracking.
+---
+- RIS:
+  - RIS (aka RIM) are software-controlled EM surfaces that reshape propagation.
+  - For positioning: enable accuracy in NLOS, act as a multipath controller, create virtual anchors and path-level measurements (angles/delays); each element behaves like a local emitter to harden links.
+  - Variants: TIS, space–time modulated metasurfaces, fully-passive flexible/chipless skins.
+  - Deployment: physical constraints ⇒ use conformal metasurfaces on curved objects (e.g., vehicles).
+  - Big picture: programmable waves enable holographic localization (HL); with RIS/LIS + NFC, approach capacity limits and boost NLOS positioning.
+---
+- CPP:
+
+What it is: Uses the absolute carrier phase to infer range; can reach cm/sub-cm accuracy—far beyond group-delay TDOA/RTT.
+
+Why it matters: Studies show orders-of-magnitude accuracy gains; works with GNSS-assisted or cellular-only designs across FR1/FR2 and massive MIMO.
+
+Key challenges: Integer ambiguity resolution, phase continuity/cycle slips, oscillator & hardware phase biases, multipath/NLOS.
+
+Practical tips:
+- Borrow RTK/PPP ideas (differencing, assistance, continuous observation) for ambiguity fixing.
+- Fuse time-based + phase-based (RTT/OTDOA + CPP) to boost availability.
+- In FR2, use narrow beams to suppress multipath; in FR1, leverage multi-TRP geometry and path-level metrics (e.g., RSRPP) plus LOS detection.
+---
+- NTN — Non-Terrestrial Networks
+
+What it is: Satellite/HAPS/UAV platforms extending coverage and adding positioning geometry.
+
+Why it matters: Wider geometry and extra links can improve accuracy (CRB analyses); critical for remote/underserved areas.
+
+Key challenges: Strong Doppler & time-varying geometry, clock/orbit errors, long RTT, intermittent visibility, interworking with terrestrial NR.
+
+Practical tips:
+- Use precise ephemeris/clock assistance and multi-band/multi-link fusion; track dynamics with model-based filters (EKF/UKF).
+- Hybrid terrestrial + NTN positioning improves availability and integrity.
+---
+- UAV:
+
+What it is: 5G’s high rate/low latency/coverage enabling accurate UAV navigation and tracking; joint designs (beamforming, short blocklengths) achieve cm-level for mapping/inspection.
+
+Key challenges: Fast 3D motion → frequent beam alignment/handover; blockage/regulatory constraints; tight power/weight budgets.
+
+Practical tips:
+- Combine multi-TRP PRS/SRS with fast beam prediction (AI/ML).
+- Tightly fuse IMU/baro/vision with RF (EKF/factor graphs).
+---
+- NFC
+
+What it is: With very large arrays/RIS/D-MIMO, propagation becomes near-field: spherical wavefronts, spatial non-stationarity, beam squint.
+
+Why it matters: Properly modeled, near-field gives simultaneous angle + range resolution—enabling high accuracy even with narrow bandwidth (PCRB results).
+
+Key challenges: Accurate near-field modeling/calibration, high-dimensional estimation, computational load.
+
+Practical tips:
+- Use spherical-wave models and range–angle separable estimators to reduce dimension.
+- Exploit subarray/subcarrier joint processing to mitigate beam squint.
+- Algorithms: near-field MUSIC/ESPRIT, sparse recovery, factor-graph inference.
+
+7) D-MIMO (Distributed MIMO)
+
+Idea: Antennas are split across phase- or frequency-coherent nodes over an area (cell-free / distributed arrays), not co-located like conventional MIMO.
+Why it helps positioning: Wider spatial aperture → stronger geometry, diversity, and robustness; more anchors without adding base stations.
+What research shows:
+
+Fiber-assisted D-MIMO for precise localization; JRC (joint radar–comms) strategies that co-optimize sensing & comms; extensions even to underwater.
+
+Cell-free massive MIMO surveys highlight scalability, user experience and spectral-efficiency gains; “multi-array”/DAS (e.g., multiple panels on a vehicle) improves blockage resilience and can enable single-BS TDOA when ≥2 separated arrays are available.
+Algorithms in play: graph-based fusion, (sequential) MMSE, ZF, etc.
+Modes:
+
+Phase-coherent (shared phase) → best for fine-grained ranging/angle but harder to implement at high freq.
+
+Frequency-coherent (per-antenna channels, relaxed phase) → easier at mmWave; still valuable for positioning.
+Where it shines: dense urban venues, stadiums, factories—high user density + frequent blockage.
+
+
+
+
+
 
 
 

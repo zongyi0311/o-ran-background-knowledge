@@ -469,7 +469,7 @@ Two classes:
 - Toolkit: classic ML (SVM/RVM for NLOS ID), DNN/CNN/Autoencoders on full CIR (indoor/outdoor), GNNs, Federated Learning (privacy-preserving map matching), BNNs for uncertainty (and BNN-augmented tracking under NLOS).
 Near-term 3GPP uses: RB allocation, mobility, channel estimation, scheduling, beam management; Rel-18 seeds, broader 6G adoption.
 
-
+---
 
 
 

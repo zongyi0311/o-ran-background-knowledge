@@ -1,3 +1,12 @@
+## 2025/8/15
+**Short-term Goals**
+- read A Tutorial on 5G Positioning
+
+**Daily Logs:**
+- 13:00 - 16:00 :
+
+
+
 ## 2025/8/14
 **Short-term Goals**
 - read https://openairinterface.org/wp-content/uploads/2025/05/OAI-Kista-Workshop-NEU-1.pdf
@@ -412,6 +421,7 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 **Daily Logs:**
 - 10:00 - 15:00 : [nr_ulsch_demodulation.c](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/nr_ulsch_demodulation.md#718)
 - 20:00 - 23:00: continue nr_ulsch_demodulation.c
+
 
 
 

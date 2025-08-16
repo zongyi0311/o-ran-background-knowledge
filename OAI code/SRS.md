@@ -472,7 +472,7 @@ Near-term 3GPP uses: RB allocation, mobility, channel estimation, scheduling, be
 ---
 
 
-
+zt​=τ=0∑Tcp​​Hτ​yt−τ​+ξt​
 
 
 

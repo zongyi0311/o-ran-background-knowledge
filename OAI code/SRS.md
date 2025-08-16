@@ -1,6 +1,7 @@
 [A Tutorial on 5G Positioning](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/SRS.md#a-tutorial-on-5g-positioning)
 
 
+
 # from https://openairinterface.org/wp-content/uploads/2025/05/OAI-Kista-Workshop-NEU-1.pdf
 ## Localization Architecture in 5G NR
 - It illustrates control-plane positioning (CP-LCS) in 5G: the main entities, the interfaces between them, and which protocol is used by whom.
@@ -472,8 +473,19 @@ Near-term 3GPP uses: RB allocation, mobility, channel estimation, scheduling, be
 
 ---
 
+- <img width="659" height="606" alt="image" src="https://github.com/user-attachments/assets/bb085cd4-2943-4d6b-b1b2-fe94c7b67f69" />                                                             ˇ
+- <img width="671" height="498" alt="image" src="https://github.com/user-attachments/assets/cf42fe1d-b9f8-4fc2-8d31-cd37254522fd" />
+- <img width="667" height="450" alt="image" src="https://github.com/user-attachments/assets/4e18f05a-c3eb-4507-9263-82bb4503db08" />
+- <img width="629" height="570" alt="image" src="https://github.com/user-attachments/assets/fc3fdad5-7b8b-4bc4-b7aa-0a3d325b7118" />
+- <img width="632" height="726" alt="image" src="https://github.com/user-attachments/assets/8d9071a5-7525-482c-b970-68af7737d727" />
 
-zt​=τ=0∑Tcp​​Hτ​yt−τ​+ξt​
+- <img width="672" height="760" alt="image" src="https://github.com/user-attachments/assets/91bb91d6-4d7b-4f9e-abcb-979d8bbcb383" />
+- <img width="666" height="705" alt="image" src="https://github.com/user-attachments/assets/33b9427c-d9c1-4385-8b4f-725d2ef6fa88" />
+- <img width="670" height="726" alt="image" src="https://github.com/user-attachments/assets/d41002ad-9dfa-4d26-80c6-1691bbdb3305" />
+- <img width="685" height="708" alt="image" src="https://github.com/user-attachments/assets/c183ba1e-4512-4a82-bd48-be0f1be26a0b" />
+- <img width="652" height="682" alt="image" src="https://github.com/user-attachments/assets/a5641227-62c1-4810-88be-42f57d5372de" />
+- <img width="687" height="618" alt="image" src="https://github.com/user-attachments/assets/261805bf-0aa9-46cb-8a3a-d74a2ed9159a" />
+
 
 
 

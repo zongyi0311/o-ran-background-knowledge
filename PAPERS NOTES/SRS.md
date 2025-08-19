@@ -522,13 +522,33 @@ Therefore, Rel-16 introduces dedicated positioning signals: PRS for downlink and
   - Frequency domain: CSI-RS can be transmitted in every RB, so it can cover the entire channel bandwidth. The exact RE pattern/density depends on the chosen CSI-RS configuration (ports, comb, density).
  
 #### PRS:
+- <img width="665" height="550" alt="image" src="https://github.com/user-attachments/assets/62ecace6-4bb4-4a63-81b0-3211f67c6296" />
+- <img width="747" height="476" alt="image" src="https://github.com/user-attachments/assets/a03e2f9f-7667-4721-b3ba-23aa9ab23cc5" />
+- <img width="863" height="243" alt="image" src="https://github.com/user-attachments/assets/b1823fe6-7220-460f-a34c-d26510eb4ebd" />
+
+#### SRS:
+- <img width="681" height="438" alt="image" src="https://github.com/user-attachments/assets/d7d479b9-80d9-4f9a-bbeb-da3590554846" />
+- <img width="730" height="373" alt="image" src="https://github.com/user-attachments/assets/edc679db-785a-46c4-b3a6-90fa67b06d35" />
+- <img width="684" height="495" alt="image" src="https://github.com/user-attachments/assets/78609da0-274d-4586-a8d1-2d985ef0bcde" />
+
+### E. 5G Positioning Methods
+#### DL-TDOA
+- <img width="662" height="677" alt="image" src="https://github.com/user-attachments/assets/ee900aeb-c70f-43ba-9d5a-62961735364c" />
+- <img width="654" height="196" alt="image" src="https://github.com/user-attachments/assets/2a9ec134-19db-4a46-b0c6-358ed78fdf1f" />
 
 
+#### DL-AOD
+- <img width="671" height="478" alt="image" src="https://github.com/user-attachments/assets/166972e1-fa2f-46a1-ab64-318d12303ffe" />
+- <img width="674" height="572" alt="image" src="https://github.com/user-attachments/assets/eadd0942-69e4-4c40-88a5-652725584d74" />
 
+#### UL-AOA
+- <img width="658" height="618" alt="image" src="https://github.com/user-attachments/assets/fa29d151-f423-4663-a395-acb1cf6f5e26" />
+- <img width="641" height="561" alt="image" src="https://github.com/user-attachments/assets/cc92fd90-7fab-4da2-9b78-44e1a3f281e9" />
 
-
-
-
+#### Multi-RTT
+- <img width="539" height="428" alt="image" src="https://github.com/user-attachments/assets/2409459e-73a9-4585-a334-72702a23742a" />
+- <img width="699" height="722" alt="image" src="https://github.com/user-attachments/assets/a0a18e5d-02ff-41a1-b9ff-4a260867beba" />
+- <img width="694" height="418" alt="image" src="https://github.com/user-attachments/assets/2458b1c6-7579-4446-86ff-b0fe23d82237" />
 
 
 

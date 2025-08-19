@@ -1,3 +1,15 @@
+## 2025/8/19
+**Short-term Goals**
+- make my cv
+- read A Tutorial on 5G Positioning
+
+**Daily Logs:**
+- 13:00 - 14:30: making my CV
+- 15:00 - 17:00: reading A Tutorial on 5G Positioning
+
+
+
+
 ## 2025/8/15
 **Short-term Goals**
 - read A Tutorial on 5G Positioning
@@ -421,6 +433,7 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 **Daily Logs:**
 - 10:00 - 15:00 : [nr_ulsch_demodulation.c](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/nr_ulsch_demodulation.md#718)
 - 20:00 - 23:00: continue nr_ulsch_demodulation.c
+
 
 
 

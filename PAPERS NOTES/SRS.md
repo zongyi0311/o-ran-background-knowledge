@@ -1,4 +1,4 @@
-[A Tutorial on 5G Positioning](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/SRS.md#a-tutorial-on-5g-positioning)
+[A Tutorial on 5G Positioning]
 
 
 
@@ -485,6 +485,52 @@ Near-term 3GPP uses: RB allocation, mobility, channel estimation, scheduling, be
 - <img width="685" height="708" alt="image" src="https://github.com/user-attachments/assets/c183ba1e-4512-4a82-bd48-be0f1be26a0b" />
 - <img width="652" height="682" alt="image" src="https://github.com/user-attachments/assets/a5641227-62c1-4810-88be-42f57d5372de" />
 - <img width="687" height="618" alt="image" src="https://github.com/user-attachments/assets/261805bf-0aa9-46cb-8a3a-d74a2ed9159a" />
+
+## IV. 5G POSITIONING TECHNOLOGY
+### A. 5G Positioning Architectures
+- The 5G system used for positioning consists of the 5G core network (5GCN) and the radio access network (RAN). The 5GCN follows a service-based architecture (SBA): network functions (NFs) expose services to each other and interact through the service-based interface (SBI). Two key NFs for positioning are the Location Management Function (LMF) and the Access and Mobility Management Function (AMF).
+- The LMF orchestrates all UE-localization procedures: it selects the positioning method, schedules resources, coordinates involved nodes, and prepares assistance data to be broadcast to UEs. The AMF provides location services support (e.g., emergency calls) and can initiate a localization request for a UE. In practice, the AMF often acts as an intermediary between the LMF and either the RAN or the UE.
+- The RAN participates directly in positioning procedures. It transfers messages between the UE and the AMF/LMF—such as positioning signaling and broadcast assistance data—and executes radio actions required by the chosen method. The next-generation RAN (NG-RAN) comprises an en-gNB for LTE access and a gNB for NR access. Unlike the monolithic 4G eNB, a 5G base station can be split into a gNB Central Unit (gNB-CU) and one or more gNB Distributed Units (gNB-DUs).
+A gNB can transmit in downlink (DL) or measure in uplink (UL), enabling both DL- and UL-based positioning schemes. This dual role is enabled by the Transmission Reception Point (TRP) concept: a TRP may operate as a Transmission Point (TP), a Reception Point (RP), or both, giving the network flexibility to realize different positioning methods.
+
+### B. 5G Frame Structure
+- <img width="659" height="513" alt="image" src="https://github.com/user-attachments/assets/69c985e0-a9f3-4c13-a59b-f5e201512bb4" />
+- <img width="690" height="702" alt="image" src="https://github.com/user-attachments/assets/3e885564-ce30-4ca7-9836-4cb134b6aa38" />
+
+### C. Time-Domain Accuracy
+- <img width="827" height="640" alt="image" src="https://github.com/user-attachments/assets/eac507e8-61e2-443d-960b-52d3c12ee497" />
+
+### D. 5G Positioning Signals
+- Motivation (Rel-16). Earlier reference signals not designed for positioning—CSI-RS and SS blocks (SSB/SS)—have limits: (i) they can’t fully solve the hearability problem (UE must detect signals from several cells at once while neighboring cells interfere); (ii) strong nearby cells shadow weak far-away signals; (iii) the RE density/pattern of CSI-RS and SSB gives poor correlation and may not spread energy over all subcarriers.
+Therefore, Rel-16 introduces dedicated positioning signals: PRS for downlink and SRS for uplink, enabling precise positioning in 5G networks.
+#### SSB:
+- <img width="813" height="451" alt="image" src="https://github.com/user-attachments/assets/bdbfd8c6-6b40-4f08-a270-394b1408c2e9" />
+- CSI-RS (Channel-State Information RS)
+  -  Originally meant for CSI acquisition (beam management, CQI/PMI/RI reporting). It is not tailored to positioning, and—in dense networks—its correlation and frequency coverage are often insufficient for robust multi-cell ranging.
+ 
+- PRS (Positioning Reference Signal, DL)
+  - Rel-16 adds PRS so the network can transmit positioning-friendly pilots: wideband, configurable time–frequency patterns with higher RE density/repetition and beam options. UEs measure PRS (e.g., TOA/TDOA, possibly AOD) from multiple TRPs with low interference and good cross-correlation, improving hearability.
+
+- SRS (Sounding Reference Signal, UL)
+  - Rel-16 leverages SRS for uplink positioning. The UE transmits SRS across configurable bandwidth/beam sets; multiple TRPs receive it to derive AOA, TOA/TDOA, or full-band channel features. The number of UL beams relates to the RE budget per slot.
+ 
+#### CSI-RS:
+- CSI reference signals (CSI-RS) were introduced in Rel-10 to acquire channel state information (beam management, CSI feedback). They are not primarily designed for positioning, but can be reused when configured properly.
+- Key properties
+  - Spatial layers: To support up to 8-layer spatial multiplexing, a TRP can configure the same number of CSI-RS signals/ports.
+  - Time domain: Periodic; you can schedule 2–8 CSI-RS per 10-ms frame (i.e., one every 5–1.25 ms). A subframe offset is also configurable.
+  - Frequency domain: CSI-RS can be transmitted in every RB, so it can cover the entire channel bandwidth. The exact RE pattern/density depends on the chosen CSI-RS configuration (ports, comb, density).
+ 
+#### PRS:
+
+
+
+
+
+
+
+
+
 
 
 

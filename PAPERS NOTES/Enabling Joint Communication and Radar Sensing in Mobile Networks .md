@@ -123,4 +123,140 @@
 - Pros: huge bandwidths → fine range resolution; short wavelengths → narrow beams & high angular resolution; potentially very high data rates.
 - Cons: technology still maturing (RF front-end, calibration, blockage), limited deployment to date; sub-THz lacks mature standards.
 - What the literature explores
-  - 
+  - Waveform co-design at mmWave: feasibility in indoor / vehicular networks; in-depth signal-processing reviews (esp. waveform design for JCAS).
+  - Hybrid / adaptive beamforming: joint Tx/Rx beam designs to balance SNR for comms and sensing; adaptive structures that reconfigure by task.
+  - Automotive JCAS: comparisons of phase-modulated continuous-wave vs OFDM-based JCAS by analyzing system models and design parameters.
+  - Multibeam transmission: a single joint signal forms multiple beams to cover different sensing directions and carry data.
+  - Terahertz massive-MIMO JCAS: beamforming methods targeting extreme resolution and high data rates.
+ 
+- Multi-channel JCAS (key special case)
+  - Concept: Use one or more channels at a time, but over a session occupy many channels
+  - Benefits: Achieve large overall (synthetic) bandwidth for sensing without large instantaneous comm bandwidth → lower RF cost and better alignment with comm spectrum use.
+  - Main challenge: Each channel’s receive chain introduces imperfections/distortions (gain/phase offsets, CFO, timing skew). You must calibrate/compensate and concatenate channels coherently.
+  - JCAS twist: Design the waveform & schedule to make concatenation easier (shared pilots, inter-channel guards, known hop patterns) while keeping comm performance high.
+ 
+- E. Advantages of JCAS Systems
+  - Spectral Efficiency
+  - Sharing the same spectrum for both communication and sensing can, in principle, double spectral efficiency versus running them separately.
+  - Beamforming Efficiency
+  - Sensing reveals real-time channel/scene structure (angles, paths, motion). Comms can exploit this for fast beam adaptation, direction optimization, and more reliable links.
+ 
+# III FRAMEWORK FOR A PMN
+- PMN can evolve from today’s mobile networks with added/modified hardware, system features, and algorithms—no full redesign required.
+- PMN evolution is not tied to a specific cellular standard. The discussion is generalized around modern mobile ingredients: antenna arrays, broadband, MU-MIMO, and OFDMA. (5G NR is referenced only when helpful.)
+- Deployment topologies for JCAS in PMN
+  - Cloud-RAN (CRAN): centralized baseband with distributed radio units → natural place for cooperative sensing and data fusion.
+  - Standalone BS: each site performs local comms + sensing → simpler deployment, less fronthaul dependence.
+
+## A. System Platform and Infrastructure
+### CRAN(Cloud-RAN):
+- A central unit (CU) + many distributed remote radio units (RRUs) (a.k.a. radio remote units).
+- RRUs connect to the CU over fiber; either quantized RF or baseband (I/Q) samples are transported.
+- How PMN/JCAS runs on CRAN
+  - In a PMN, densely deployed RRUs are coordinated by the CU to deliver comms and sensing.
+  - The CU hosts the traditional BBU pool (communication processing) and a new sensing processor (for fusion/estimation).
+  - This mirrors distributed radar architectures.
+ 
+- Typical comms scenario
+  - Multiple RRUs serve UEs cooperatively using MU-MIMO on the same RBs (same time/frequency).
+  - Even without explicit cooperation, one can still support sensing by raising DL power so other RRUs can receive the signal; this doesn’t harm MU-MIMO (no downlink inter-RRU interference).
+- RRUs are typically GPS-clock synchronized, giving an excellent timing reference for distributed sensing algorithms.
+
+### Standalone BS:
+- You don’t need CRAN to do PMN sensing. A single (standalone) base station can sense using the signals it transmits itself (DL/monostatic) or signals from UEs (UL/bistatic).
+- Pros: simple, low latency (edge), no centralized sync required, good for targeted coverage.
+- Cons: less multi-site cooperation/fusion than CRAN; coverage and diversity depend on one site unless multiple standalone BSs are coordinated.
+
+## B. Three Types of Sensing Operations
+### Downlink Active Sensing:
+- An RRU/BS senses using its own downlink (DL) communication signal by listening to the echoes (reflections/diffractions). Tx and Rx are co-located → essentially mono-static radar.
+- Full-duplex (FD) (transmit and receive at the same time) or an equivalent FD solution (e.g., strong analog - digital self-interference (SI) cancellation).
+
+### Downlink Passive Sensing
+- An RRU/BS uses the downlink (DL) signals transmitted by other RRUs to sense. Tx and Rx are spatially separated → a bi-static / multi-static radar setup (their clocks may be synchronized). It mainly senses the environment between RRUs.
+- At a given RRU, you receive (i) active echoes from its own DL signal and (ii) passive echoes from other RRUs’ DL signals. Passive echoes usually arrive slightly later (longer path). With SDMA (multi-UE beams), time/frequency alone may not separate them → algorithms must handle mixtures.
+- Angles & Doppler
+  - <img width="611" height="94" alt="image" src="https://github.com/user-attachments/assets/16eb6381-33d6-4d25-a21c-cddaa55c6708" />
+
+### Uplink Sensing
+- The BS/ gNB estimates the environment using uplink communication signals transmitted by UEs.
+- Architecturally similar to passive sensing: transmitter (UE) and receiver (BS) are spatially separated and not clock-synchronized.
+- Key difference from passive sensing
+  - In UL sensing the BS fully knows the protocol and signal structure of the received UL waveforms (pilots, frame timing, coding, etc.), which simplifies processing compared with generic passive radar.
+- Can be deployed directly on today’s networks: no hardware change, no network topology change, and no full-duplex requirement at the BS.
+- Because UE and BS clocks are not locked, the BS estimates relative (not absolute) time delay and Doppler,so Ambiguities from unsynchronized clocks must be handled with special techniques.
+
+### Downlink vs. Uplink Sensing — comparison
+- DL sensing can often achieve higher accuracy than UL sensing because:
+  - RRUs/BSs have more antennas and higher transmit power.
+  - The entire transmitted signal is centrally known and controlled.
+- Deployability:
+  - UL sensing is easier to deploy (no FD and no extra hardware).
+  - DL sensing may require full-duplex or equivalent self-interference suppression at the sensing node.
+ 
+## Signals Usable from 5G NR for Radio Sensing
+### Reference Signals Used for Channel Estimation:
+- DMRS (UL/PUSCH & DL/PDSCH), SRS (UL), CSI-RS (DL). Most are comb-type pilots placed across OFDM symbols and subcarriers, and orthogonal across users.
+- DMRS with data payload: DMRS that accompanies data on PDSCH/PUSCH is user-specific and its time–frequency pattern is irregular (because it depends on scheduling, layers/ports, mapping with data). This demands sensing algorithms that can handle irregular pilots.
+- SRS & CSI-RS: Can be periodic or aperiodic, thus easier to use for structured sensing (e.g., subspace/spectrum methods like ESPRIT for angle/delay).
+- Positions known & tunable: BS knows where the DMRS OFDM symbols are; their number/positions can be adjusted across slots and subcarriers. Jointly optimizing comms & sensing means designing pilot density/placement.
+- Grid anatomy: One resource element (RE) = 1 subcarrier × 1 OFDM symbol. One resource block (RB) = 12 consecutive subcarriers in frequency; slot usually has 14 OFDM symbols. A single NR carrier supports up to ~3300 active subcarriers
+- Why it matters: The number and pattern of subcarriers occupied by DMRS directly affect sensing resolution & ambiguity (e.g., finer comb → better delay/angle resolution; poor geometry → higher ambiguity).
+- Sequences: DMRS generated from Gold sequences (per TS 38.211) for both PDSCH and PUSCH.
+- DL vs UL mapping:
+  - PDSCH (downlink) DMRS is typically interleaved across subcarriers → good for comms, but can introduce sensing ambiguity.
+  - PUSCH (uplink) DMRS often uses grouped / non-interleaved subcarriers → cleaner structure for sensing.
+- Both UL & DL DMRS are feasible for sensing (simulations show excellent potential),
+
+### Non-Channel Estimation Signals
+- Deterministic, non-channel-estimation signals such as SS and PBCH/SSB can also be used for sensing.
+- They appear with regular periodicity (interval of several to tens of milliseconds) and occupy only a limited number of subcarriers, which limits multipath-delay identification.
+- Transmission intuition: The SSB bundle (PSS, SSS, PBCH + DMRS) is mapped to fixed time–frequency REs per NR pattern and can be beam-swept over multiple directions; this makes it predictable (good for synchronization/initial acquisition) but sparse for fine delay profiling.
+
+### Data Payload Signals
+- Data payload on PDSCH (DL) and PUSCH (UL) can be exploited as additional sensing illumination.
+- DL: the network knows the bits and modulation → can treat symbols as known for coherent processing.
+- UL: symbols are unknown → need decision-directed reconstruction; demodulation errors degrade sensing.
+- Multi-layer MIMO streams are generally non-orthogonal, which adds interference for sensing.
+- Pros: greatly increases usable REs → better SNR, resolution, and statistics; precoders can be jointly optimized for C&S.
+- Cons: higher implementation/compute complexity; UL is sensitive to sync and detection errors.
+
+# IV. EVOLUTION: SYSTEM MODIFICATIONS TO ENABLE SENSING
+- What C&S can share (in a MIMO-OFDM transceiver)
+  - Shared signal chain: the whole transmitter and many receiver modules can be common to both Communication & Sensing.
+  - Waveform co-design: the transmitted waveform can be jointly optimized to satisfy requirements of C&S simultaneously.
+  - Where estimation happens: sensing parameter estimation can be done in time or frequency domain.
+  - What the sensing app may output: either numerical parameters (delay, Doppler, AoA/AoD, etc.) and/or pattern-recognition results (e.g., detection/classification).
+ 
+- Why today’s mobile network still needs modifications
+  - No full-duplex today → a node cannot transmit & receive at the same frequency at the same time ⇒ mono-static radar sensing is infeasible without HW changes.
+  - No clock synch between separated Tx/Rx (e.g., two different nodes) → only relative timing/Doppler; ranging ambiguity and cross-packet processing becomes hard.
+  - Therefore, classic bi-static radar methods cannot be directly used on current comms infrastructure.
+ 
+## A. Dedicated Transmitter for Uplink Sensing
+- Baseline (conventional UL sensing): Works much like passive sensing; BS/RRU receivers—already in the network—process UL comm signals for both comms & sensing.
+- Main issue: UE–BS clocks are not synchronized → only relative delay/Doppler can be measured → ranging ambiguity.
+  - If this ambiguity is acceptable, no HW/system changes are needed.
+  - In special cases it can be mitigated by signal processing (see Sec. VI-F)
+- Ambiguity-free option: deploy a dedicated (static) UE that is clock-synchronized to the BSs and transmits UL sensing signals.
+  - Enables SIMO sensing (one Tx, many spatially separated BS/RRUs as Rx) with joint/collaborative processing across sites.
+
+## B. Using Full-Duplex Radios for Downlink Sensing
+- What problem it solves
+  - In DL sensing, a base station must hear very weak echoes while it is transmitting. Its own transmit signal leaks into the receiver and can drown out those echoes.
+- How full-duplex (FD) helps
+  - FD lets a node transmit and receive on the same channel at the same time, then cancel the self-interference (the leaked TX signal) using a mix of:
+  - antenna isolation/separation,
+  - RF analog suppression,
+  - digital/baseband cancellation.
+- For JCAS, FD is a bit easier than for pure communications: we mostly need to suppress our own leaked TX while keeping the environmental echoes; we don’t have to manage simultaneous signals from two comm nodes.
+- Still hard in practice, especially for MIMO: many TX-RX antenna pairs create many leakage paths that must be canceled simultaneously.
+- Mobility/dynamics make cancellation tougher.
+
+## C. Dedicated Receiver for Downlink (and Uplink) Sensing
+- To avoid needing full-duplex, a near-term path is to deploy a receive-only BS/node. It can be set to (a) downlink-only sensing, or (b) both communications and downlink sensing.
+- Implementation notes
+  - Why changes are needed: Today’s BS receivers are built mainly to receive uplink signals; downlink sensing needs them to receive downlink signals.
+  - TDD is easier: In TDD, the transceiver already uses a TX/RX switch. Downlink sensing mainly requires scheduling the switch so the antennas connect to RX during the needed period → minimal hardware changes.
+  - FDD is harder/costlier: The BS RX path may not cover downlink bands, so hardware mods are likely. Hence DL sensing is typically more cost-effective in TDD than FDD.
+- Deploy a dedicated receiving-only node that can do both DL and UL sensing (and even comms). This fits TDD well because DL and UL can be time-separated at the receiver. To remove delay/Doppler ambiguity you need clock synchronization between transmit and receive nodes.

@@ -260,3 +260,45 @@
   - TDD is easier: In TDD, the transceiver already uses a TX/RX switch. Downlink sensing mainly requires scheduling the switch so the antennas connect to RX during the needed period → minimal hardware changes.
   - FDD is harder/costlier: The BS RX path may not cover downlink bands, so hardware mods are likely. Hence DL sensing is typically more cost-effective in TDD than FDD.
 - Deploy a dedicated receiving-only node that can do both DL and UL sensing (and even comms). This fits TDD well because DL and UL can be time-separated at the receiver. To remove delay/Doppler ambiguity you need clock synchronization between transmit and receive nodes.
+
+
+## D. BS with Spatially Widely Separated Transmitting and Receiving Antennas
+- Use a well-separated transmit (Tx) and receive (Rx) antenna for downlink sensing to greatly reduce direct-leakage from the transmitter. Baseband self-interference cancellation can still be applied using a feedback path from Tx baseband to Rx baseband.
+- TDD example (Fig. 8).
+- <img width="609" height="480" alt="image" src="https://github.com/user-attachments/assets/c1e77cf0-049a-4c15-8047-a9ee54bc285f" />
+- (a) General concept
+  - The “Normal Tx/Rx” block does regular TDD (TX in DL slot, RX in UL slot).
+  - A separate sensing-only receiver is fed by its own antenna/port so it can keep receiving even when the comm side is transmitting.
+- (b) A practical wiring on existing hardware
+  - SPDT1–SPDT4 are RF switches that steer an antenna feed to either TX ports (Tx1–Tx4) during DL or to comm RX ports (Rx1–Rx4 (C)) during UL.
+  - Rx5 (S) is a dedicated sensing RX; the purple line shows a permanent path to the sensing chain.
+ 
+## E. Summary and Insights
+- Full-duplex radios would be the ideal long-term solution for seamless downlink sensing + communications, but are impractical today.
+- The other three options are near-term, sub-optimal choices that require only minor hardware/system tweaks to current networks. Among them, the single spatially separated receive antenna dedicated to sensing in a conventional MIMO base station appears to be the most cost-effective approach for downlink sensing.
+- Beyond hardware changes, hardware calibration is also important. Experiments show that receiver and array imperfections can harm high-resolution sensing-parameter estimation in channel sounding, while antenna-array calibration can effectively mitigate these impacts.
+- <img width="1297" height="344" alt="image" src="https://github.com/user-attachments/assets/adf3fa15-f2db-4e7f-a651-f2bb212dfc37" />
+
+
+# V. MAJOR RESEARCH CHALLENGES FOR PMN
+## A. Sensing Parameter Extraction from Sophisticated Mobile Signals
+- Sensing needs continuous parameters (delay, Doppler, AoA/AoD), while comms channel estimation often returns grid-quantized composite coefficients or only LOS info.
+- Why it’s hard
+  - Irregular, user-dependent allocations → incomplete / nonuniform measurements.
+  - Multi-user, non-orthogonal spatial layers → interference and mixing.
+  - Comms estimators target link reliability, not physical parameter identifiability.
+- Parametric channel models + gridless sparse / super-resolution estimation (e.g., atomic norm/iterative ML/peak tracking) to recover continuous delay/Doppler/angles.
+- Leverage DMRS / CSI-RS / SRS for joint time-freq-space estimation; add cross-slot phase alignment.
+
+## B. Joint Design and Optimization
+- Why it’s hard: C & S want different things.
+  - In multiuser MIMO communications, the transmit signal is a mix of users’ random, modulated symbols; beamforming maximizes gain/directivity.
+  - In ideal MIMO radar, sensing signals are preferably unmodulated and orthogonal; arrays try to form virtual sub-arrays to enlarge aperture and angular resolution.
+- Open directions: Beyond standalone waveform tuning, study joint optimization at system/network levels (e.g., coordinated beam/scheduling, resource sharing), and quantify mutual benefits (so far mostly studied for propagation-path optimization and secure communications).
+
+## C. Networked Sensing
+- Embedding sensing into cellular topology promises big gains—high frequency reuse, wide coverage, distributed nodes, and hence larger “sensing capacity.”
+- Algorithms that exploit cellular structure: inter-cell interference handling, BS cooperation, multi/static sensing, and sensing handover across BSs.
+- Scheduling & resource co-design between C & S; synchronization and data fusion across many BSs; defining metrics for networked sensing capacity.
+- Goal: Develop both theory (bounds/metrics) and practical algorithms that make distributed, multi-BS sensing reliable and scalable.
+

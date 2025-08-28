@@ -145,18 +145,113 @@ searching for PRACH in 831.18 : prach_index 3 => -1.-1
   - RU thread is reading received data for frame 831, slot 19.
 - **Reading 30720 samples for slot 19 (0x78de5c7da040)**
   - Reads 30720 IQ samples for slot 19 (address pointer shown).
+
+---
+
+- <img width="1219" height="162" alt="image" src="https://github.com/user-attachments/assets/1ba3f896-e0c5-4cf0-9397-c382bd8547ac" />
+- The RU thread is currently in frame 947, slot 19, and has finished processing the fronthaul input. The pipeline is also preparing for the next TX (frame 948.5).
+- The thread pool starts allocating DLSCH encoding for the UE (aid=0) in the two symbol intervals (0–6, 7–13) of slot 19.
+- Coding details: 808-bit TB → 880-bit CB → rate-match to 2688 bits, using 16 RB, QPSK, HARQ rv=0.
+
+- <img width="1219" height="162" alt="image" src="https://github.com/user-attachments/assets/626bd6dc-c1e9-4545-a008-ebf330c5ced3" />
+- PDSCH allocation inside a 48-RB BWP starting at RB=27. This allocation uses 16 RBs, starting at offset 0.
+- 2688 bits are modulated with QPSK (mod_order=2), producing 1344 QPSK symbols.
+- Maps the 1344 symbols to 1 layer (Nl=1). Count matches (16 RB × 12 RE × 7 symbols = 1344).
+- RU thread is processing frame 947, slot 19 reception.
+- In frame 947, slot 19, RU scans PRACH occasions:
+  - index 0 → 573.19: First occasion mapped to frame 573, slot 19 (due to PRACH periodicity).
+  - index 1 → 947.19: Another occasion in the current slot.
+
+- <img width="1348" height="215" alt="image" src="https://github.com/user-attachments/assets/5bb44c5d-6f66-4347-a571-f68f23932fe3" />
+- Generate UE-specific DMRS in slot 0, symbol 2. nscid=0 is the sequence ID; x2 is the Gold sequence state.
+- EN: RU is detecting PRACH in frame 947, slot 19:
+  - format 5 maps to PRACH Format A2 in OAI.
+  - numRA 0 = first RA occasion in this slot.
+  - prachStartSymbol 0 = starts at symbol 0.
+  - prachOccasion 0 = occasion index 0.
+- TX (l1_tx_thread):
+  - Generates UE DMRS for slot 0 (symbols 2, 6, and 9).
+  - Also, splits the PDSCH into three segments of 1032 bits each, using QPSK modulation.
  
-- <img width="1267" height="450" alt="image" src="https://github.com/user-attachments/assets/a96ea293-80a7-4d3b-af60-0c10010ce500" />
+- RX (ru_thread):
+  - Performs PRACH detection in frame 947, slot 19 (Format A2, startSymbol 0, occasion 0).
+  - The log also displays the frequencyStart and startSymbol values ​​for this PRACH configuration.
+
+- <img width="1341" height="519" alt="image" src="https://github.com/user-attachments/assets/c1110838-c373-4859-b4e7-fc7c7591508b" />
+  - [l1_tx_thread] Rotating symbol N, slot 0, symbol_subframe_index N (±32767,0/−1)
+  - This is the TX applying phase rotation to symbols 0..13 of slot 0.
+  - (±32767,0/−1) are Q15 fixed-point values ≈ ±1+j·0.
+  - Reason: For 15 kHz SCS with 7.5 kHz half-subcarrier shift, each OFDM symbol alternates by ±1.
+- [ru_thread] Doing PRACH combining of 4 repetitions N_ZC 139
+  - Format A2 (internally labeled as format 5).
+  - With 4 repetitions.
+  - Zadoff–Chu root = 139.
+    RU combines the 4 repetitions to improve detection SNR.
+
+- [ru_thread] frame 947, slot 19: doing rx_nr_prach_ru for format 5, numRA 0, prachStartSymbol 4, prachOccasion 1
+- [ru_thread] PRACH (ru 0) in 947.19, format A2, msg1_frequencyStart 0, startSymbol 4
+  - Detecting PRACH in frame 947, slot 19.
+  - prachStartSymbol 4 = starts at symbol 4.
+  - prachOccasion 1 = the 2nd occasion in this slot (the first was startSymbol 0).
+  - msg1_frequencyStart 0 = frequency domain starts at RB 0.
+ 
+- Transmitter (l1_tx_thread):
+- In frame 948, slot 0 prepares for downlink PDSCH:TB segmentation → LDPC encoding → rate matching → QPSK modulation → layer mapping → DMRS insertion → RE segment modulation.
+
+- Receiver (ru_thread):
+- At the same time, uplink PRACH detection is performed in frame 947, slot 19: Scanning multiple occasions → Detecting the preamble (Format A2, N_ZC=139, repeated 4 times in the time domain).
 
 
+- <img width="1773" height="834" alt="image" src="https://github.com/user-attachments/assets/db6db428-c695-43e8-9834-bf065c51f0be" />
+TX (gNB):
 
+Slot 0 symbols are rotated and compensated one by one.
 
+PDSCH/PDCCH coding, modulation, and RE mapping.
 
+The calling RU sends 30720 IQ samples.
 
+RX (RU):
 
+Simultaneously, a PRACH occasion (0, 4, 8) is detected in frame 947, slot 19.
 
+Each preamble is repeated four times, and energy combining is performed.
 
+IQ samples are read from the buffer and processed.
 
+Thread pool:
 
+Background data for slot 0 is generated, and beamforming for slot 1 is prepared.
 
+-<img width="1788" height="576" alt="image" src="https://github.com/user-attachments/assets/32bd3dee-c939-4d9f-bbba-e32cc7025cab" />
+- [l1_tx_thread] Rotating symbol 0..13, slot 1, symbol_subframe_index 14..27 (±32767,…)
+  - TX side processes frame 948, slot 1 symbol rotation.
+  - symbol_subframe_index 14..27 = continuous index across the frame (slot 0 = 0..13, slot 1 = 14..27).
+  - (±32767,0/-1) = Q15 fixed-point ±1, implementing 7.5 kHz half-subcarrier shift compensation.
 
+- [ru_thread] RU 0/0 TS 582481920, GPS 9.480500, SR 61440000.000000, frame 948, slot 1.6 / 20
+  - RU reports status
+
+- [l1_tx_thread] gNB: 948.1 : calling RU TX function
+  - gNB calls RU to transmit frame 948, slot 1.
+
+- [ru_thread] AFTER fh_south_in - SFN/SL:948.1 RU->proc[RX:948.1 TX:948.7] RC.gNB[0]:[RX:00 TX(SFN):0]
+  - fh_south_in finished.
+  - RU is receiving 948.1 and preparing for TX at 948.7.
+  - OAI pipeline runs parallel RX/TX: RU receives current slot, prepares TX for future slots.
+
+- [ru_thread] read data: frame_rx = 948, tti_rx = 2
+- [ru_thread] Reading 30720 samples for slot 2
+  - RU reads IQ samples for frame 948, slot 2.
+  - Each slot = 30720 samples (61.44 Msps).
+ 
+- [Tpool_-1] SFN/SF:RU:TX:948/7 aa 0 Generating slot 1 (first_symbol 0 num_symbols 7) slot_offset ...
+  - Thread pool is generating slot 1 data.
+  - first_symbol 0 num_symbols 7 → generates first half of slot 1 (symbols 0–6).
+  - Next line = first_symbol 7 num_symbols 7 → generates second half (symbols 7–13).
+ 
+- [l1_tx_thread] [TXPATH] RU 0 tx_rf, writing to TS 582481920, 948.1, unwrapped_frame 0, slot 1, flags 1, siglen+sf_extension 30720, returned 30720, E -inf
+- gNB writes frame 948, slot 1 IQ samples (30720) into RU TX RF.
+- E -inf = energy estimation (−∞ means not calculated in this log level).
+
+- 

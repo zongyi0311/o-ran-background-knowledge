@@ -271,4 +271,5 @@ Background data for slot 0 is generated, and beamforming for slot 1 is prepared.
   - It allows multiple UEs to attempt random access within the same slot, but separated in different OFDM symbols, reducing collision probability.
   - The gNB must monitor all PRACH occasions in the slot, regardless of which one the UE chooses.
  
-- 
+- ![Uploading image.png…]()
+

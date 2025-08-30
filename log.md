@@ -254,4 +254,21 @@ Background data for slot 0 is generated, and beamforming for slot 1 is prepared.
 - gNB writes frame 948, slot 1 IQ samples (30720) into RU TX RF.
 - E -inf = energy estimation (−∞ means not calculated in this log level).
 
+---
+- <img width="1764" height="709" alt="image" src="https://github.com/user-attachments/assets/9d756a1f-e374-4306-9253-3ef44d633150" />
+- **PRACH (ru 0) in 747.19, format A2, msg1_frequencyStart 0, startSymbol 0**  RU 0 PRACH detected: frame 747 slot 19, format A2, freqStart=0, startSymbol=0.
+- **frame 747, slot 19: doing rx_nr_prach_ru for format 5, numRA 0, prachStartSymbol 4, prachOccasion 1**  RU receiving PRACH format 5, RA index=0, startSymbol=4, occasion=1.
+- prachStartSymbol 0, prachOccasion 0, prachStartSymbol 4, prachOccasion 1, prachStartSymbol 8, prachOccasion 2
+- In 5G NR, the PRACH (Physical Random Access Channel) transmission positions are determined by the time-domain configuration.
+- A single slot can contain multiple PRACH occasions.
+  - Each PRACH occasion is identified by its start symbol (prachStartSymbol).
+  - For example, in a Format A2 configuration, the typical PRACH occasions within a slot are:
+  - Occasion 0 → prachStartSymbol = 0
+  - Occasion 1 → prachStartSymbol = 4
+  - Occasion 2 → prachStartSymbol = 8
+ 
+- Why this design exists:
+  - It allows multiple UEs to attempt random access within the same slot, but separated in different OFDM symbols, reducing collision probability.
+  - The gNB must monitor all PRACH occasions in the slot, regardless of which one the UE chooses.
+ 
 - 

@@ -270,6 +270,62 @@ Background data for slot 0 is generated, and beamforming for slot 1 is prepared.
 - Why this design exists:
   - It allows multiple UEs to attempt random access within the same slot, but separated in different OFDM symbols, reducing collision probability.
   - The gNB must monitor all PRACH occasions in the slot, regardless of which one the UE chooses.
- 
-- ![Uploading image.png…]()
 
+- <img width="1795" height="239" alt="image" src="https://github.com/user-attachments/assets/8e1623d3-bcfd-40ae-8ac8-06ad4836b0df" />
+- <img width="1864" height="100" alt="image" src="https://github.com/user-attachments/assets/993c4e29-7951-4813-8219-d5e096e719c1" />
+- PUCCH Configuration
+  - nr_symbols 1 → Uses 1 OFDM symbol.
+  - start_symbol 13 → Located at symbol 13 (last symbol in slot).
+  - prb_start 8 → Allocated at PRB index 8.
+  - second_hop_prb 0 → No frequency hopping.
+  - group_hop_flag 0, sequence_hop_flag 0 → No group/sequence hopping.
+  - O_ACK 0 → No HARQ-ACK bits.
+  - O_SR 1 → 1-bit Scheduling Request (SR) is being sent.
+  - mcs 0 → Not relevant here.
+  - initial_cyclic_shift 0 → Cyclic shift index 0.
+  - This confirms it’s PUCCH Format 0 carrying a Scheduling Request.
+
+- PUCCH Sequence Parameters
+  - u = 10, v = 0 → Root sequence index u=10, cyclic shift v=0.
+  - Used for Zadoff-Chu (ZC) sequence generation.
+ 
+- PUCCH Demodulation
+  - PUCCH IDFT[0/9] = (0,0) => -inf → The IDFT-based detection returned -infinity, meaning no valid energy detected.
+  - Indicates either no UE transmission or extremely low SNR.
+ 
+- Energy Statistics
+  - n00[8] = 0, n01[8] = 0 → Energy bins show zero values.
+  - This confirms that PUCCH wasn’t successfully received.
+ 
+```
+PRACH RX preamble_index 0, preamble_offset 0
+PRACH RX new dft preamble_offset-first_nonzero_root_idx 0
+PRACH RX preamble_index 1, preamble_offset 0
+PRACH RX preamble_index 2, preamble_offset 0
+PRACH RX preamble_index 3, preamble_offset 0
+```
+**PRACH RX preamble_index N**
+
+This shows that the gNB, during PRACH detection (RX), is checking preamble index N (UE chooses one index during random access).
+
+Here, it cycles from index 0 to index 3.
+
+**preamble_offset**
+
+This indicates the timing/frequency offset of the detected preamble.
+
+All are 0 here, which means either the preamble is perfectly aligned or no timing advance is detected.
+
+**new dft preamble_offset-first_nonzero_root_idx**
+
+PRACH sequences are Zadoff-Chu sequences. The gNB applies DFT detection to check correlation with configured root sequences.
+
+**The log shows first_nonzero_root_idx = 0, meaning the first ZC root sequence being tested produced a valid detection.**
+
+This log indicates the PRACH decoding process at the gNB:
+
+It scans through preamble indices 0–3,
+
+Runs correlation with the Zadoff-Chu roots,
+
+Finds signals aligned with zero offset.

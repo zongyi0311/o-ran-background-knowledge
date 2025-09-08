@@ -126,5 +126,5 @@
 
 - <img width="2036" height="1327" alt="image" src="https://github.com/user-attachments/assets/93cec1b9-913f-4f0f-8ef0-ae894c785e48" />
 
-
-
+## 3.2 Automatic Configuration mapping of gNB and RU
+### 3.2.1 Repeatable parameters in DU/RU

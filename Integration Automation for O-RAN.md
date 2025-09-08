@@ -113,10 +113,18 @@
 - Output: Throughput results → Grafana Dashboard visualization.
 
 # Chapter 3 Proposed Method
+## 3-1 System Input Parameters for rApp Execution
+- Input Parameter Categories
+  - gNB Configuration
+	- Test Configuration
+	- Host Information
 
+- Input Format & Workflow
+  - Input is provided in JSON format.
+	- rApp receives and parses JSON → verifies required fields.
+	- Automation proceeds sequentially: DU/RU config → gNB/CN startup → performance & synchronization verification.
 
-
-
+- <img width="2036" height="1327" alt="image" src="https://github.com/user-attachments/assets/93cec1b9-913f-4f0f-8ef0-ae894c785e48" />
 
 
 

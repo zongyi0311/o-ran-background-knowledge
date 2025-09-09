@@ -1,4 +1,4 @@
-<img width="689" height="850" alt="image" src="https://github.com/user-attachments/assets/b5669928-9097-4bdd-b72e-c06d3c4455f9" /><img width="667" height="486" alt="image" src="https://github.com/user-attachments/assets/d7ed8908-040b-4807-bb49-04e4d9575206" /><img width="532" height="792" alt="image" src="https://github.com/user-attachments/assets/915d8d11-6aa1-4926-87e8-904079b58499" /><img width="532" height="792" alt="image" src="https://github.com/user-attachments/assets/61fb479d-06ba-42cc-9911-1513eceecdfb" /><img width="749" height="373" alt="image" src="https://github.com/user-attachments/assets/9105d6f5-5471-4f21-a39d-63b952b94dbf" />
+- <img width="749" height="373" alt="image" src="https://github.com/user-attachments/assets/9105d6f5-5471-4f21-a39d-63b952b94dbf" />
 - Vendor Config Files : Each vendor has its own config files, with different formats and parameter naming, increasing integration complexity.
 - sh Script / UI Control: : Configuration and management can be done via scripts (sh script) or UI control.
 

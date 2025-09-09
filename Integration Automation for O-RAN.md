@@ -1,4 +1,4 @@
-<img width="532" height="792" alt="image" src="https://github.com/user-attachments/assets/915d8d11-6aa1-4926-87e8-904079b58499" /><img width="532" height="792" alt="image" src="https://github.com/user-attachments/assets/61fb479d-06ba-42cc-9911-1513eceecdfb" /><img width="749" height="373" alt="image" src="https://github.com/user-attachments/assets/9105d6f5-5471-4f21-a39d-63b952b94dbf" />
+<img width="689" height="850" alt="image" src="https://github.com/user-attachments/assets/b5669928-9097-4bdd-b72e-c06d3c4455f9" /><img width="667" height="486" alt="image" src="https://github.com/user-attachments/assets/d7ed8908-040b-4807-bb49-04e4d9575206" /><img width="532" height="792" alt="image" src="https://github.com/user-attachments/assets/915d8d11-6aa1-4926-87e8-904079b58499" /><img width="532" height="792" alt="image" src="https://github.com/user-attachments/assets/61fb479d-06ba-42cc-9911-1513eceecdfb" /><img width="749" height="373" alt="image" src="https://github.com/user-attachments/assets/9105d6f5-5471-4f21-a39d-63b952b94dbf" />
 - Vendor Config Files : Each vendor has its own config files, with different formats and parameter naming, increasing integration complexity.
 - sh Script / UI Control: : Configuration and management can be done via scripts (sh script) or UI control.
 
@@ -190,6 +190,101 @@ eAxC ID 3 → RU Antenna Port 3
 - <img width="759" height="195" alt="image" src="https://github.com/user-attachments/assets/18652f1c-5be7-4074-a20a-24500796b041" />
 - **BWP (Bandwidth Part) Location and Size**
 - Encode the initial BWP (location + size) in a compact format using RIV encoding.
-- 
-- 
+- <img width="782" height="342" alt="image" src="https://github.com/user-attachments/assets/f24014d5-992c-4925-8393-02cfde1d3a77" />
 
+- <img width="712" height="474" alt="image" src="https://github.com/user-attachments/assets/27d33ec8-f795-4b67-9aca-2558fe4cbb74" />
+
+## 3.3 Start End-to-end component
+- <img width="736" height="544" alt="image" src="https://github.com/user-attachments/assets/dec1a2b9-fc65-4880-aed9-235db7314d58" />
+- <img width="667" height="468" alt="image" src="https://github.com/user-attachments/assets/3f9819b5-6a68-44f3-9010-673a7d970c75" />
+- GPS Status Check
+
+	rApp queries Fronthaul Gateway (FHG) for GPS status.
+	
+	FHG receives GPS signal → reports back → rApp verifies GPS availability.
+
+- DU/RU PTP Sync Check
+
+	rApp queries PTP sync state from gNB (DU).
+	
+	rApp queries RU via M-plane for PTP status.
+	
+	Results stored in Test Execution Interface (TEV).
+
+- Periodic Monitoring
+
+	Every 30 seconds, rApp repeats the PTP status check.
+	
+	Key metrics: offset, delay, frequency (small/consistent values indicate sync).
+
+- Sync Confirmation
+
+	Once DU and RU both report stable sync (within ±1 μs), rApp marks gNB/RU as “got PTP sync”.
+
+
+<img width="667" height="468" alt="image" src="https://github.com/user-attachments/assets/16a25df1-2ff4-4486-a539-ebf1daa5dc16" />
+- Start CN
+
+rApp launches the Core Network (e.g., Free5GC/Open5GS).
+
+- Start gNB
+
+	rApp launches the OAI gNB (DU/CU).
+
+- Capture NG Setup PCAP
+
+	rApp uses tcpdump to capture NG interface packets.
+	
+	Stores them as PCAP files.
+
+- NGAP Message Exchange
+
+	gNB → CN: NGSetupRequest
+	
+	CN → gNB: NGSetupResponse
+	
+	rApp analyzes PCAP with pyshark to verify proper NGAP exchange.
+
+- NG Setup Success
+
+	Presence of NGSetupResponse confirms NG setup.
+	
+	rApp reports NG setup success.
+
+
+## 3.4Checking Fronthaul Packet Status and Tim-ing Window Adjustment
+- Ensure reliable and timely packet transmission between gNB and RU over the Open Fronthaul(FH) interface.
+- rApp process:
+
+	Collect RU’s packet reception statistics via configuration service.
+	
+	Verify whether C/U-plane packets fall within the configured timing window.
+	
+		If inside → UE proceeds with attachment.
+		
+		If outside → Adjust timing window parameters and restart gNB.
+
+- Timing window adjustment logic
+	- Monitor counts of early packets (RX_EARLY) and late packets (RX_LATE).
+	- If trends increase → update corresponding T1a parameters (T1a_cp, T1a_up) to re-center packet timing.
+
+- Packet classification & visualization
+	- Packets categorized as early / on-time / late.
+	- Statistics guide whether to shift or widen the timing window.
+
+- <img width="667" height="688" alt="image" src="https://github.com/user-attachments/assets/ed8456d1-b9bf-42ea-b34a-b45f297b9e6b" />
+- UE attach is allowed only when the RU packet timing is correct.
+- If a packet is sent too early or too late, the rApp automatically adjusts the time window and restarts the gNB.
+
+## 3.5 UE Auto Attach and iperf
+- **iperf3**
+- iperf3 is an open-source network performance testing tool.
+- Measures end-to-end throughput between two nodes.
+- Supports TCP and UDP tests, evaluates:
+	- Bandwidth
+	- Latency
+	- Jitter
+	- Packet loss
+
+- **ADB** Android Debug Bridge
+- A command-line tool that lets your computer communicate with an Android device.

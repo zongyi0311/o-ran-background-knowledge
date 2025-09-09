@@ -1,4 +1,4 @@
-<img width="749" height="373" alt="image" src="https://github.com/user-attachments/assets/9105d6f5-5471-4f21-a39d-63b952b94dbf" />
+<img width="532" height="792" alt="image" src="https://github.com/user-attachments/assets/915d8d11-6aa1-4926-87e8-904079b58499" /><img width="532" height="792" alt="image" src="https://github.com/user-attachments/assets/61fb479d-06ba-42cc-9911-1513eceecdfb" /><img width="749" height="373" alt="image" src="https://github.com/user-attachments/assets/9105d6f5-5471-4f21-a39d-63b952b94dbf" />
 - Vendor Config Files : Each vendor has its own config files, with different formats and parameter naming, increasing integration complexity.
 - sh Script / UI Control: : Configuration and management can be done via scripts (sh script) or UI control.
 
@@ -128,3 +128,68 @@
 
 ## 3.2 Automatic Configuration mapping of gNB and RU
 ### 3.2.1 Repeatable parameters in DU/RU
+- Parameters like l2_mtu, iq-bitwidth, compression-type, compression-method are defined once in JSON and auto-applied to both DU & RU.
+
+### 3.2.2 MAC & VLAN Automation
+- Manual process: retrieve RU MAC → edit config → create VF → bind to DPDK → update config.
+- Automated rApp: detects/creates VF, sets MAC/VLAN, binds to DPDK, auto-fills gNB config.
+
+- **JSON**
+- JavaScript Object Notation:
+	- A lightweight data exchange format, commonly used in configuration files, APIs, and data transmission.
+ 	- Features: Human-readable and easy for programs to parse.
+    - Structure: composed of key-value pairs, supporting nested structures (like dictionaries/objects + arrays).
+ 
+- **SFTP**
+- A secure file transfer method based on SSH (Secure Shell)
+- Unlike traditional FTP (File Transfer Protocol), SFTP encrypts the entire connection (account, password, and data content), so it is more secure.
+
+- <img width="658" height="577" alt="image" src="https://github.com/user-attachments/assets/ed607bcd-b7ef-45ab-a936-63744c5c33f0" />
+- NIC (Network Interface Card): Network card, physical network interface.
+- PF (Physical Function): Physical function of the NIC, representing actual hardware resources.
+- VF (Virtual Function): Virtual function carved out of the PF, which can be assigned a MAC address and VLAN.
+- Bus Info: Identification information of the VF on the PCI bus, which is later provided to the DPDK for binding.
+- DPDK (Data Plane Development Kit): High-performance packet processing framework required by gNBs to accelerate fronthaul traffic.
+- OAI DU config: The OAI gNB configuration file, which contains the VF's MAC address, VLAN, bus information, and other information.
+
+### 3.2.3 MIMO Adjustment
+- To support flexible DL transmission configurations, rApp automates MIMO setting adjustments based on the test case.
+- Reads antenna config and desired MIMO layers from JSON.
+- Generates eAxC IDs, checks RU antenna capability, and limits layers if needed.
+- Maps eAxC IDs to RU antennas for consistent repeatable MIMO testing.
+
+- **eAxC ID**
+- eAxC = eCPRI AxC Container, In the eCPRI (Common Public Radio Interface over Ethernet) protocol, AxC (Antenna Carrier) stands for "a combination of an antenna and a carrier."
+- In O-RAN fronthaul (RU ↔ DU) transmission, each antenna carrier is assigned an ID, which is the eAxC ID.
+- ex "maxMIMO_layers": 4 ,rApp will generate eAxC ID = 0,1,2,3
+- Mapping relationship:
+
+eAxC ID 0 → RU Antenna Port 0
+
+eAxC ID 1 → RU Antenna Port 1
+
+eAxC ID 2 → RU Antenna Port 2
+
+eAxC ID 3 → RU Antenna Port 3
+- <img width="532" height="792" alt="image" src="https://github.com/user-attachments/assets/b2547bba-8d0b-4179-a486-0ecfb50b9fe7" />
+
+### 3.2.4 Frequency Automation
+- **SubCarrier Spacing (SCS) Conversion**
+	- Input subCarrierSpacing (kHz) → converted to:
+		- Numerology μ (0, 1, 2, 3)
+		- SCS string (scs) for DU/RU config
+ 
+- **Bandwidth Conversion**
+- Input bSChannelBw (MHz) → converted to Resource Blocks (RBs) using 3GPP TS 38.101-1 Table 5.3.2-1.
+
+- **SSB Frequency Selection**
+- input:arfcn (Absolute Radio Frequency Channel Number)
+- <img width="711" height="387" alt="image" src="https://github.com/user-attachments/assets/2ffa8747-04aa-470c-be1e-c6c71592b180" />
+- **RU Center Frequency Calculation**
+- Input: number of PRBs (number-of-prb) instead of ARFCN.
+- <img width="759" height="195" alt="image" src="https://github.com/user-attachments/assets/18652f1c-5be7-4074-a20a-24500796b041" />
+- **BWP (Bandwidth Part) Location and Size**
+- Encode the initial BWP (location + size) in a compact format using RIV encoding.
+- 
+- 
+

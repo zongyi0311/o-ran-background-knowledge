@@ -35,6 +35,8 @@
   - Perform cell probing.
   - Inform neighbor nodes via X2/Xn interface.
 
+### 5.2 Architecture/Deployment Options
+- Option 1: Non-RT RIC Deployment
 - Table 5.2.1.1-1: Carrier and Cell Switch Off/On: AI/ML inference via Non-RT RIC
 - Goal
   - Enable carrier/cell switch-off for energy savign.
@@ -95,6 +97,39 @@
 - O-RU(Radio Unit)
   - Reporter
     - Provides energy consumption (EC) and efficiency (EE) data via Open FH M-Plane (to O-DU or SMO).
+
+#### 5.2.1.3 Input/Output Data Requirements
+- Inputs:The system collects traffic load, radio quality, mobility info, and energy/power reports from E2 Nodes and O-RUs.
+- Output:The SMO sends switch-off/on commands to E2 Nodes for specific cells/carriers.
+
+- Table 5.2.1.3-1: Initialization
+- Before the system can decide which carriers/cells to switch off/on, it needs:
+  - Targets/metrics for energy efficiency (bit/J).
+  - Detailed characteristics of carriers and cells (location, frequency, power, mapping).
+
+- Table 5.2.1.3-2: AI/ML Model Training
+- To decide whether to switch off/on carriers or cells, the system needs traffic data + radio quality metrics + energy/power data:
+  - Traffic volume: DL/UL PDCP data.
+  - Radio quality: RSRP, RSRQ, SINR (per cell/beam).
+  - Energy usage: kWh consumption, power per hardware, transmit power.
+ 
+- Table 5.2.1.3-3: Input Decision Making / AI/ML Inference
+- For AI/ML-based decision making, the system continuously gathers:
+  - Traffic load data (UL/DL PDCP volume).
+  - Radio quality metrics (RSRQ, RSRP, SINR).
+  - Energy/power consumption data (total energy use, hardware power, transmit power).
+
+- Option 2: Near-RT RIC Deployment
+
+
+
+
+
+
+
+
+
+
 
 
 

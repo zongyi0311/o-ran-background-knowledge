@@ -60,12 +60,41 @@
   - SMO instructs E2 Node, which updates O-RU configuration. Notification is sent back after completion.
   - Non-RT RIC analyzes performance; if savings not achieved → fallback, retraining, or model update.
 
-
-
-
-
-
-
+- End When
+  - E2 Node becomes non-operational, or
+  - operator disable the optimization function.
+ 
+- O1 = SMO ↔ E2 Node.
+- FH (Fronthaul M-Plane) = E2 Node ↔ O-RU.
+- Non-RT RIC
+  - Data collector & Analyzer
+    - Gets configurations, KPIs, measurement reports.
+  - AI/ML Role
+    - Can train or retrain models.
+    - Can deploy or updata AI/ML model inside itself.
+  - Decision Making
+    - Uses data(and AI/ML if applied) to decide which carriers/cells should be switched off/on.
+  - control signaling
+    - Sends updated optimization configureations to E2 Nodes(O-CU) via R1/O1 interface.
+   
+- E2 Node (O-DU / O-CU)
+  - Reporter
+    - Sends cell configuration, KPIs, traffic/energy reports to SMO via O1 interface
+  - Action Executor
+    - Executes energy-saving actions:
+      - Before switch-off:
+        - Check for emergency calls/messages.
+        - adjust carrier Aggregation/Dual Connectivity.
+        - Trigger handover for UEs.
+        - Inform neighbors(via X2/Xn interface).
+      - Before switch-on:
+        - Perform call probing.
+        - Inform neighbors(via X2/Xn).
+    - Makes the final decision on switch-off/on and notifies SMO of the action.
+   
+- O-RU(Radio Unit)
+  - Reporter
+    - Provides energy consumption (EC) and efficiency (EE) data via Open FH M-Plane (to O-DU or SMO).
 
 
 

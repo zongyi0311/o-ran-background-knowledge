@@ -1,4 +1,4 @@
-# O-RAN Alliance Technical Report on Network Energy Savings Use Cases (NESUC-R003 v02.00, 2023)
+<img width="486" height="649" alt="image" src="https://github.com/user-attachments/assets/78285513-be1d-4d42-89aa-d42c4e98ce2a" /># O-RAN Alliance Technical Report on Network Energy Savings Use Cases (NESUC-R003 v02.00, 2023)
 ## 5 Carrier and Cell Switch Off/On
 ### 5.1 Problem Statement, Solution and Value Proposition
 - 1.Problem Context
@@ -267,9 +267,107 @@
 - <img width="465" height="150" alt="image" src="https://github.com/user-attachments/assets/18ed93bc-ebea-4c14-8c26-d10a35e585a2" />
 - Even just 3 hours/day of switch-off at 10,000 O-RUs = equivalent to the yearly electricity use of a small town.
 
+## 6.RF Channel Reconfigureation
+### Problem Statementm, Solution and Value Proposition
+- **Problem Statement**
+  - Massive MIMO (mMOMO) antennas are used for beamforming to imporve capacity and throughput.
+  - O-RUs concentrate power amplifiers near the radome by combining radiating elements.
+  - At low load(traffic or user count below a threshold), keeping all Tx/Rx arrays active wastes energy. 
+- **Solution**
+  - Achieve energy saviang(ES) by switching off part of the Tx/Rx arrays during low load.
+    - Example:turn off 32 out of 64 arrays in a digital mMIMO O-RU.
+  - This may require reducing:the number of spatial layers, the number of SSB beams, the O-RU transmit power.
+ 
+- Decision Making  
+  - Depends on management model:hybrid or hierachical.
+  - Two options for AI/ML decisions: AI/ML inference at Non-RT RIC or Near-RT RIC
+  - AI/ML models may predict:Future traffic, User mobility, Resource usage and Expected gains in energy efficiency and network performance under diffenent configurations
 
+- **Value Proposition**
+  - Main objective: Tx/Rx array selection and reconfiguration in the O-RU.
+  - Possible adjustments:Maximum spatial streams, Number of SSB beams and Antenna transmit power.
+  - Value:Reduce power consumption during low load
 
+- Table 6.1-1: Actions in the context of RF channel Recongiguration
+  - 1. O-RU Tx/Rx Array Selection: Switch off certain Tx/Rx arrays to reduce O-RU power consumption. Re-selecting arrays may affect cell coverage.
+  - How it's done:
+    - O-RU reports supported Tx/Rx array selections to O-DU or SMO via Open FH M-Plane.
+    - Based on traffic load & user distribution, Non-RT / Near-RT RIC decides the optimal Tx/Rx array configuration.
+  - 2. Modification of Number of SU/MU MIMO Spatial Streams of Data Layers: Maximum spatial streams depend on active Tx/Rx arrays. May need reduction when arrays are switched off, ex: 16 streams for 64T64R, 8 streams for 32T32R.
+  - How it’s done:
+    - O-RU reports max supported spatial streams.
+    - Based on traffic & user distribution, O-DU/Non-RT/Near-RT RIC instructs the O-RU to reduce streams, turning off unneeded processing units.
+   
+  - 3. Modification of Number of SSB Beams: Number of SSB beams depends on TX/RX array selection and spatial streams.
+  - How it's done:
+    - O-DU controls SSB beams.
+    - Non-RT / Near-RT RIC instructs O-DU to set the number of beams based on Tx/Rx array configuration.
+  - 4. Modification of O-RU Antenna Transmit Power: Max transmit power depends on active TX/RX arrays. If arrays are reduced, transmit power may need to be adjusted to keep coverage.
+  - How it's done:
+    - O-RU power is per Tx array.
+    - No change needed if selection is proportional.
+    - If coverage drops, O-RU Tx power can be boosteed to compensate.
 
+- **SSB**
+  - The SSB(Synchronization signal Block) is the signal structure broadcast by the gNB to allow UEs to: detect and synchronize with the cell, identify the cell and measure beam quallity for beam management.
+  - Often uses beamforming, especially in mmWave and massive MIMO deployments.
+  - Each SSB carries:
+    - PSS (Primary Synchronization Signal)
+    - SSS (Secondary Synchronization Signal)
+    - PBCH (Physical Broadcast Channel)
+
+### 6.2.1 Option 1: Non-RT RIC Deployment
+- Goal: Enable RF Channel Reconfiguration for Energy Saving(ES) by letting the Non-RT RIC handle-making with AI/ML models.
+- Non-RT RIC -> inference host for energy saving decisions
+- E2 Node(O-DU/CU) & O-RU -> execute the actual configuration changes.
+
+- Flow
+- Measurement Collection
+  - Non-RT RIC requests measurement data(via O1 or Open FH M-plane) from E2 Node or O-RU.
+  - E2 Node & O-RU send traffic load, energy consumption, and other KPIs back through SMO.
+  - Non-RT RIC retrieves and aggregates these measurements.
+ 
+- AI/ML Training & Inference
+  - Train or Updata AI/ML models with the collected data.
+  - Then continuously monitors KPIs like load, EE/EC reports, and geolocation. 
+
+- Decision & Optimization
+  - Based on AI/ML inference, Non-RT RIC decides on RF channel Reconfiguration actions.
+  - Non-RT RIC requests SMO → E2 Node (O-DU) → O-RU to apply changes.
+ 
+- Reconfiguration Execution
+  - Possible actions applied at the O-RU:
+  - Switch off certain Tx/Rx arrays.
+  - Reduce number of MIMO layers.
+  - Adjust number of SSB beams.
+  - Modify Tx power per antenna.
+
+- Ends at the moment Operator disables Es function, or E2 Node becomes non-operational.
+
+- Summary: In Option 1, the Non-RT RIC is the “brain” — it both trains AI/ML models and decides optimizations, while the E2 Node & O-RU just execute reconfiguration actions.
+
+- Input Data
+- From SMO/E2 Node: Load statistics per cell/carrier:Active users, RRC connections, Scheduled users per TTI, PRB utilization, DL/UL throughput, PMI/CSI reports
+- From O-RU: Power consumption metrics: Mean total/per carrier power consumption,
+Mean total/per carrier transmit power.
+
+Output Data
+- From SMO to E2 Node(reconfiguration instructions)
+  - O-RU Tx/Rx Array selection
+  - Modify SU/MU MIMO spatial streams/data layers
+  - Modify number of SSB beams
+  - Modify O-RU antenna transmit power
+
+### 6.2.2 Option 2: Near-RT RIC Deployment
+- Goal
+  - Enable RF Channel Reconfiguration for Energy Saving (EE/ES) using configuration changes.
+  - Decisions made by Near-RT RIC (AI/ML inference).
+  - AI/ML model training may still happen in Non-RT RIC.
+
+- Roles:
+  - Near-RT RIC: inference host for energy saving decisions.
+  - Non-RT RIC / SMO: policy maker, may trigger or guide Near-RT RIC optimization.
+  -  
 
 
 

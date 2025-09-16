@@ -408,3 +408,225 @@ flowchart LR
   class E2,ORU node;
   class AI,Model,Infer ai;
 ```
+
+```mermaid
+flowchart LR
+
+subgraph IN["輸入 Inputs"]
+  RFD["rxdataF[beam][ant][grid]（UL 頻域IQ）"]
+  PDU["rel15_ul（nfapi_nr_pusch_pdu_t）"]
+  FP["frame_parms（NR_DL_FRAME_PARMS）"]
+  CTL["gNB->pusch_vars[...]（狀態/緩衝）"]
+end
+
+subgraph TOP["nr_rx_pusch_tp() — UL PUSCH 接收主流程 / Top-level UL PUSCH RX"]
+  direction LR
+  CE["(1) 通道估計 / Channel Estimation
+  nr_pusch_channel_estimation() → ul_ch_estimates, nvar"]
+  CHAVG["(2)（選）時域平均 / Time-domain avg
+  nr_chest_time_domain_avg()"]
+  SCRAM_INIT["(3) 解擾序列初始化
+  nr_codeword_unscrambling_init() → scramblingSequence"]
+  CHLVL["(4) 通道層級量測
+  nr_channel_level() → log2_maxh"]
+  SYM_DISP["(5) 逐符元處理（平行）
+  nr_pusch_symbol_processing() → inner_rx()"]
+  SCOPE_T["(6) 記錄 & 匯出
+  T(...) / gNB scope"]
+end
+
+subgraph PER["inner_rx() — 單一OFDM符元處理 / Per-symbol RX"]
+  direction LR
+  EXTR["(A) RB/RE 擷取
+  nr_ulsch_extract_rbs() → rxFext, chFext"]
+  COMP["(B) 通道補償 + |h|²
+  nr_ulsch_channel_compensation() → rxdataF_comp, rxF_ch_mag{a,b,c}, rho"]
+  TP_EQ_IDFT["(C)（條件）DFT-s-OFDM 等化+IDFT
+  nr_freq_equalization(), nr_idft()"]
+  PTRS["(D)（選）PTRS
+  nr_pusch_ptrs_processing() → 調整 ul_valid_re"]
+  LLR2L["(E1) 兩層 ≤64QAM → ML LLR
+  nr_ulsch_compute_ML_llr()"]
+  MMSE2["(E2) 兩層 256QAM → MMSE
+  nr_ulsch_mmse_2layers()"]
+  LLR1["(E3) 一般 LLR
+  nr_ulsch_compute_llr()"]
+  DMAP["(F) 去交錯（層→codeword）"]
+  DESCR["(G) 解擾
+  llr × scramblingSequence"]
+end
+
+subgraph OUT["輸出 Outputs"]
+  LLR["pusch_vars->llr（解擾後 LLR）"]
+  RXIQ_OUT["pusch_vars->rxdataF_comp（等化符號）"]
+  METRICS["功率/雜訊統計"]
+  TRACE["T-Tracer Buffers"]
+  SCOPE["gNB Scope（Rx IQ / LLR）"]
+end
+
+%% Top-level flow
+RFD --> CE
+PDU --> CE
+FP  --> CE
+CTL --> CE
+CE --> CHAVG
+CHAVG --> CHLVL
+CE --> CHLVL
+PDU --> SCRAM_INIT
+SCRAM_INIT --> SYM_DISP
+CHLVL --> SYM_DISP
+
+%% Per-symbol
+SYM_DISP -. per-symbol .-> PER
+RFD --> EXTR
+CTL --> EXTR
+PDU --> EXTR
+FP  --> EXTR
+EXTR --> COMP
+COMP --> TP_EQ_IDFT
+COMP --> LLR1
+COMP --> LLR2L
+COMP --> MMSE2
+TP_EQ_IDFT --> PTRS
+PDU --> PTRS
+PTRS --> LLR1
+PTRS --> LLR2L
+PTRS --> MMSE2
+LLR2L --> DMAP
+MMSE2 --> DMAP
+LLR1  --> DMAP
+SCRAM_INIT --> DESCR
+DMAP --> DESCR
+DESCR --> LLR
+
+%% Outputs
+PER --> SYM_DISP
+SYM_DISP --> LLR
+SYM_DISP --> RXIQ_OUT
+CE --> METRICS
+TOP --> TRACE
+TOP --> SCOPE
+
+```
+```mermaid
+flowchart LR
+  %% ===== Styles =====
+  classDef in fill:#E3F2FD,stroke:#1E88E5,color:#0D47A1
+  classDef out fill:#E8F5E9,stroke:#43A047,color:#1B5E20
+  classDef blk fill:#FFF8E1,stroke:#FB8C00,color:#E65100
+  classDef phy fill:#F3E5F5,stroke:#8E24AA,color:#4A148C
+  classDef side fill:#F5F5F5,stroke:#9E9E9E,color:#424242
+
+  %% ===== Inputs =====
+  RXIQ["(Input) Uplink RF → IQ Samples<br/>來自 RU/USRP，每天線路徑"]:::in
+  LO["(Input) RU/DU 時鐘/同步<br/>GCN/ToD/1PPS, SSB-based"]:::in
+  CFG["(Input) 上行配置/參數<br/>BWP, 資源配置, DCI 資訊"]:::in
+
+  %% ===== Front-end & PHY(Low) 共用 =====
+  FE["RF/IF Front-End<br/>增益/數位下變頻/抽 decimation"]:::blk
+  CPrem["CP Removal (去循環字首)"]:::phy
+  FFT["FFT / Slot FEP<br/>(OFDMA → 子載波頻域)"]:::phy
+  CFO["CFO/TO Estimation & Correction<br/>(頻偏/定時校正)"]:::phy
+
+  %% ===== PUSCH Branch =====
+  subgraph PUSCH["PUSCH (數據上行)"]
+    direction LR
+    REext["RE Extraction (RE 擷取)<br/>去除 DMRS/保留資料 RE"]:::phy
+    DMRSest["DMRS-based Channel Estimation<br/>+ 時頻插值"]:::phy
+    EQ["Channel Compensation / MIMO Equalization<br/>(ZF/MMSE)"]:::phy
+    IDFT["IDFT (僅 transform-precoding 時)<br/>SC-FDMA 還原"]:::phy
+    Demod["Soft Demodulation → LLR<br/>(QPSK/16QAM/64QAM/256QAM)"]:::phy
+    RM["Rate De-matching / Descrambling"]:::phy
+    LDPC["LDPC Decoding + HARQ Combine"]:::phy
+    CRC["CRC Check"]:::phy
+  end
+
+  %% ===== PUCCH Branch =====
+  subgraph PUCCH["PUCCH (UCI: HARQ-ACK/CSI/SR)"]
+    direction LR
+    REextU["PUCCH RE Extraction"]:::phy
+    CEU["Channel Estimation"]:::phy
+    DemodU["UCI Demod/Decoding"]:::phy
+  end
+
+  %% ===== PRACH Branch =====
+  subgraph PRACH["PRACH (隨機接入)"]
+    direction LR
+    RachF["RACH FFT / Corr (ZC/Preamble Detect)"]:::phy
+    TAcalc["Timing Advance / RNTI 決定"]:::phy
+  end
+
+  %% ===== Outputs =====
+  MACSDU["(Output) UL MAC PDU / SDU<br/>→ MAC/RLC"]:::out
+  UCIout["(Output) UCI: HARQ-ACK / CSI / SR<br/>→ MAC"]:::out
+  TAout["(Output) Timing Advance Command<br/>→ 下行控制"]:::out
+  CHMeas["(Output) Channel Metrics/KPI<br/>BLER, SNR, CQI 等"]:::out
+
+  %% ===== Side/Control =====
+  LOG["(Side) OAI Logs / T Traces"]:::side
+  SRS["(Side-Input) SRS for Channel Sounding"]:::in
+
+  %% ===== Wiring Common Path =====
+  RXIQ --> FE --> CPrem --> FFT --> CFO
+  LO --> FE
+  CFG --> REext
+  CFG --> REextU
+  CFG --> RachF
+  SRS -.-> DMRSest
+
+  %% ===== Wiring PUSCH =====
+  CFO --> REext --> DMRSest --> EQ --> IDFT --> Demod --> RM --> LDPC --> CRC --> MACSDU
+  DMRSest -. 品質量測 .-> CHMeas
+  LDPC -. BLER/重傳狀態 .-> CHMeas
+
+  %% ===== Wiring PUCCH =====
+  CFO --> REextU --> CEU --> DemodU --> UCIout
+
+  %% ===== Wiring PRACH =====
+  CFO --> RachF --> TAcalc --> TAout
+
+  %% ===== Logs =====
+  CPrem -.-> LOG
+  FFT -.-> LOG
+  Demod -.-> LOG
+  LDPC -.-> LOG
+  RachF -.-> LOG
+  ```
+```mermaid
+flowchart LR
+  %% ===== Styles =====
+  classDef in fill:#E3F2FD,stroke:#1E88E5,color:#0D47A1
+  classDef out fill:#E8F5E9,stroke:#43A047,color:#1B5E20
+  classDef phy fill:#F3E5F5,stroke:#8E24AA,color:#4A148C
+  classDef blk fill:#FFF8E1,stroke:#FB8C00,color:#E65100
+
+  %% ===== Inputs =====
+  RXIQ["(Input) Uplink IQ Samples<br/>上行IQ取樣 (RU/USRP)"]:::in
+  CFG["(Input) UL Config / DCI<br/>上行配置 (BWP, 資源, 調變)"]:::in
+  SYNC["(Input) 時間/頻率同步<br/>SSB/ToD/GCN"]:::in
+
+  %% ===== PUSCH Processing Chain =====
+  FE["Front-End 處理<br/>增益, 下變頻, 抽取"]:::blk
+  CPrem["CP Removal<br/>去除循環字首"]:::phy
+  FFT["FFT / Slot FEP<br/>轉換至頻域"]:::phy
+  CFO["CFO/TO Correction<br/>頻偏/定時校正"]:::phy
+  REext["RE Extraction<br/>擷取PUSCH資源元素"]:::phy
+  DMRSest["DMRS-based Channel Estimation<br/>基於DMRS的通道估計"]:::phy
+  EQ["Channel Compensation / Equalization<br/>通道補償/等化 (ZF/MMSE)"]:::phy
+  IDFT["IDFT (若啟用transform precoding)<br/>SC-FDMA 還原"]:::phy
+  Demod["Soft Demodulation → LLR<br/>QPSK/16QAM/64QAM/256QAM"]:::phy
+  RM["Rate De-matching / Descrambling<br/>解速率匹配/解擾碼"]:::phy
+  LDPC["LDPC Decoding + HARQ Combine<br/>LDPC 解碼 + HARQ合併"]:::phy
+  CRC["CRC Check<br/>錯誤檢測"]:::phy
+
+  %% ===== Outputs =====
+  MACSDU["(Output) UL MAC PDU/SDU<br/>上行MAC PDU傳送至MAC層"]:::out
+  CHMeas["(Output) Channel Metrics<br/>通道品質量測 (SNR, BLER, CQI)"]:::out
+
+  %% ===== Wiring =====
+  RXIQ --> FE --> CPrem --> FFT --> CFO --> REext --> DMRSest --> EQ --> IDFT --> Demod --> RM --> LDPC --> CRC --> MACSDU
+  CFG --> REext
+  SYNC --> CFO
+  DMRSest -.-> CHMeas
+  LDPC -.-> CHMeas
+```

@@ -370,9 +370,41 @@ Output Data
   -  
 
 
+```mermaid
+flowchart LR
+  %% Nodes
+  SMO["SMO / Non-RT RIC（含 Collection & Control）"]
+  NRT["Near-RT RIC（近即時管控）"]
+  E2["E2 Node（gNB / CU-DU）"]
+  ORU["O-RU（無線單元）"]
 
+  subgraph AI["AI/ML：模型訓練與推論  (AI/ML Training & Inference)"]
+  Model["資料分析 / 訓練 (Training)"]
+  Infer["上線推論與監控 (Inference & Monitoring)"]
+  end
 
+  %% Flows
+  E2 -->|"KPI/量測 Measurements"| SMO
+  ORU -->|"能效/功耗 EE/EC"| SMO
+  SMO --> Model
+  Model --> Infer
+  SMO <-->|"部署/啟用模型 Deploy/Activate"| Infer
 
+  SMO -->|"決策/策略 Decisions/Policies"| NRT
+  NRT -->|"重配置指令 Reconfiguration"| E2
+  NRT -->|"更新組態 Updated Config"| ORU
 
+  E2 -->|"回報與遙測 Feedback/Telemetry"| SMO
+  ORU -->|"回報與遙測 Feedback/Telemetry"| SMO
 
+  %% Styles
+  classDef core fill:#fff2b3,stroke:#333,color:#111,stroke-width:1px;
+  classDef ctrl fill:#dbeafe,stroke:#333,color:#111,stroke-width:1px;
+  classDef node fill:#fde2e2,stroke:#333,color:#111,stroke-width:1px;
+  classDef ai fill:#e9ffe7,stroke:#333,color:#111,stroke-width:1px;
 
+  class SMO core;
+  class NRT ctrl;
+  class E2,ORU node;
+  class AI,Model,Infer ai;
+```

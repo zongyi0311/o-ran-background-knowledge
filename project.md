@@ -171,25 +171,6 @@ flowchart TD
 ```
 ```mermaid
 flowchart TD
-  IN[輸入：gNB 參數 PUSCH配置 當前符號]
-  LOOPA[迴圈：逐根接收天線]
-  INIT[初始化相位緩衝\nDMRS符號設 幅度1 相位0]
-  PTRSCHECK{是否為PTRS符號?}
-  EST[進行相位估計\nnr_ptrs_cpe_estimation]
-  LASTCHECK{是否為時槽最後一個符號?}
-  INTERP[時間域內插相位\nnr_ptrs_process_slot]
-  ROTATE[相位補償資料符號\nrotate_cpx_vector]
-  OUT[輸出：已補償的rxdataF_comp\n每符號相位估測]
-
-  IN --> LOOPA --> INIT --> PTRSCHECK
-  PTRSCHECK -->|是| EST --> LASTCHECK
-  PTRSCHECK -->|否| LASTCHECK
-  LASTCHECK -->|是| INTERP --> ROTATE --> OUT
-  LASTCHECK -->|否| OUT
-
-```
-```mermaid
-flowchart TD
   IN[輸入：rxdataF_comp 接收符號、ul_ch_mag 通道能量、ul_ch_magb 輔助能量、symbol 當前符號、Msc_RS 資源元素數、Qm 調變階數]
   CK[檢查參數範圍：symbol 與 Msc_RS 不可越界]
   LOOP[向量化迴圈：分段處理資源元素]
@@ -201,5 +182,106 @@ flowchart TD
 
   IN --> CK --> LOOP --> AMP --> INV --> EQ --> CONST --> OUT
 
+
+```
+
+```mermaid
+flowchart LR
+  RX["rxdataF\n頻域接收IQ"]
+  CHEST["ul_ch_estimates\n通道估測(來自DMRS)"]
+  PDU["pusch_pdu / cfg\n(PRB, Qm, Layers, DMRS位置...)"]
+
+  EXTRACT["RB/RE 擷取\nnr_ulsch_extract_rbs"]
+
+  RX --> EXTRACT
+  CHEST --> EXTRACT
+  PDU --> EXTRACT
+
+  EXTRACT --> RXFEXT["rxFext\n擷取後IQ"]
+  EXTRACT --> CHFEXT["chFext\n擷取後通道"]
+
+```
+```mermaid
+flowchart LR
+  CHFEXT["chFext\n擷取後通道"]
+  RXFEXT["rxFext\n擷取後IQ"]
+
+  SCALE["通道縮放\nnr_ulsch_scale_channel"]
+  COMP["通道補償 + MRC\nnr_ulsch_channel_compensation"]
+
+  CHFEXT --> SCALE --> COMP
+  RXFEXT ----------> COMP
+
+  COMP --> RXCOMP["rxdataF_comp\n等化/合併後IQ(逐層)"]
+  COMP --> MAGA["ul_ch_mag{a,b,c}\n|h|^2 對應QAM常數"]
+  COMP --> RHO["rho (層間相關)\n(多層用)"]
+```
+```mermaid
+flowchart LR
+  RXCOMP["rxdataF_comp[0]\n第0層IQ"]
+  MAGA["ul_ch_maga\n|h|^2項"]
+  MAGB["ul_ch_magb"]
+  CFG["pusch_pdu\n(transform_precoding==enabled 且 Qm≤64)"]
+
+  FEQ["頻域等化\nnr_freq_equalization"]
+  IDFT["IDFT (SC-FDMA)\nnr_idft"]
+
+  RXCOMP --> FEQ --> IDFT
+  MAGA --> FEQ
+  MAGB --> FEQ
+  CFG  --> FEQ
+
+  IDFT --> TD["時域符元(單層)"]
+```
+```mermaid
+flowchart LR
+  IQ["(校正後)樣點\n每RE逐層"]
+  MAG["ul_ch_mag{a,b,c}"]
+  RHO["rho\n(若兩層)"]
+  NVAR["noise_var\n(僅MMSE用)"]
+  CFG["pusch_pdu\n(Qm, Layers)"]
+  SCRAM["scramblingSequence\n解擾序列"]
+
+  DECIDE{"層數/調變條件?"}
+
+  ML["兩層ML LLR\nnr_ulsch_compute_ML_llr"]
+  MMSE["兩層MMSE/ZF核\nnr_ulsch_mmse_2layers"]
+  LLR1["單層/其他 LLR\nnr_ulsch_compute_llr"]
+
+  LDMAP["Layer De-mapping\n層去交織(內部)"]
+  UNSCR["Unscrambling\n解擾"]
+
+  IQ --> DECIDE
+  MAG --> ML
+  MAG --> MMSE
+  MAG --> LLR1
+  RHO --> ML
+  NVAR --> MMSE
+  CFG --> DECIDE
+
+  DECIDE -- "2層 & Qm≤64" --> ML --> LDMAP
+  DECIDE -- "2層 & Qm>64" --> MMSE --> LDMAP
+  DECIDE -- "其他情形" ----> LLR1 --> LDMAP
+
+  LDMAP --> UNSCR --> LLRBUF[/"LLR Buffer\n軟位元輸出(送LDPC)"/]
+  SCRAM --> UNSCR
+```
+```mermaid
+flowchart LR
+  IN[輸入：gNB 參數 PUSCH配置 當前符號]
+  LOOPA[迴圈：逐根接收天線]
+  INIT[初始化相位緩衝DMRS符號設 幅度1 相位0]
+  PTRSCHECK{是否為PTRS符號?}
+  EST[進行相位估計nr_ptrs_cpe_estimation]
+  LASTCHECK{是否為時槽最後一個符號?}
+  INTERP[時間域內插相位nr_ptrs_process_slot]
+  ROTATE[相位補償資料符號rotate_cpx_vector]
+  OUT[輸出：已補償的rxdataF_comp每符號相位估測]
+
+  IN --> LOOPA --> INIT --> PTRSCHECK
+  PTRSCHECK -->|是| EST --> LASTCHECK
+  PTRSCHECK -->|否| LASTCHECK
+  LASTCHECK -->|是| INTERP --> ROTATE --> OUT
+  LASTCHECK -->|否| OUT
 
 ```

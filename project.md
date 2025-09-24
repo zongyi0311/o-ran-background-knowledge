@@ -136,25 +136,6 @@ flowchart LR
 ```
 
 ```mermaid
-flowchart LR
-  IN[Inputs rxdataF chF rxoffset choffset pusch_pdu frame_parms is_dmrs_symbol]
-  SR[Compute start_re and nb_re_pusch]
-  DCHK{Is DMRS symbol}
-  D0[Copy contiguous PUSCH REs handle wrap around]
-  T1{DMRS type1}
-  T1SEL[Select data REs by odd even step2 handle wrap around]
-  T2SEL[Select data REs by skipping mod6 equals 2*delta or 2*delta+1 handle wrap around]
-  OUT[Outputs rxFext chFext]
-
-  IN --> SR --> DCHK
-  DCHK -->|No| D0 --> OUT
-  DCHK -->|Yes| T1
-  T1 -->|Yes| T1SEL --> OUT
-  T1 -->|No  type2| T2SEL --> OUT
-
-```
-
-```mermaid
 flowchart TD
   IN[Inputs : 輸入接收符號rxFext 通道估測chFext 天線數 層數 buffer長度 調變階數 位移量]
   QAM[Select QAM constants : 根據調變階數選常數]
@@ -267,7 +248,7 @@ flowchart LR
   SCRAM --> UNSCR
 ```
 ```mermaid
-flowchart LR
+flowchart TD
   IN[輸入：gNB 參數 PUSCH配置 當前符號]
   LOOPA[迴圈：逐根接收天線]
   INIT[初始化相位緩衝DMRS符號設 幅度1 相位0]
@@ -283,5 +264,24 @@ flowchart LR
   PTRSCHECK -->|否| LASTCHECK
   LASTCHECK -->|是| INTERP --> ROTATE --> OUT
   LASTCHECK -->|否| OUT
+
+```
+
+```mermaid
+flowchart TD
+  IN[Inputs rxdataF chF rxoffset choffset pusch_pdu frame_parms is_dmrs_symbol]
+  SR[Compute start_re and nb_re_pusch]
+  DCHK{Is DMRS symbol}
+  D0[Copy contiguous PUSCH REs handle wrap around]
+  T1{DMRS type1}
+  T1SEL[Select data REs by odd even step2 handle wrap around]
+  T2SEL[Select data REs by skipping mod6 equals 2*delta or 2*delta+1 handle wrap around]
+  OUT[Outputs rxFext chFext]
+
+  IN --> SR --> DCHK
+  DCHK -->|No| D0 --> OUT
+  DCHK -->|Yes| T1
+  T1 -->|Yes| T1SEL --> OUT
+  T1 -->|No  type2| T2SEL --> OUT
 
 ```

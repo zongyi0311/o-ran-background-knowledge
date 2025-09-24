@@ -285,3 +285,44 @@ flowchart TD
   T1 -->|No  type2| T2SEL --> OUT
 
 ```
+```mermaid
+flowchart TD
+  A[Demodulation得到 LLR] --> B[Decoding Slot建立參數]
+  B --> C[Segmentation產生 C K Z F]
+  C --> D[設定 segments計算 E R]
+  D --> E[呼叫 LDPC 接口]
+  E --> F[逐段呼叫 LDPCdecoder]
+  F --> G[LDPCdecoder coreCN BN 迭代]
+  G --> H[回傳狀態]
+  H --> I[Post decode\n合併到 TB]
+
+
+```
+```mermaid
+sequenceDiagram
+  participant SLOT
+  participant IFACE
+  participant DEC
+  participant CORE
+
+  SLOT->>SLOT: segmentation to C K Z F
+  loop r blocks
+    SLOT->>SLOT: compute E R and set segment r
+  end
+  SLOT->>IFACE: start decoder
+
+  loop each segment
+    IFACE->>DEC: call LDPCdecoder
+    DEC->>CORE: run core
+    CORE-->>DEC: iters or crc ok
+    DEC-->>IFACE: return iters maybe abort
+  end
+
+  IFACE-->>SLOT: results
+  alt ok
+    SLOT->>SLOT: merge to TB
+  else nok
+    SLOT->>SLOT: mark error
+  end
+
+```

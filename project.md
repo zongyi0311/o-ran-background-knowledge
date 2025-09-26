@@ -326,3 +326,19 @@ sequenceDiagram
   end
 
 ```
+```mermaid
+flowchart TD
+  IN["輸入：ULSCH LLR (pusch_vars[ULSCH_id].llr)"] --> SEG["分段 nr_segmentation計算 C, K, Z, F"]
+  
+  SEG --> LOOP{"對每個分段 r = 0..C-1"}
+  LOOP --> PARAMS["設定分段參數:E, R, RV, BG, Qm, Layers"]
+  PARAMS --> MAP["對應指標:llr[r_offset], d[r], c[r], d_to_be_cleared[r]"]
+
+  MAP --> DEC["呼叫 LDPC 解碼器 (nrLDPC_coding_decoder)"]
+  DEC -->|解碼成功| MERGE["合併段結果到 TB buffer b去掉填充 F、子 CRC"]
+  DEC -->|解碼失敗| ERR["標記 HARQ 錯誤 保留軟值 d[r]"]
+
+  MERGE --> OUT["輸出：完整解碼的 TB"]
+  ERR --> OUT
+
+```

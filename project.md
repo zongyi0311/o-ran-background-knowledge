@@ -342,3 +342,117 @@ flowchart TD
   ERR --> OUT
 
 ```
+```mermaid
+flowchart TD
+  A[Input HARQ TB<br/>and PDSCH config] --> B[nr_generate_pdsch]
+  B --> C[nr_dlsch_encoding<br/>CRC LDPC rate match interleave segmentation]
+  C --> D[Encoded bits]
+  D --> E[do_one_dlsch]
+  E --> F[Scrambling<br/>nr_pdsch_codeword_scrambling]
+  F --> G[QAM modulation<br/>nr_modulation]
+  G --> H[Layer mapping<br/>nr_layer_mapping]
+  H --> I[Per symbol loop]
+  I --> J[DMRS sequence<br/>nr_gold_pdsch nr_modulation]
+  I --> K[PTRS positions<br/>set_ptrs_symb_idx]
+  I --> L[Per layer mapping<br/>do_onelayer]
+  J --> L
+  K --> L
+  L --> M[Precoding and antenna<br/>do_txdataF]
+  M --> N{PMI check}
+  N --> N0[PMI 0<br/>unitary copy or mute]
+  N --> N1[PMI non zero<br/>codebook precoding]
+  N0 --> O[txdataF frequency grid]
+  N1 --> O
+  O --> P[OFDM IFFT and CP]
+
+```
+```mermaid
+flowchart LR
+  subgraph DL[下行 PDSCH 發送鏈]
+    A0[輸入 HARQ 與 PDSCH 設定<br/>rel15 harq pdu] --> A1[nr_dlsch_encoding<br/>CRC LDPC 速率匹配 交錯 分段]
+    A1 --> A2[do_one_dlsch<br/>擾碼 調變 層映射]
+    A2 --> A3[逐符號處理<br/>DMRS 產生 PTRS 位置 資源對映]
+    A3 --> A4[預編碼 與 天線對映<br/>do_txdataF]
+    A4 --> A5[txdataF 頻域格點]
+  end
+
+  A5 --> AIR[無線介面]
+
+  subgraph UL[上行 PUSCH 接收鏈]
+    B0[接收頻域格點<br/>rxdataF] --> B1[通道估測 DMRS<br/>nr_pusch_channel_estimation]
+    B1 --> B2[量測與統計<br/>nr_gnb_measurements]
+    B2 --> B3[初始化與參數<br/>G 計算 擾碼序列 LLR 緩衝]
+    B3 --> B4[逐符號處理 可能多執行緒<br/>nr_pusch_symbol_processing]
+    B4 --> B5[LLR 匯總 與 指標輸出]
+  end
+```
+
+```mermaid
+flowchart TD
+  A[輸入 HARQ 與 PDSCH 配置] --> B[nr_generate_pdsch]
+  B --> C[編碼階段<br/>CRC LDPC 速率匹配 交錯 分段]
+  C --> D[do_one_dlsch]
+  D --> E[擾碼<br/>nr_pdsch_codeword_scrambling]
+  E --> F[調變<br/>nr_modulation]
+  F --> G[層映射<br/>nr_layer_mapping]
+  G --> H[逐 OFDM 符號迴圈]
+  H --> I[DMRS 序列<br/>nr_gold_pdsch 加上調變]
+  H --> J[PTRS 符號位置<br/>set_ptrs_symb_idx]
+  H --> K[逐層資源對映<br/>do_onelayer]
+  I --> K
+  J --> K
+  K --> L[預編碼 與 天線對映<br/>do_txdataF PMI 檢查]
+  L --> M[txdataF 頻域格點<br/>後續 IFFT CP 於他檔處理]
+```
+
+```mermaid
+flowchart TD
+  R0[入口 nr_rx_pusch_tp] --> R1[通道估測迴圈<br/>掃描含 DMRS 符號]
+  R1 --> R1a[nr_pusch_channel_estimation<br/>每層每天線估測]
+  R1a --> R1b[量測與雜訊估計<br/>nr_gnb_measurements 平均能量]
+  R1b --> R2[時間域平均 可選<br/>nr_chest_time_domain_avg]
+  R2 --> R3[計算 G 與 未可用 RE 數<br/>get_ptrs_symbols_in_slot 等]
+  R3 --> R4[初始化擾碼序列 與 LLR 緩衝<br/>nr_codeword_unscrambling_init]
+  R4 --> R5[選定量測符號 與 通道縮放<br/>nr_ulsch_scale_channel]
+  R5 --> R6[計算通道等級 log2_maxh<br/>nr_channel_level]
+  R6 --> R7[逐符號處理 可能多執行緒<br/>nr_pusch_symbol_processing]
+
+  subgraph S[單一符號 inner_rx]
+    S0[抽取 PUSCH RE 與 通道係數<br/>nr_ulsch_extract_rbs] --> S1[通道補償 與 合併 MRC<br/>nr_ulsch_channel_compensation]
+    S1 --> S1a[SC FDMA 可選<br/>nr_freq_equalization 及 nr_idft]
+    S1 --> S1b[PTRS 處理 可選<br/>nr_pusch_ptrs_processing]
+    S1a --> S2
+    S1b --> S2
+    S1 --> S2{層數 與 調變階數}
+
+    S2 -->|兩層 且 QPSK 到 64QAM| S3[最大似然 LLR<br/>nr_ulsch_compute_ML_llr]
+    S2 -->|兩層 且 256QAM 或更高| S4[MMSE 等化 兩層<br/>nr_ulsch_mmse_2layers<br/>內含 HhH 組建與行列式計算]
+    S2 -->|單層 或 非上述| S5[一般 LLR 計算<br/>nr_ulsch_compute_llr]
+
+    S3 --> S6[層去映射 與 去擾碼<br/>乘以擾碼序列]
+    S4 --> S6
+    S5 --> S6
+  end
+
+  R7 --> R8[彙總 LLR 並輸出到上層解碼]
+```
+
+```mermaid
+sequenceDiagram
+  participant 調度器
+  participant PDSCH編碼 as PDSCH編碼<br/>nr_dlsch_encoding
+  participant 擾碼調變 as 擾碼 調變 層映射<br/>do_one_dlsch
+  participant 對映 as 資源對映 DMRS PTRS<br/>do_onelayer do_ptrs_symbol dmrs_case00
+  participant 預編碼 as 預編碼 天線對映<br/>do_txdataF
+  participant 無線介面
+
+  調度器->>PDSCH編碼: 呼叫 nr_generate_pdsch()
+  PDSCH編碼->>PDSCH編碼: CRC LDPC 速率匹配 交錯 分段
+  PDSCH編碼->>擾碼調變: 交付編碼後位元
+  擾碼調變->>擾碼調變: 擾碼 nr_pdsch_codeword_scrambling<br/>調變 nr_modulation<br/>層映射 nr_layer_mapping
+  擾碼調變->>對映: 逐符號處理
+  對映->>預編碼: 交付各層頻域格點
+  預編碼->>預編碼: PMI 檢查<br/>unitary 或 codebook<br/>nr_layer_precoder_simd / cm
+  預編碼->>無線介面: 輸出 txdataF
+
+```

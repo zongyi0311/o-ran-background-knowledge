@@ -492,3 +492,23 @@ sequenceDiagram
   end
   去擾碼->>解碼: LLR 輸出到 LDPC 解碼
 ```
+```mermaid
+sequenceDiagram
+  participant 調度器
+  participant gNB發送 as gNB 發送鏈<br/>nr_generate_pdsch<br/>nr_dlsch_encoding<br/>do_one_dlsch
+  participant 空中 as 無線介面
+  participant gNB接收 as gNB 接收鏈<br/>nr_pusch_channel_estimation<br/>nr_ulsch_decoding_slot
+
+  調度器->>gNB發送: PDSCH 資料
+  gNB發送->>gNB發送: 編碼 擾碼 調變 層映射 DMRS PTRS
+  gNB發送->>空中: txdataF → OFDM 發送
+
+  Note over 空中: UE 接收 PDSCH 並回傳 PUSCH
+
+  空中-->>gNB接收: 上行 PUSCH 頻域
+  gNB接收->>gNB接收: 通道估測 DMRS<br/>nr_pusch_channel_estimation
+  gNB接收->>gNB接收: 抽取與補償<br/>nr_ulsch_extract_rbs<br/>nr_ulsch_channel_compensation
+  gNB接收->>gNB接收: LLR 計算<br/>ML LLR 或 MMSE
+  gNB接收->>gNB接收: 去擾碼 層去映射
+  gNB接收->>gNB接收: LDPC 解碼<br/>nr_ulsch_decoding
+```

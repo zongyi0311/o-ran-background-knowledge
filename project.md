@@ -456,3 +456,39 @@ sequenceDiagram
   預編碼->>無線介面: 輸出 txdataF
 
 ```
+
+```mermaid
+sequenceDiagram
+  participant 無線介面
+  participant 通道估測 as 通道估測<br/>nr_pusch_channel_estimation
+  participant 初始化 as 初始化 與量測<br/>nr_gnb_measurements<br/>nr_codeword_unscrambling_init
+  participant 逐符號 as 逐符號處理<br/>nr_pusch_symbol_processing
+  participant 抽取補償 as 抽取 與補償<br/>nr_ulsch_extract_rbs<br/>nr_ulsch_channel_compensation
+  participant 等化檢測 as 等化與 LLR<br/>nr_ulsch_compute_ML_llr<br/>nr_ulsch_mmse_2layers<br/>nr_ulsch_compute_llr
+  participant 去擾碼 as 去擾碼 層去映射<br/>nr_deinterleaving 去擾碼
+  participant 解碼 as 解碼<br/>LDPC 解碼
+
+  無線介面-->>通道估測: 接收 rxdataF
+  通道估測->>初始化: 估測通道 並量測能量 雜訊
+  初始化->>逐符號: 準備 LLR 緩衝 與擾碼序列
+  loop 每個符號
+    逐符號->>抽取補償: 抽取 PUSCH RE
+    抽取補償->>抽取補償: 通道補償 合併 MRC
+    opt SC FDMA
+      抽取補償->>抽取補償: 頻域等化 nr_freq_equalization<br/>IDFT nr_idft
+    end
+    opt PTRS
+      抽取補償->>抽取補償: 相位修正 nr_pusch_ptrs_processing
+    end
+    抽取補償->>等化檢測: 輸入補償後符號
+    alt 二層 QPSK~64QAM
+      等化檢測->>等化檢測: nr_ulsch_compute_ML_llr
+    else 二層 256QAM
+      等化檢測->>等化檢測: nr_ulsch_mmse_2layers<br/>nr_ulsch_det_HhH<br/>nr_ulsch_construct_HhH_elements
+    else 其他情況
+      等化檢測->>等化檢測: nr_ulsch_compute_llr
+    end
+    等化檢測->>去擾碼: 層去映射 去擾碼
+  end
+  去擾碼->>解碼: LLR 輸出到 LDPC 解碼
+```

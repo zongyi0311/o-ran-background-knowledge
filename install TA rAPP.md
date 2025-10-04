@@ -113,3 +113,7 @@ curl -X POST "http://192.168.1.115:30082/upload_test_spec" \
   --data-binary @test_spec.json
 ```
 <img width="871" height="234" alt="image" src="https://github.com/user-attachments/assets/11dd200a-588f-4277-bfef-1575e0704201" />
+
+
+# Installation SMO+NonRT RIC Rel. L
+- **

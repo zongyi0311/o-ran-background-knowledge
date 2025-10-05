@@ -108,7 +108,7 @@ microk8s.kubectl get pods -n rapp -w
 ## Upload Test Specification to TA rApp
 ```
 cd nonrtric-rapp-test-automation/Test-Automation-rApp/src/config/
-curl -X POST "http://192.168.1.115:30082/upload_test_spec" \
+curl -X POST "http://192.168.1.114:30082/upload_test_spec" \
   -H "Content-Type: application/json" \
   --data-binary @test_spec.json
 ```

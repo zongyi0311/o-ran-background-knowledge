@@ -1,4 +1,4 @@
-# Joe's TA rAPP Installation log
+# TA rAPP Installation log
 ## Environment
 - VMware ubuntu 22.04
 

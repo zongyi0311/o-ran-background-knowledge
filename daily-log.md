@@ -5,7 +5,7 @@
 
 **Daily Logs:**
 - 12:30 - 15:30 : Run exmple to test cluster
-  - There are currently some issues that prevent successful deployment [log]([https://github.com/bmw-ece-ntust/o-ran-docs/blob/Henry/BubbleRAN/BubbleRAN%20setup%20and%20cli%20study%20note.md#run-example-to-test-cluster-still-wrong](https://github.com/bmw-ece-ntust/o-ran-docs/blob/Henry/BubbleRAN/BubbleRAN%20setup%20and%20cli%20study%20note.md#deployment-issue)) and try find the problems and fix it
+  - There are currently some issues that prevent successful deployment [log](https://github.com/bmw-ece-ntust/o-ran-docs/blob/Henry/BubbleRAN/BubbleRAN%20setup%20and%20cli%20study%20note.md#deployment-issue) and try find the problems and fix it
 
 
 
@@ -454,6 +454,7 @@ focus on this part [Set openair0_device](https://github.com/zongyi0311/rfsim-int
 **Daily Logs:**
 - 10:00 - 15:00 : [nr_ulsch_demodulation.c](https://github.com/zongyi0311/rfsim-intern-log/blob/main/OAI%20code/nr_ulsch_demodulation.md#718)
 - 20:00 - 23:00: continue nr_ulsch_demodulation.c
+
 
 
 

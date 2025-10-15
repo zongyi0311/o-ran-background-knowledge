@@ -66,13 +66,14 @@
 | **CUPS**         | Control and User Plane Separation |
 
 ### 5G SA
-1.Scan and synchronize.
-2.Receive MIB (Master Information Blocks) and SIB (System Information Blocks).
-3.Cell selection and random access (RACH).
-4.RRC connection.
-5.NAS registration.
-6.PDU session establishment.
-7.Send/Receive data.
+
+1. Scan and synchronize.
+2. Receive MIB (Master Information Blocks) and SIB (System Information Blocks).
+3. Cell selection and random access (RACH).
+4. RRC connection.
+5 .NAS registration.
+6. PDU session establishment.
+7. Send/Receive data.
 
 - step 1: Scan and Synchronize
   - At the beginning, there is no dedicated channel for the UE since it is not yet connected.
@@ -83,4 +84,43 @@
   - MIB contains reference subcarrier spacing and control channel info.
   - SIB1 provides the necessary information for the initial attach and schedules other SIBs.
 
+- step 3: Cell Selection & Contention-Based Random Access
+  - After selecting a 5G cell, the UE performs a Contention-Based Random Access (CBRA) procedure with the gNB, exchanging four key messages (Msg1–Msg4) to establish initial uplink synchronization.
+```
+ UE → gNB : Msg1 - RA Preamble Transmission  
+gNB → UE : Msg2 - RA Response  
+UE → gNB : Msg3 - Scheduled PUSCH Transmission  
+gNB → UE : Msg4 - Contention Resolution
+```
 
+| Message  | Direction | Channel | Content                          | Purpose                               |
+| -------- | --------- | ------- | -------------------------------- | ------------------------------------- |
+| **Msg1** | UE → gNB  | PRACH   | RA Preamble                      | Start random access                   |
+| **Msg2** | gNB → UE  | PDSCH   | TA, RAPID, Uplink Grant, TC-RNTI | Send Random Access Response           |
+| **Msg3** | UE → gNB  | PUSCH   | Temp ID, RRC Request             | Send UE ID / connection request       |
+| **Msg4** | gNB → UE  | PDSCH   | Contention Resolution            | Confirm UE identity and assign C-RNTI |
+
+- Step 4：RRC Connection
+- After completing the random access procedure, the UE establishes an RRC (Radio Resource Control) connection with the gNB.
+This step transitions the UE from IDLE mode to RRC Connected mode, enabling control-plane communication.
+
+```
+UE (IDLE) → gNB : RRC Connection Request   //The UE sends an RRC Connection Request message to the gNB containing
+gNB → UE : RRC Connection Setup //The gNB responds with RRC Connection Setup, configuring radio parameters, control channels (e.g., SRB/RLC/MAC), and assigning identifiers to the UE.
+UE → gNB : RRC Connection Setup Complete   //UE sends RRC Connection Setup Complete to confirm successful setup and may 
+gNB → UE : RRC Connection Reconfiguration include a NAS message (e.g., Registration Request). //The gNB sends RRC Connection Reconfiguration to modify or enhance configurations (e.g., handover, measurement activation, DRB setup).
+The UE replies with RRC Connection Reconfiguration Complete to confirm.
+UE → gNB : RRC Connection Reconfiguration Complete 
+```
+- Step 5：NAS Registration
+  - After RRC connection, the UE sends a NAS Registration Request to the AMF to register with the 5G network.
+  - The message includes the UE’s security credentials and network capabilities.
+  - The network performs authentication and security key exchange for secure communication.
+  - Once verified, the AMF replies with a Registration Accept, which includes the 5G-GUTI and other configuration details.
+
+- Step 6：PDU Session Establishment
+  - To start a data session, the UE sends a PDU Session Establishment Request to the SMF, The message includes session requirements, SSC Mode, and the 5G-GUTI.
+  - The SMF processes the request, allocates resources, and replies with a PDU Session Establishment Accept containing QoS parameters and the IP address.
+ 
+- Step 7：Send/Receive Data
+  - After the PDU session is established, the UE can now send and receive data through the 5G network (e.g., internet access, streaming, or voice communication).

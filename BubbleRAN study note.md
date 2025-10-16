@@ -176,3 +176,11 @@ During subscription, the xApp provides:
 - Based on data analysis and network observability, the xApp determines the appropriate control actions to apply to the RAN
 to ensure that the network operates closer to the desired state.
 
+## xApp SDK design
+- The xApp SDK is designed to be simple yet flexible, enabling efficient xApp development tailored to user needs, and it provides standardized APIs that manage the entire xApp lifecycle.
+- Thanks to SWIG, xApps can be developed in multiple languages, including C/C++ and Python.
+The C SDK provides the fundamental functions that manage the xApp lifecycle and Service Models (SM).
+These functions form the backbone of xApp development, supporting innovation and flexibility.
+<img width="423" height="377" alt="image" src="https://github.com/user-attachments/assets/70f86a07-d470-4fd2-9176-07505cd63e10" />
+
+- SWIG acts like a translator, allowing different languages ​​(such as Python) to "understand" the functionality provided by the C/C++ SDK.

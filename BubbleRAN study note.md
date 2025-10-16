@@ -124,3 +124,55 @@ UE → gNB : RRC Connection Reconfiguration Complete
  
 - Step 7：Send/Receive Data
   - After the PDU session is established, the UE can now send and receive data through the 5G network (e.g., internet access, streaming, or voice communication).
+
+
+# xApp Development Guide
+## xApp Lifecycle
+
+| stage            | description                      |
+| --------------   | -------------------------------- |
+| **Init**         | E42 Setup, E2 State              |
+| **Indication**   | SM Subscription, Data Collection |
+| **Logic**        | Data Analysis, Decision Making   |
+| **Control**      | RAN Control, Slicing, RRM        |
+| **Exit**         | SM Unsubscribe, E42 Teardown     |
+
+<img width="860" height="785" alt="image" src="https://github.com/user-attachments/assets/498680f4-cb5c-4bd7-9737-be889f143f89" />
+
+### Init
+- The first step of every xApp is to initialize it. This includes:
+  1. Parsing the input arguments from folders or files.
+  2. Setting up the E42 interface towards FlexRIC
+  3. Requesting and reading the current E2 state, which contains the available E2 Nodes and RAN functions
+ 
+### Indication — Data Subscription & Handling
+- In this step, we define how to handle incoming indication messages from the selected elements.
+We write a custom indication callback function to:
+1. Process incoming messages
+2. Parse desired metrics
+3. Store or calculate new values
+
+- To receive indications, the xApp subscribes to the desired E2 Node and RAN function using the proper Service Model (SM).
+During subscription, the xApp provides:
+1. The ID(s) of the E2 Node(s)
+2. The Service Model ID
+3. The reporting interval (e.g., 5 ms)
+4. The custom callback function for message handling
+
+- Logic — Core Intelligence Phase
+- This is the creative phase of the xApp, where we design the core logic to address a specific use case.
+- At this stage, the xApp has already gathered and processed indication messages from E2 Nodes, it is now the ideal time to perform data analysis, extract features, and generate forecasts, turning raw data into actionable insights.
+
+| type                                                  | description                                        |
+| --------------------------------------------------    | -------------------------------------------------- |
+| **Exploratory Data Analysis (EDA)**                   | Analyze data distribution and detect anomalies     |
+| **Pre-processing & Feature Extraction**               | Clean and extract relevant features                |
+| **Forecasting (Supervised/Unsupervised Learning)**    | Predict future trends using ML models              |
+| **Reinforcement Learning (RL)**                       | Optimize actions based on feedback loops           |
+| **Data Set Creation & Augmentation**                  | Generate or augment datasets for robustness        |
+| **Model Training & Continuous Learning**              | Train models and adapt continuously                |
+| **Model Evaluation & Tuning**                         | Evaluate performance and fine-tune hyperparameters |
+
+- Based on data analysis and network observability, the xApp determines the appropriate control actions to apply to the RAN
+to ensure that the network operates closer to the desired state.
+

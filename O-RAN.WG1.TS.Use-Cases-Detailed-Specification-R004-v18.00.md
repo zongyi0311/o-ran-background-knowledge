@@ -1,10 +1,10 @@
 - [4.8 QoS-based Resource Optimization](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#48-qos-based-resource-optimization)
   - [4.8.1 Background Information](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#481-background-information)
     - [1. Definition & Purpose](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#1-definition--purpose)
-    - [2. Role of the RAN Layer](https://github.com/zongyi0311/o-ran-background-knowledge/edit/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#2-role-of-the-ran-layer)
-    - [3. RAN Sub-slice Instantiation](https://github.com/zongyi0311/o-ran-background-knowledge/edit/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#ran-sub-slice-instantiation)
-    - [4. Handling Resource Shortages](https://github.com/zongyi0311/o-ran-background-knowledge/edit/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#4-handling-resource-shortages)
-    - [5. NR NRM](https://github.com/zongyi0311/o-ran-background-knowledge/edit/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#5-nr-nrm)
+    - [2. Role of the RAN Layer](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#2-role-of-the-ran-layer)
+    - [3. RAN Sub-slice Instantiation](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#3-ran-sub-slice-instantiation)
+    - [4. Handling Resource Shortages](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#4-handling-resource-shortages)
+    - [5. NR NRM](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#5-nr-nrm)
 # 4.8 QoS-based Resource Optimization
 ## 4.8.1 Background Information
 ### 1. Definition & Purpose

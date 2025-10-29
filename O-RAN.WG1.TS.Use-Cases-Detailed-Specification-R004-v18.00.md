@@ -119,3 +119,35 @@ It is assumed that 50% of PRBs in an area are reserved for emergency users
 - 3. Non-RT RIC generates A1 policies to guide Near-RT RIC optimization.
 - 4. Near-RT RIC sends QoS control instructions to E2 nodes.
 - 5. E2 nodes adjust Radio Resource Management (RRM) behavior accordingly.
+
+# 4.21 Network Energy Saving
+## 4.21.1 Background Information
+- Energy Consumption (EC) of the RAN is a critical issue for 5G network operators.
+- RAN Energy Saving (ES) depends on careful planning and configuration.
+- Common ES Techniques:
+  - Deep Sleep Mode: shutting down base stations, carriers, or RF channels.
+  - Short-term ES: symbol-, subframe-, and frame-level mechanisms known as Advanced Sleep Modes (ASM).
+- Main EC Contributors:
+- O-RU contributes the largest portion of RAN energy usage.
+
+| Item                       | English Description                                                              |
+| -------------------------- | -------------------------------------------------------------------------------- |
+| **Goal**                   | Reduce RAN energy consumption through advanced energy-saving mechanisms.         |
+| **Main Focus**             | O-RU energy optimization, VNF power estimation, dynamic sleep control.           |
+| **Challenges**             | Varying traffic patterns, lack of standardized VNF EC models (until Rel-18).     |
+| **Techniques**             | Deep Sleep Mode, Carrier Shutdown, RF On/Off, Advanced Sleep Mode (ASM).         |
+| **Standardization Status** | EC measurement for VNFs still under study; will be addressed in 3GPP Release 18. |
+
+## 4.21.2 Motivation
+- 3GPP defines both centralized and distributed ES features, mainly targeting cell on/off switching within or across RATs and in legacy and 5G networks, Energy Saving (ES) can be achieved through manual configuration or SON functions.
+- The motivation for O-RAN ES is to leverage AI/ML-based services and open interfaces to enable smarter ES control.
+
+## 4.21.3 Proposed Solution
+
+| Item                | English Description                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------ |
+| **Purpose**         | Optimize network energy consumption using AI/ML-driven O-RAN energy-saving mechanisms.     |
+| **Main Methods**    | ① Carrier/Cell on-off switching ② RF Channel on-off switching ③ Advanced Sleep Mode (ASM). |
+| **Main Actors**     | Non-RT RIC, Near-RT RIC, SMO, O-CU, O-DU, O-RU.                                            |
+| **Interfaces Used** | O1, E2, and Open Fronthaul M-plane.                                                        |
+| **Impact**          | Enables dynamic energy saving across RAN components at different time scales.              |

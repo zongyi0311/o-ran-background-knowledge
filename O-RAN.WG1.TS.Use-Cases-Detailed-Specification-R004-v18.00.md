@@ -1,5 +1,4 @@
 <!-- TOC -->
-<!-- /TOC -->
 - [4.8 QoS-based Resource Optimization](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#48-qos-based-resource-optimization)
   - [4.8.1 Background Information](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#481-background-information)
     - [1. Definition & Purpose](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#1-definition--purpose)
@@ -86,3 +85,4 @@ It is assumed that 50% of PRBs in an area are reserved for emergency users
 | **Core Mechanism**        | Non-RT RIC issues A1 policy → Near-RT RIC executes E2 control → dynamic PRB / QoS adjustment     |
 
 ## 4.8.3 Proposed Solution
+<!-- /TOC -->

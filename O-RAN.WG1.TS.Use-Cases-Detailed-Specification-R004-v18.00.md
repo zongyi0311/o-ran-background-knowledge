@@ -1,4 +1,18 @@
+- [4.8 QoS-based Resource Optimization](#48-qos-based-resource-optimization)
+  - [4.8.1 Background Information](#481-background-information)
+    - [1. Definition \& Purpose](#1-definition--purpose)
+    - [2. Role of the RAN Layer](#2-role-of-the-ran-layer)
+    - [3. RAN Sub-slice Instantiation](#3-ran-sub-slice-instantiation)
+    - [4. Handling Resource Shortages](#4-handling-resource-shortages)
+    - [5. NR NRM](#5-nr-nrm)
+  - [4.8.2 Motivation](#482-motivation)
+    - [1. Example Use Case](#1-example-use-case)
+    - [2. Problem Scenario](#2-problem-scenario)
+    - [3. Dynamic Optimization via RIC](#3-dynamic-optimization-via-ric)
+    - [4. Use Case Summary](#4-use-case-summary)
+  - [4.8.3 Proposed Solution](#483-proposed-solution)
 <!-- TOC -->
+<!-- /TOC -->
 - [4.8 QoS-based Resource Optimization](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#48-qos-based-resource-optimization)
   - [4.8.1 Background Information](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#481-background-information)
     - [1. Definition & Purpose](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#1-definition--purpose)
@@ -8,8 +22,7 @@
     - [5. NR NRM](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#5-nr-nrm)
    
 - [4.8.2 Motivation]()
-
-<!-- /TOC -->
+- 
 # 4.8 QoS-based Resource Optimization
 ## 4.8.1 Background Information
 ### 1. Definition & Purpose

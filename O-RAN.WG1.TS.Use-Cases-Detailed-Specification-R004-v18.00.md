@@ -1,3 +1,5 @@
+<!-- TOC -->
+<!-- /TOC -->
 - [4.8 QoS-based Resource Optimization](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#48-qos-based-resource-optimization)
   - [4.8.1 Background Information](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#481-background-information)
     - [1. Definition & Purpose](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#1-definition--purpose)

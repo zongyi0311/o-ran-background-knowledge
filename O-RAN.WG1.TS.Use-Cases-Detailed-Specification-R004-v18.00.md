@@ -99,3 +99,23 @@ It is assumed that 50% of PRBs in an area are reserved for emergency users
 | **Core Mechanism**        | Non-RT RIC issues A1 policy → Near-RT RIC executes E2 control → dynamic PRB / QoS adjustment     |
 
 ## 4.8.3 Proposed Solution
+### 1. Main Objective
+- This section describes how O-RAN components collaborate to achieve intelligent QoS-based resource optimization.
+- The main objective is to enable dynamic and efficient QoS adjustments at the RAN level by leveraging SMO, Non-RT RIC, Near-RT RIC, O-CU, and O-DU functions.
+
+### 2. Component Responsibilities
+
+| Component           | English Description                                                                                                                             |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Non-RT RIC**      | - Provides **A1 policies** to Near-RT RIC to guide RAN-level QoS optimization.<br>- Monitors QoS-related metrics from both the network and SMO. |
+| **Near-RT RIC**     | - Executes QoS enforcement decisions received from Non-RT RIC via A1.<br>- Applies these controls on E2 nodes influencing RRM behavior.         |
+| **O-CU / O-DU**     | - Provide UE-level performance metrics with defined granularity to SMO via **O1 interface**.                                                    |
+| **SMO**             | - Collects and aggregates RAN and external performance data.<br>- Supports decision-making for resource allocation.                             |
+| **External Source** | - May provide non-RAN data, such as UE priority or application-level information, to SMO.                                                       |
+
+### 3. System Flow Summary
+- 1 .O-CU / O-DU report UE performance metrics to SMO.
+- 2. SMO aggregates RAN and external data (e.g., UE priorities).
+- 3. Non-RT RIC generates A1 policies to guide Near-RT RIC optimization.
+- 4. Near-RT RIC sends QoS control instructions to E2 nodes.
+- 5. E2 nodes adjust Radio Resource Management (RRM) behavior accordingly.

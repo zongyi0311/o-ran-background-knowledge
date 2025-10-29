@@ -5,6 +5,9 @@
     - [3. RAN Sub-slice Instantiation](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#3-ran-sub-slice-instantiation)
     - [4. Handling Resource Shortages](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#4-handling-resource-shortages)
     - [5. NR NRM](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#5-nr-nrm)
+   
+- [4.8.2 Motivation]()
+- 
 # 4.8 QoS-based Resource Optimization
 ## 4.8.1 Background Information
 ### 1. Definition & Purpose
@@ -43,3 +46,41 @@
 
 ### 5. NR NRM
 - NR NRM (NR Network Resource Model) is an information model defined by 3GPP to describe the network resources, relationships, and attributes within a 5G NR (New Radio) network.
+- It provides a standardized data model that allows management and orchestration systems (like SMO or RIC) to:
+  - Monitor the state of RAN components
+  - Configure parameters such as power, bandwidth, or PRB allocation
+  - Represent the network topology and resource hierarchy
+ 
+## 4.8.2 Motivation
+### 1. Example Use Case
+- To illustrate the use case, the document uses an emergency service as a slice tenant.
+It is assumed that 50% of PRBs in an area are reserved for emergency users
+- This ensures that, even under high network load, emergency communications maintain service quality.
+- For instance, emergency personnel’s video cameras maintain a minimum bitrate of 500 kbps.
+
+### 2. Problem Scenario
+- During an emergency, such as a fire, multiple personnel stream live videos, leading to high traffic within the slice.
+- Even with 50% PRBs reserved, resources may still be insufficient to handle all video streams.
+- In this case:
+  - The operator may reconfigure PRB allocation to favor emergency slices.
+  - However, this could degrade the SLA of other slices.
+  - Despite this, some video streams may still lack sufficient resolution due to physical limitations.
+ 
+### 3. Dynamic Optimization via RIC
+- The emergency control command selects one critical video feed and requests higher resolution.
+- Steps:
+  - The emergency control system determines which video stream needs higher resolution.
+  - It reports this to the end-to-end slice assurance function (e.g., via an Edge API).
+  - The Non-RT RIC uses this information to define an A1 policy influencing resource allocation.
+  - The Near-RT RIC applies the modified QoS target over the E2 interface, ensuring sufficient bandwidth for the selected stream.
+ 
+### 4. Use Case Summary
+| Item                      | Description                                                                                      |
+| ------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Purpose**               | Dynamically adjust QoS to ensure service quality for critical users during emergency situations. |
+| **Main Components**       | Non-RT RIC, Near-RT RIC, SMO, Edge API                                                           |
+| **Main Interfaces**       | A1 (policy control), E2 (QoS enforcement and execution)                                          |
+| **Application Scenarios** | Emergency response, disaster monitoring, public safety slice                                     |
+| **Core Mechanism**        | Non-RT RIC issues A1 policy → Near-RT RIC executes E2 control → dynamic PRB / QoS adjustment     |
+
+## 4.8.3 Proposed Solution

@@ -42,3 +42,4 @@
 |  Components       | RAN, O1, SMO, Non-RT RIC, NR NRM                                                |
 
 ### 5. NR NRM
+- NR NRM (NR Network Resource Model) is an information model defined by 3GPP to describe the network resources, relationships, and attributes within a 5G NR (New Radio) network.

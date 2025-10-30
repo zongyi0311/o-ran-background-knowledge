@@ -15,6 +15,7 @@
     - [1. Main Objective](#1-main-objective)
     - [2. Component Responsibilities](#2-component-responsibilities)
     - [3. System Flow Summary](#3-system-flow-summary)
+  - [4.8.4 Required Data](#484-required-data)
 - [4.21 Network Energy Saving](#421-network-energy-saving)
   - [4.21.1 Background Information](#4211-background-information)
   - [4.21.2 Motivation](#4212-motivation)
@@ -118,6 +119,17 @@ It is assumed that 50% of PRBs in an area are reserved for emergency users
 - 3. Non-RT RIC generates A1 policies to guide Near-RT RIC optimization.
 - 4. Near-RT RIC sends QoS control instructions to E2 nodes.
 - 5. E2 nodes adjust Radio Resource Management (RRM) behavior accordingly.
+
+## 4.8.4 Required Data
+- For this use case, different kinds of observability data must be reported to the Non-RT RIC
+- The Non-RT RIC should monitor resource consumption in the area.
+- When resource usage is low, the RAN scheduler can allocate resources efficiently to all users.
+- When usage exceeds a threshold, the default RAN configuration may fail to meet user requirements.
+  - At this point, the Non-RT RIC must configure detailed reporting for individual UEs.
+- This enhanced observability enables Non-RT RIC to gain deeper performance insights, including:
+  - User throughput
+  - Transmission delay
+- With these detailed metrics, the Non-RT RIC can make smarter, adaptive optimization decisions.
 
 # 4.21 Network Energy Saving
 ## 4.21.1 Background Information

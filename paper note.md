@@ -103,7 +103,7 @@ throughput even though the goal was mainly QoS stabilization.
 ## 8. Conclusion
 
 This work proposes the **first integration of RNN-based rApp and
-distributed DRL-based xApp** for O-RAN network slicing.\
-It demonstrates: - Enhanced **QoS stability**\
-- Reduced **SLA violations**\
+distributed DRL-based xApp** for O-RAN network slicing.
+It demonstrates: - Enhanced **QoS stability**
+- Reduced **SLA violations**
 - Better **traffic adaptability**

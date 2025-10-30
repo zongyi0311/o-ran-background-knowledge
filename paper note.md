@@ -1,6 +1,4 @@
-```{=html}
-<!-- TOC -->
-```
+
 -   [1. Motivation & Problem](#1-motivation--problem)
 -   [2. Proposed Solution](#2-proposed-solution)
 -   [3. System Model](#3-system-model)
@@ -8,7 +6,7 @@
 -   [5. DRL-based xApp](#5-drl-based-xapp)
 -   [6. Algorithm (DDRL)](#6-algorithm-ddrl)
 -   [7. Simulation Results](#7-simulation-results)
--   [8. Conclusion](#8-conclusion) `<!-- /TOC -->`{=html}
+-   [8. Conclusion](#8-conclusion) 
 
 # Open RAN LSTM Traffic Prediction and Slice Management using Deep Reinforcement Learning
 

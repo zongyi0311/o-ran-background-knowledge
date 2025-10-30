@@ -1,3 +1,4 @@
+<!-- TOC -->
 - [4.8 QoS-based Resource Optimization](#48-qos-based-resource-optimization)
   - [4.8.1 Background Information](#481-background-information)
     - [1. Definition \& Purpose](#1-definition--purpose)
@@ -11,18 +12,15 @@
     - [3. Dynamic Optimization via RIC](#3-dynamic-optimization-via-ric)
     - [4. Use Case Summary](#4-use-case-summary)
   - [4.8.3 Proposed Solution](#483-proposed-solution)
-<!-- TOC -->
+    - [1. Main Objective](#1-main-objective)
+    - [2. Component Responsibilities](#2-component-responsibilities)
+    - [3. System Flow Summary](#3-system-flow-summary)
+- [4.21 Network Energy Saving](#421-network-energy-saving)
+  - [4.21.1 Background Information](#4211-background-information)
+  - [4.21.2 Motivation](#4212-motivation)
+  - [4.21.3 Proposed Solution](#4213-proposed-solution)
+
 <!-- /TOC -->
-- [4.8 QoS-based Resource Optimization](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#48-qos-based-resource-optimization)
-  - [4.8.1 Background Information](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#481-background-information)
-    - [1. Definition & Purpose](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#1-definition--purpose)
-    - [2. Role of the RAN Layer](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#2-role-of-the-ran-layer)
-    - [3. RAN Sub-slice Instantiation](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#3-ran-sub-slice-instantiation)
-    - [4. Handling Resource Shortages](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#4-handling-resource-shortages)
-    - [5. NR NRM](https://github.com/zongyi0311/o-ran-background-knowledge/blob/main/O-RAN.WG1.TS.Use-Cases-Detailed-Specification-R004-v18.00.md#5-nr-nrm)
-   
-- [4.8.2 Motivation]()
-- 
 # 4.8 QoS-based Resource Optimization
 ## 4.8.1 Background Information
 ### 1. Definition & Purpose
@@ -151,3 +149,4 @@ It is assumed that 50% of PRBs in an area are reserved for emergency users
 | **Main Actors**     | Non-RT RIC, Near-RT RIC, SMO, O-CU, O-DU, O-RU.                                            |
 | **Interfaces Used** | O1, E2, and Open Fronthaul M-plane.                                                        |
 | **Impact**          | Enables dynamic energy saving across RAN components at different time scales.              |
+

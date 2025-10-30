@@ -20,6 +20,7 @@
   - [4.21.2 Motivation](#4212-motivation)
   - [4.21.3 Proposed Solution](#4213-proposed-solution)
 
+
 <!-- /TOC -->
 # 4.8 QoS-based Resource Optimization
 ## 4.8.1 Background Information
@@ -141,6 +142,24 @@ It is assumed that 50% of PRBs in an area are reserved for emergency users
 - The motivation for O-RAN ES is to leverage AI/ML-based services and open interfaces to enable smarter ES control.
 
 ## 4.21.3 Proposed Solution
+- 1. Carrier and Cell Switch On/Off ES
+  - Time Scale: Non-real-time (for both control and system)
+  - iGoal: Reduce power consumption of O-CU, O-DU, and O-RU by switching off certain carriers or cells.
+  - AI/ML Role: Non-RT RIC controls traffic load and determines when to switch on/off via O1 or open fronthaul M-plane.
+
+- 2. RF Channel Switch On/Off ES
+  - Time Scale: Non- or near-real-time
+  - Goal: Reduce O-RU power consumption, especially with massive MIMO.
+  - AI/ML Role: rApps/xApps trigger switching on/off of RF channels based on traffic, user location, and mobility
+  - Example: Switch off 32 of 64 RF channels or reduce MIMO layers dynamically.
+  - Control: Performed via open fronthaul M-plane from E2 or SMO.
+- 3. Advanced Sleep Mode (ASM)
+  - Time Scale: Non-real-time control, near-real-time execution
+  - Goal: Reduce power consumption by partially switching off O-RU components.
+  - Features:
+  - Uses multidimensional data (traffic load, service type, energy metrics, etc.).
+  - Near-RT RIC adjusts parameters such as SSB periodicity.
+  - Expected Outcome: Significantly reduced energy consumption while maintaining service quality.
 
 | Item                | English Description                                                                        |
 | ------------------- | ------------------------------------------------------------------------------------------ |

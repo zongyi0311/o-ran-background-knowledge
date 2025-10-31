@@ -107,3 +107,83 @@ distributed DRL-based xApp** for O-RAN network slicing.
 It demonstrates: - Enhanced **QoS stability**
 - Reduced **SLA violations**
 - Better **traffic adaptability**
+
+
+<!-- TOC -->
+- [An Open RAN Development Framework with Network Energy Saving rApp Implementation](#an-open-ran-development-framework-with-network-energy-saving-rapp-implementation)
+  - [Abstract](#abstract)
+  - [Section II – Open RAN Architecture](#section-ii--open-ran-architecture)
+  - [Section III – Development Framework](#section-iii--development-framework)
+  - [Section IV – AI/ML-Based Energy Saving](#section-iv--aiml-based-energy-saving)
+  - [Section V – Visualization](#section-v--visualization)
+  - [Section VI – Conclusion](#section-vi--conclusion)
+  - [Key Insights](#key-insights)
+<!-- /TOC -->
+
+
+# An Open RAN Development Framework with Network Energy Saving rApp Implementation
+
+## Abstract
+This paper presents a lightweight Open RAN development framework that supports the design, testing, and visualization of rApps, focusing on AI/ML-based network energy saving. The framework includes Non-RT RIC functionalities, simplified O1 management, and an E2-Node simulator for dataset generation. The team develops an energy-saving rApp using AI/ML to determine when to switch base stations (BSs) on or off. Results demonstrate effective energy reduction with minimal QoS loss, validating the framework’s extensibility to other O-RAN use cases.
+
+## Section II – Open RAN Architecture
+The Open RAN system centers on the Service Management and Orchestration (SMO) layer, hosting the Non-RT RIC and rApps. It interacts with the Near-RT RIC (hosting xApps) and E2 Nodes (O-CU, O-DU) through standardized interfaces (A1, O1, E2). Non-RT RIC manages policies, data exposure, and long-term network optimization (energy saving, load balancing).
+
+## Section III – Development Framework
+### Components
+- **Non-RT RIC Framework:** Provides R1 services for rApps, including Service, Data, and Policy Management; and simple OAM (via REST).
+- **rApps:** Applications connected via R1 to implement custom functions (e.g., energy saving).
+- **E2 Nodes / Simulator:** Generate 5G RAN data for AI model training.
+- **Visualization (Front-End):** GUI for real-time system monitoring.
+
+### Implementation
+- OS: Ubuntu 22.04
+- Container: Dockerized services
+- RIC Base: O-RAN Software Community (OSC) Non-RT RIC Release I
+- Database: CSV / InfluxDB
+- API: Simple REST-based O1 substitute
+
+## Section IV – AI/ML-Based Energy Saving
+### Scenario
+Traditional methods (e.g., greedy BS sleep mode) cannot adapt to time-varying traffic. Thus, the authors use an AI/ML-based, data-driven approach that learns when to switch BSs ON/OFF while maintaining network performance.
+
+### Model
+- Model: 3-layer LSTM network (hidden size = 256).
+- Input: Sequence of past CSI (channel state information).
+- Output: Binary vector αₜ₊₁ indicating ON(1)/OFF(0) for each BS.
+- Activation: Sigmoid + Threshold τ=0.5.
+
+### Dataset Generation
+- Custom 5G simulator generates CSI and optimal BS ON/OFF pairs.
+- UEs move randomly in 3GPP Urban Micro environments.
+- Objective: Maximize \( P_{NES} = \sum R_k - λ \sum P_m \), balancing throughput and energy.
+- 10,000 training samples → 450,000 sequences; 1,000 testing samples.
+
+### Performance Results
+| Method | Data Rate | Power | P_NES |
+|---------|-----------|--------|--------|
+| All-on | 217.0 | 45.6 | 171.4 |
+| Proposed (LSTM) | 216.0 (↓0.46%) | 41.8 (↓8.33%) | **174.2 (+2.8%)** |
+| Optimal | 216.2 | 41.7 | 174.5 |
+
+The proposed model reduces power consumption by 8.3% with only 0.46% throughput loss.
+
+## Section V – Visualization
+Front-End Stack: React + Kakao Maps + Recharts + InfluxDB
+
+### Panels
+1. Cell & UE Location — displays BS/UE position.
+2. Network Energy Saving — shows real-time energy saving graphs.
+3. Cell Metrics — throughput, connected UEs per BS.
+4. UE Metrics — UE throughput and received power.
+5. System Control — manual BS ON/OFF and energy mode.
+
+## Section VI – Conclusion
+The proposed framework offers a lightweight, flexible, and visual environment for developing and testing Open RAN rApps. It integrates simulation, AI-driven control, and intuitive GUI, and can serve as a baseline for diverse O-RAN use cases. Future work targets integration with real testbeds (Colosseum, X5G) and exploration of issues like imperfect CSI, latency, scalability, and generalization.
+
+## Key Insights
+- Provides the first practical Non-RT RIC development framework for AI/ML rApps.
+- Uses simulated data to overcome lack of real Open RAN datasets.
+- Demonstrates an LSTM-based AI model achieving near-optimal energy saving.
+- Offers modular visualization GUI for debugging and performance analysis.
+- Lays groundwork for future AI-enhanced, sustainable 6G RAN systems.

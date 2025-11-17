@@ -1,4 +1,4 @@
-# 1Webinar
+# Webinar
 
 ## 1. Network Automation
 

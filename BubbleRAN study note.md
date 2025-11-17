@@ -1,3 +1,27 @@
+[TOC]- [Webinar](#webinar)
+
+- [Webinar](#webinar)
+  - [1. Network Automation](#1-network-automation)
+    - [Zero-touch Network Automation](#zero-touch-network-automation)
+  - [2. xApp automation](#2-xapp-automation)
+  - [rApp automation](#rapp-automation)
+  - [Slice automation](#slice-automation)
+- [BubbleRAN USER guide](#bubbleran-user-guide)
+  - [5G Control Plane](#5g-control-plane)
+    - [5G SA](#5g-sa)
+- [xApp Development Guide](#xapp-development-guide)
+  - [xApp Lifecycle](#xapp-lifecycle)
+    - [Init](#init)
+    - [Indication — Data Subscription \& Handling](#indication--data-subscription--handling)
+  - [xApp SDK design](#xapp-sdk-design)
+- [rApp Development Guide](#rapp-development-guide)
+  - [overview](#overview)
+  - [BubbleRAN Operator Plane](#bubbleran-operator-plane)
+  - [Core Components](#core-components)
+    - [OAM Component: athena-base-operator](#oam-component-athena-base-operator)
+    - [Non-RT RIC Component: odin-control-manager](#non-rt-ric-component-odin-control-manager)
+    - [BubbleRAN vs O-RAN](#bubbleran-vs-o-ran)
+
 # Webinar
 
 ## 1. Network Automation

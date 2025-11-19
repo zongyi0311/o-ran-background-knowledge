@@ -1,5 +1,5 @@
-- [BubbleRAN vs O-RAN Architecture Summary](#bubbleran-vs-o-ran-architecture-summary)
-  - [1. Operator Plane vs Vendor Plane](#1-operator-plane-vs-vendor-plane)
+- [BubbleRAN Architecture](#bubbleran-architecture)
+  - [1. Operator Plane and Vendor Plane](#1-operator-plane-and-vendor-plane)
   - [2. The Four Layers of BubbleRAN](#2-the-four-layers-of-bubbleran)
     - [Layer 1: rApps / Operators / Agents](#layer-1-rapps--operators--agents)
     - [Layer 2: Control Subsystem (ODIN)](#layer-2-control-subsystem-odin)
@@ -11,9 +11,9 @@
   - [5. What is the Vendor Plane?](#5-what-is-the-vendor-plane)
 - [BubbleRAN vs O-RAN](#bubbleran-vs-o-ran)
 
-# BubbleRAN vs O-RAN Architecture Summary
+# BubbleRAN Architecture
 
-## 1. Operator Plane vs Vendor Plane
+## 1. Operator Plane and Vendor Plane
 
 **Operator Plane**: Policies, orchestration, automation (SMO + Non-RT RIC)  
 **Vendor Plane**: Real-time execution (Near-RT RIC + RAN + Core)
@@ -102,8 +102,8 @@ rApp → R1 → ODIN → A1 → xApp → E2 → RAN
 | **Development Approach**   | Provides developers with **modular SDKs, Operator APIs, and rApp/xApp frameworks**, enabling customization and rapid deployment. | Focuses on **standardized interfaces and interoperability**, with applications developed by various vendors.                                  | BubbleRAN serves as an **implementation and experimental platform** for O-RAN concepts.                                                    |
 | **Goal Orientation**       | Enables rapid building, simulation, and testing of **RAN automation and AI-driven control** in an end-to-end setup.              | Aims to establish **a globally standardized open RAN** framework.                                                                             | BubbleRAN represents the **research and practical extension** of the O-RAN standard.                                                       |
 
-- [BubbleRAN vs O-RAN Architecture Summary](#bubbleran-vs-o-ran-architecture-summary)
-  - [1. Operator Plane vs Vendor Plane](#1-operator-plane-vs-vendor-plane)
+- [BubbleRAN Architecture](#bubbleran-architecture)
+  - [1. Operator Plane and Vendor Plane](#1-operator-plane-and-vendor-plane)
   - [2. The Four Layers of BubbleRAN](#2-the-four-layers-of-bubbleran)
     - [Layer 1: rApps / Operators / Agents](#layer-1-rapps--operators--agents)
     - [Layer 2: Control Subsystem (ODIN)](#layer-2-control-subsystem-odin)

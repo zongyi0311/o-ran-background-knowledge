@@ -101,16 +101,3 @@ rApp → R1 → ODIN → A1 → xApp → E2 → RAN
 | **Control Interfaces**     | **R1** (rApp ↔ ODIN) <br> **A1** (ODIN ↔ xApp)                                                                                   | **R1** (rApp ↔ Non-RT RIC) <br> **A1** (Non-RT ↔ Near-RT RIC)                                                                                 | Identical naming and purpose — BubbleRAN strictly follows O-RAN interface design.                                                          |
 | **Development Approach**   | Provides developers with **modular SDKs, Operator APIs, and rApp/xApp frameworks**, enabling customization and rapid deployment. | Focuses on **standardized interfaces and interoperability**, with applications developed by various vendors.                                  | BubbleRAN serves as an **implementation and experimental platform** for O-RAN concepts.                                                    |
 | **Goal Orientation**       | Enables rapid building, simulation, and testing of **RAN automation and AI-driven control** in an end-to-end setup.              | Aims to establish **a globally standardized open RAN** framework.                                                                             | BubbleRAN represents the **research and practical extension** of the O-RAN standard.                                                       |
-
-- [BubbleRAN Architecture](#bubbleran-architecture)
-  - [1. Operator Plane and Vendor Plane](#1-operator-plane-and-vendor-plane)
-  - [2. The Four Layers of BubbleRAN](#2-the-four-layers-of-bubbleran)
-    - [Layer 1: rApps / Operators / Agents](#layer-1-rapps--operators--agents)
-    - [Layer 2: Control Subsystem (ODIN)](#layer-2-control-subsystem-odin)
-    - [Layer 2: Management Subsystem (Athena)](#layer-2-management-subsystem-athena)
-    - [Layer 3: Network Entities](#layer-3-network-entities)
-    - [Layer 4: Telco-Optimized Kubernetes](#layer-4-telco-optimized-kubernetes)
-  - [3. Where is the Near-RT RIC?](#3-where-is-the-near-rt-ric)
-  - [4. BubbleRAN ↔ O-RAN Mapping Table](#4-bubbleran--o-ran-mapping-table)
-  - [5. What is the Vendor Plane?](#5-what-is-the-vendor-plane)
-- [BubbleRAN vs O-RAN](#bubbleran-vs-o-ran)

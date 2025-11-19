@@ -1,6 +1,6 @@
 [TOC]- [Webinar](#webinar)
 
-- [Webinar1](#webinar1)
+- [Webinar](#webinar)
   - [1. Network Automation](#1-network-automation)
     - [Zero-touch Network Automation](#zero-touch-network-automation)
   - [2. xApp automation](#2-xapp-automation)
@@ -22,7 +22,7 @@
     - [Non-RT RIC Component: odin-control-manager](#non-rt-ric-component-odin-control-manager)
     - [BubbleRAN vs O-RAN](#bubbleran-vs-o-ran)
 
-# Webinar1
+# Webinar
 
 ## 1. Network Automation
 

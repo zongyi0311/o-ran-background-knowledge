@@ -247,3 +247,39 @@ UE → gNB : RRC Connection Reconfiguration Complete
 - **ODIN functions as a Non-RT RIC Orchestrator.**
   - ODIN functions as a Non-RT RIC Orchestrator, providing the central decision-making and orchestration layer in BubbleRAN.
   - ODIN is BubbleRAN’s Non-RT RIC orchestrator. It converts rApp intents into policies, deploys the right xApps, and coordinates execution, without directly controlling or measuring the RAN.
+
+| architecture | BubbleRAN             | O-RAN                                  |
+| ------------ | --------------------- | -------------------------------------- |
+| SMO          | Operator Plane        | SMO                                    |
+| OAM          | Athena Base Operator  | O1-based OAM（標準化但需 vendor 支援） |
+| Non-RT RIC   | ODIN（Non-RT MX-RIC） | Non-RT RIC                             |
+| rApps        | rApps                 | rApps                                  |
+
+| Feature            | BubbleRAN ODIN     | O-RAN Non-RT RIC         |
+| ------------------ | ------------------ | ------------------------ |
+| Intent handling    | ✔                  | ✔                        |
+| AI/ML integration  | Native (MX-AI)     | External                 |
+| White-box control  | ✔                  | ✖ (vendor dependent)     |
+| xApp orchestration | ✔                  | Partial                  |
+| Execution path     | MX-RIC + A1        | A1                       |
+| Near-RT actions    | Delegated to xApps | Delegated to Near-RT RIC |
+
+| Item           | BubbleRAN             | O-RAN              |
+| -------------- | --------------------- | ------------------ |
+| Near-RT RIC    | Near-RT MX-RIC        | Near-RT RIC        |
+| Interface      | E2                    | E2                 |
+| Control Apps   | xApps                 | xApps              |
+| xApp ecosystem | Native + customizable | Vendor / community |
+
+| Feature             | BubbleRAN RAN     | O-RAN RAN             |
+| ------------------- | ----------------- | --------------------- |
+| Implementation      | Containerized OAI | Vendor-specific O-RAN |
+| White-box           | ✔                 | ✖                     |
+| DU/CU modifications | ✔                 | ✖                     |
+
+| Interface | BubbleRAN             | O-RAN                    |
+| --------- | --------------------- | ------------------------ |
+| R1        | rApp → ODIN           | rApp → Non-RT RIC        |
+| A1        | ODIN → Near-RT MX-RIC | Non-RT RIC → Near-RT RIC |
+| E2        | xApps → RAN           | xApps → RAN              |
+| O1        | MX-Operator（Athena） | SMO → RAN                |

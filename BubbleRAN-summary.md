@@ -89,15 +89,34 @@ rApp → R1 → ODIN → A1 → xApp → E2 → RAN
 
 # BubbleRAN vs O-RAN
 
-| **Item**                   | **BubbleRAN**                                                                                                                    | **O-RAN**                                                                                                                                     | **Correspondence and Explanation**                                                                                                         |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Overall Positioning**    | A **cloud-native RAN platform based on Kubernetes**, where gNB, RIC, and OAM are fully containerized and automated.              | An **open RAN standardized architecture** defined by the O-RAN Alliance, focusing on interface standardization and functional modularization. | BubbleRAN can be regarded as **an implementation platform of the O-RAN architecture**, realizing modularity and automation via Kubernetes. |
-| **Control Plane**          | **ODIN Controller / odin-control-manager** — responsible for policy delivery and decision control, equivalent to the Non-RT RIC. | **Non-RT RIC** — responsible for strategic decisions such as energy saving, load prediction, and AI/ML-based control.                         | Both share similar roles. **ODIN corresponds to the Non-RT RIC.**                                                                          |
-| **Application Layer**      | **rApps, Operators, Agents** — define high-level intents and policies for policy-based control.                                  | **rApps** — policy applications running on the SMO / Non-RT RIC.                                                                              | Conceptually identical; BubbleRAN implements them through **Kubernetes Operators**.                                                        |
-| **Execution Layer**        | **Control & Management Subsystems** — execute xApp logic and operational instructions.                                           | **Near-RT RIC + xApps** — handle real-time or near-real-time control (milliseconds to seconds).                                               | BubbleRAN integrates xApp logic into the operator plane; its functionality matches that of the Near-RT RIC.                                |
-| **Network Entities Layer** | **Access / Edge / Core Entities** — actual deployed components such as gNB, Core, and UE.                                        | **O-DU / O-CU / Core NFs / UE**                                                                                                               | BubbleRAN simulates the physical components in O-RAN, all containerized and deployable.                                                    |
-| **OAM / Management Layer** | **athena-base-operator** — manages the full lifecycle of components (deploy, monitor, update, delete).                           | **OAM / SMO (Service Management and Orchestration)**                                                                                          | **Athena** corresponds to the **SMO’s** core management functionality in O-RAN.                                                            |
-| **Platform Foundation**    | **Telco-Optimized Kubernetes Cluster** — supports automation and scalability.                                                    | **Cloud or on-premises platforms**, depending on vendor implementation.                                                                       | BubbleRAN natively integrates Kubernetes, making it a fully cloud-native system.                                                           |
-| **Control Interfaces**     | **R1** (rApp ↔ ODIN) <br> **A1** (ODIN ↔ xApp)                                                                                   | **R1** (rApp ↔ Non-RT RIC) <br> **A1** (Non-RT ↔ Near-RT RIC)                                                                                 | Identical naming and purpose — BubbleRAN strictly follows O-RAN interface design.                                                          |
-| **Development Approach**   | Provides developers with **modular SDKs, Operator APIs, and rApp/xApp frameworks**, enabling customization and rapid deployment. | Focuses on **standardized interfaces and interoperability**, with applications developed by various vendors.                                  | BubbleRAN serves as an **implementation and experimental platform** for O-RAN concepts.                                                    |
-| **Goal Orientation**       | Enables rapid building, simulation, and testing of **RAN automation and AI-driven control** in an end-to-end setup.              | Aims to establish **a globally standardized open RAN** framework.                                                                             | BubbleRAN represents the **research and practical extension** of the O-RAN standard.                                                       |
+| 項目                | **BubbleRAN**                                           | **O-RAN（標準）**                               | **對應關係與解釋**                         |
+| ----------------- | ------------------------------------------------------- | ------------------------------------------- | ----------------------------------- |
+| **系統定位**          | 完整可執行的 **Cloud-Native RAN 平台**（K8s 上的 gNB + RIC + Core） | **開放 RAN 標準架構**（定義功能模組與介面）                  | BubbleRAN = O-RAN 標準的 **實作平台**      |
+| **Non-RT 控制**     | **ODIN（odin-control-manager）**，策略決策、AI/ML、高層控制          | **Non-RT RIC**                              | 100% 等價：ODIN = Non-RT RIC           |
+| **SMO / OAM**     | **Athena（athena-base-operator）**，負責部署/監控/更新/網路模型        | **SMO（Service Management & Orchestration）** | Athena = SMO（負責 OAM）                |
+| **策略應用（rApps）**   | rApps + Operators（Kubernetes Operators）                 | rApps                                       | 概念相同；BubbleRAN 用 K8s Operator 實作    |
+| **Near-RT 控制**    | 功能由 **FlexRIC + xApps** 於 Vendor Plane 提供               | Near-RT RIC + xApps                         | BubbleRAN 透過 FlexRIC 實現 Near-RT RIC |
+| **xApps 執行環境**    | FlexRIC E2 Agent + Containerized xApps                  | Near-RT RIC Service Models (E2SM)           | BubbleRAN 完整支援標準 E2 SM              |
+| **E2 介面**         | 由 FlexRIC 提供完整 E2：Setup / Indication / Control          | 標準 E2AP + E2SM                              | 完全遵循 O-RAN                          |
+| **A1 介面**         | ODIN ↔ xApps 的策略下發                                      | Non-RT RIC ↔ Near-RT RIC                    | BubbleRAN 實作完整 A1                   |
+| **R1 介面**         | rApp ↔ ODIN（policy input）                               | rApp ↔ Non-RT RIC                           | 完全一致                                |
+| **RAN 實作**        | Containerized OAI gNB（DU/CU）                            | O-DU / O-CU                                 | BubbleRAN 使用 OAI 作為白盒 gNB           |
+| **Core 實作**       | Containerized 5GC（AMF/SMF/UPF）                          | 5GC NFs                                     | BubbleRAN = 可部署的實際 RAN + Core       |
+| **執行平台（O-Cloud）** | **Telco-Optimized Kubernetes Cluster**                  | O-Cloud                                     | BubbleRAN = 100% cloud-native RAN   |
+| **功能邏輯位置**        | Operator Plane + Vendor Plane                           | SMO + RIC（Non-RT / Near-RT）+ RAN            | 完整對應整套 O-RAN 架構                     |
+| **開發支援**          | SDK、Operator API、xApp SDK、rApp SDK                      | 標準，只定義 API，不提供 SDK                          | BubbleRAN = 實驗/研究最佳環境               |
+| **目的**            | 快速實作、研究、AI/ML、自動化、RAN 測試                                | 建立業界一致的開放標準                                 | BubbleRAN = 把 O-RAN 落地到可跑的系統        |
+
+| O-RAN 架構區塊        | BubbleRAN 元件           | O-RAN 名稱        | 對應說明                             |
+| ----------------- | ---------------------- | --------------- | -------------------------------- |
+| **SMO 層**         | **Athena**             | SMO/OAM         | 部署、監控、生命週期、Network/Element Model |
+| **Non-RT RIC 層**  | **ODIN**               | Non-RT RIC      | AI/ML、策略、目標下發（R1/A1）             |
+| **Near-RT RIC 層** | **FlexRIC + xApps**    | Near-RT RIC     | 準即時控制（E2）                        |
+| **RAN 層**         | **OAI gNB（DU/CU）**     | O-DU / O-CU     | PHY, MAC, RLC, PDCP 執行           |
+| **Core 層**        | Containerized 5GC      | 5GC AMF/SMF/UPF | 完整 end-to-end 支援                 |
+| **Cloud 層**       | **Kubernetes Cluster** | O-Cloud         | 調度、容器管理、自動化                      |
+
+
+
+
+
